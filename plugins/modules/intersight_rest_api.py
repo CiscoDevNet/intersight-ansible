@@ -132,9 +132,9 @@ api_repsonse:
 
 
 import re
-from ansible.module_utils.remote_management.intersight import IntersightModule, intersight_argument_spec
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six import iteritems
+from ansible_collections.cisco.intersight.plugins.module_utils.intersight import IntersightModule, intersight_argument_spec
 
 
 def get_resource(intersight):
