@@ -189,7 +189,7 @@ def compare_values(expected, actual):
 
 def configure_resource(intersight, moid):
     if not intersight.module.check_mode:
-        if moid:
+        if moid and intersight.module.params['update_method'] != 'post':
             # update the resource - user has to specify all the props they want updated
             options = {
                 'http_method': intersight.module.params['update_method'],
