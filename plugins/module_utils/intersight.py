@@ -236,7 +236,7 @@ class IntersightModule():
             raise ValueError('Invalid *moid* value!')
 
         # Check for query_params, encode, and concatenate onto URL
-        if query_params is not None:
+        if query_params:
             query_path = "?" + urlencode(query_params).replace('+', '%20')
 
         # Handle PATCH/DELETE by Object "name" instead of "moid"

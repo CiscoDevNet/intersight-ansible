@@ -1,0 +1,84 @@
+---
+#
+# The hosts group used is provided by the group variable or defaulted to 'Intersight_Servers'.
+# You can specify a specific host (or host group) on the command line:
+#   ansible-playbook ... -e group=<your host group>
+#   e.g., ansible-playbook server_profiles.yml -e group=TME_Demo
+#
+- hosts: "{{ group | default('Intersight_Servers') }}"
+  connection: local
+  gather_facts: false
+  vars:
+    # Create an anchor for api_info that can be used throughout the file
+    api_info: &api_info
+      api_private_key: "{{ api_private_key }}"
+      api_key_id: "{{ api_key_id }}"
+      api_uri: "{{ api_uri | default(omit) }}"
+      validate_certs: "{{ validate_certs | default(omit) }}"
+      state: "{{ state | default(omit) }}"
+  tasks:
+    # Get a user defined FW version
+    - name: Get Moid of user defined FW version
+      intersight_rest_api:
+        <<: *api_info
+        resource_path: /firmware/Distributables
+        query_params:
+          $filter: "SupportedModels eq '{{ model }}' and Version eq '{{ fw_version }}'"
+      delegate_to: localhost
+      register: fw_resp
+      when: fw_version is defined
+    - set_fact:
+        fw_moid: "{{ fw_resp.api_response.Moid }}"
+      when: fw_resp.api_response is defined
+    # OR Get the recommended FW version
+    - name: Get Moid of recommended FW version
+      intersight_rest_api:
+        <<: *api_info
+        resource_path: /firmware/Distributables
+        query_params:
+          $filter: "SupportedModels eq '{{ model }}' and RecommendedBuild eq 'Y'"
+      delegate_to: localhost
+      register: fw_resp
+      when: fw_version is not defined
+    - set_fact:
+        fw_moid: "{{ fw_resp.api_response.Moid }}"
+      when: fw_resp.api_response is defined
+    # Update server firmware with a post based on server moid
+    - name: Update server firmware
+      intersight_rest_api:
+        <<: *api_info
+        resource_path: /firmware/Upgrades
+        query_params:
+          $filter: "Server.Moid eq '{{ server_moid }}'"
+        update_method: post
+        api_body: {
+          "DirectDownload": {
+            "Upgradeoption": "sd_upgrade_mount_only"
+          },
+          "UpgradeType": "direct_upgrade",
+          "Server": {
+            "Moid": "{{ server_moid }}"
+          },
+          "Distributable": {
+            "Moid": "{{ fw_moid }}"
+          }
+        }
+      delegate_to: localhost
+      register: update_resp
+      when:
+        - server_moid is defined
+        - fw_moid is defined
+    # Wait for download to complete
+    - name: Check firmware download status
+      intersight_rest_api:
+        <<: *api_info
+        resource_path: /firmware/UpgradeStatuses
+        query_params:
+          $filter: "Moid eq '{{ update_resp.api_response.UpgradeStatus.Moid }}'"
+      delegate_to: localhost
+      register: status_resp
+      until: status_resp.api_response.Overallstatus == 'pending' or status_resp.api_response.Overallstatus == 'success'
+      retries: 15
+      delay: 120
+      when:
+        - update_resp.api_response is defined
