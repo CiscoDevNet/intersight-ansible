@@ -131,102 +131,8 @@ api_repsonse:
 '''
 
 
-import re
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.six import iteritems
-from ansible_collections.cisco.intersight.plugins.module_utils.intersight import IntersightModule, intersight_argument_spec
-
-
-def get_resource(intersight):
-    '''
-    GET a resource and return the 1st element found or the full Results list
-    '''
-    options = {
-        'http_method': 'get',
-        'resource_path': intersight.module.params['resource_path'],
-        'query_params': intersight.module.params['query_params'],
-    }
-    response = intersight.call_api(**options)
-    if response.get('Results'):
-        if intersight.module.params['return_list']:
-            intersight.result['api_response'] = response['Results']
-        else:
-            # return the 1st list element
-            intersight.result['api_response'] = response['Results'][0]
-    intersight.result['trace_id'] = response.get('trace_id')
-
-
-def compare_lists(expected_list, actual_list):
-    if len(expected_list) != len(actual_list):
-        # mismatch if list lengths aren't equal
-        return False
-    for expected, actual in zip(expected_list, actual_list):
-        # if compare_values returns False, stop the loop and return
-        if not compare_values(expected, actual):
-            return False
-    # loop complete with all items matching
-    return True
-
-
-def compare_values(expected, actual):
-    try:
-        if isinstance(expected, list) and isinstance(actual, list):
-            return compare_lists(expected, actual)
-        for (key, value) in iteritems(expected):
-            if re.search(r'P(ass)?w(or)?d', key) or key not in actual:
-                # do not compare any password related attributes or attributes that are not in the actual resource
-                continue
-            if not compare_values(value, actual[key]):
-                return False
-        # loop complete with all items matching
-        return True
-    except (AttributeError, TypeError):
-        # if expected and actual != expected:
-        if actual != expected:
-            return False
-        return True
-
-
-def configure_resource(intersight, moid):
-    if not intersight.module.check_mode:
-        if moid and intersight.module.params['update_method'] != 'post':
-            # update the resource - user has to specify all the props they want updated
-            options = {
-                'http_method': intersight.module.params['update_method'],
-                'resource_path': intersight.module.params['resource_path'],
-                'body': intersight.module.params['api_body'],
-                'moid': moid,
-            }
-            response_dict = intersight.call_api(**options)
-            if response_dict.get('Results'):
-                # return the 1st element in the results list
-                intersight.result['api_response'] = response_dict['Results'][0]
-                intersight.result['trace_id'] = response_dict.get('trace_id')
-        else:
-            # create the resource
-            options = {
-                'http_method': 'post',
-                'resource_path': intersight.module.params['resource_path'],
-                'body': intersight.module.params['api_body'],
-            }
-            intersight.call_api(**options)
-            # POSTs may not return any data so get the current state of the resource
-            get_resource(intersight)
-    intersight.result['changed'] = True
-
-
-def delete_resource(intersight, moid):
-    # delete resource and create empty api_response
-    if not intersight.module.check_mode:
-        options = {
-            'http_method': 'delete',
-            'resource_path': intersight.module.params['resource_path'],
-            'moid': moid,
-        }
-        resp = intersight.call_api(**options)
-        intersight.result['api_response'] = {}
-        intersight.result['trace_id'] = resp.get('trace_id')
-    intersight.result['changed'] = True
+from ansible_collections.cisco.intersight.plugins.module_utils.intersight import IntersightModule, intersight_argument_spec, compare_values
 
 
 def main():
@@ -254,7 +160,10 @@ def main():
     intersight.result['trace_id'] = ''
 
     # get the current state of the resource
-    get_resource(intersight)
+    intersight.get_resource(
+        resource_path=intersight.module.params['resource_path'],
+        query_params=intersight.module.params['query_params'],
+    )
 
     # determine requested operation (config, delete, or neither (get resource only))
     if module.params['state'] == 'present':
@@ -273,10 +182,18 @@ def main():
         if request_config:
             resource_values_match = compare_values(module.params['api_body'], intersight.result['api_response'])
         else:  # request_delete
-            delete_resource(intersight, moid)
+            intersight.delete_resource(
+                moid=moid,
+                resource_path=intersight.module.params['resource_path'],
+            )
 
     if request_config and not resource_values_match:
-        configure_resource(intersight, moid)
+        intersight.configure_resource(
+            moid=moid,
+            resource_path=intersight.module.params['resource_path'],
+            body=intersight.module.params['api_body'],
+            query_params=intersight.module.params['query_params'],
+        )
 
     module.exit_json(**intersight.result)
 

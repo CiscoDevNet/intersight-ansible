@@ -35,7 +35,8 @@ from email.utils import formatdate
 import re
 import json
 import hashlib
-from ansible.module_utils.six.moves.urllib.parse import urlparse, urlencode, quote
+from ansible.module_utils.six import iteritems
+from ansible.module_utils.six.moves.urllib.parse import urlparse, urlencode
 from ansible.module_utils.urls import fetch_url
 
 try:
@@ -100,6 +101,37 @@ def get_gmt_date():
     """
 
     return formatdate(timeval=None, localtime=False, usegmt=True)
+
+
+def compare_lists(expected_list, actual_list):
+    if len(expected_list) != len(actual_list):
+        # mismatch if list lengths aren't equal
+        return False
+    for expected, actual in zip(expected_list, actual_list):
+        # if compare_values returns False, stop the loop and return
+        if not compare_values(expected, actual):
+            return False
+    # loop complete with all items matching
+    return True
+
+
+def compare_values(expected, actual):
+    try:
+        if isinstance(expected, list) and isinstance(actual, list):
+            return compare_lists(expected, actual)
+        for (key, value) in iteritems(expected):
+            if re.search(r'P(ass)?w(or)?d', key) or key not in actual:
+                # do not compare any password related attributes or attributes that are not in the actual resource
+                continue
+            if not compare_values(value, actual[key]):
+                return False
+        # loop complete with all items matching
+        return True
+    except (AttributeError, TypeError):
+        # if expected and actual != expected:
+        if actual != expected:
+            return False
+        return True
 
 
 class IntersightModule():
@@ -227,10 +259,6 @@ class IntersightModule():
         if(query_params is not None and not isinstance(query_params, dict)):
             raise TypeError('The *query_params* value must be of type "<dict>"')
 
-        # Verify the body isn't empy & is a valid <dict> object
-        if(body is not None and not isinstance(body, dict)):
-            raise TypeError('The *body* value must be of type "<dict>"')
-
         # Verify the MOID is not null & of proper length
         if(moid is not None and len(moid.encode('utf-8')) != 24):
             raise ValueError('Invalid *moid* value!')
@@ -240,7 +268,7 @@ class IntersightModule():
             query_path = "?" + urlencode(query_params).replace('+', '%20')
 
         # Handle PATCH/DELETE by Object "name" instead of "moid"
-        if(method == "PATCH" or method == "DELETE"):
+        if method in ('PATCH', 'DELETE'):
             if moid is None:
                 if name is not None:
                     if isinstance(name, str):
@@ -293,3 +321,64 @@ class IntersightModule():
         response, info = fetch_url(self.module, target_url, data=bodyString, headers=request_header, method=method, use_proxy=self.module.params['use_proxy'])
 
         return response, info
+
+    def get_resource(self, resource_path, query_params, return_list=False):
+        '''
+        GET a resource and return the 1st element found or the full Results list
+        '''
+        options = {
+            'http_method': 'get',
+            'resource_path': resource_path,
+            'query_params': query_params,
+        }
+        response = self.call_api(**options)
+        if response.get('Results'):
+            if return_list:
+                self.result['api_response'] = response['Results']
+            else:
+                # return the 1st list element
+                self.result['api_response'] = response['Results'][0]
+        self.result['trace_id'] = response.get('trace_id')
+
+    def configure_resource(self, moid, resource_path, body, query_params, update_method=''):
+        if not self.module.check_mode:
+            if moid and update_method != 'post':
+                # update the resource - user has to specify all the props they want updated
+                options = {
+                    'http_method': 'patch',
+                    'resource_path': resource_path,
+                    'body': body,
+                    'moid': moid,
+                }
+                response_dict = self.call_api(**options)
+                if response_dict.get('Results'):
+                    # return the 1st element in the results list
+                    self.result['api_response'] = response_dict['Results'][0]
+                    self.result['trace_id'] = response_dict.get('trace_id')
+            else:
+                # create the resource
+                options = {
+                    'http_method': 'post',
+                    'resource_path': resource_path,
+                    'body': body,
+                }
+                self.call_api(**options)
+                # POSTs may not return any data so get the current state of the resource
+                self.get_resource(
+                    resource_path=resource_path,
+                    query_params=query_params,
+                )
+        self.result['changed'] = True
+
+    def delete_resource(self, moid, resource_path):
+        # delete resource and create empty api_response
+        if not self.module.check_mode:
+            options = {
+                'http_method': 'delete',
+                'resource_path': resource_path,
+                'moid': moid,
+            }
+            resp = self.call_api(**options)
+            self.result['api_response'] = {}
+            self.result['trace_id'] = resp.get('trace_id')
+        self.result['changed'] = True
