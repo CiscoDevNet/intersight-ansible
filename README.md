@@ -1,6 +1,6 @@
 # cisco.intersight Ansible Collection
 
-Ansible collection for managing and automing Cisco Intersight envrionments.  Modules and roles are provided for common Cisco Intersight tasks.
+Ansible collection for managing and automating Cisco Intersight environments.  Modules and roles are provided for common Cisco Intersight tasks.
 
 * Note: This collection is not compatible with versions of Ansible before v2.8.
 
