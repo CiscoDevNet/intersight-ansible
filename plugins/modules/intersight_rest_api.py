@@ -70,7 +70,7 @@ EXAMPLES = r'''
     query_params:
       $filter: "Name eq 'vmedia-localdisk'"
     api_body: {
-      "Name": "vmedia-hdd",
+      "Name": "vmedia-localdisk",
       "ConfiguredBootMode": "Legacy",
       "BootDevices": [
         {
@@ -159,11 +159,13 @@ def main():
     intersight.result['api_response'] = {}
     intersight.result['trace_id'] = ''
 
-    # get the current state of the resource
-    intersight.get_resource(
-        resource_path=intersight.module.params['resource_path'],
-        query_params=intersight.module.params['query_params'],
-    )
+    if module.params['update_method'] != 'post' or module.params['query_params']:
+        # get the current state of the resource
+        # skip if this is a post to /asset/DeviceClaims or similar resource without GET
+        intersight.get_resource(
+            resource_path=intersight.module.params['resource_path'],
+            query_params=intersight.module.params['query_params'],
+        )
 
     # determine requested operation (config, delete, or neither (get resource only))
     if module.params['state'] == 'present':

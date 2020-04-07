@@ -363,11 +363,12 @@ class IntersightModule():
                     'body': body,
                 }
                 self.call_api(**options)
-                # POSTs may not return any data so get the current state of the resource
-                self.get_resource(
-                    resource_path=resource_path,
-                    query_params=query_params,
-                )
+                # POSTs may not return any data so get the current state of the resource if query_params
+                if query_params:
+                    self.get_resource(
+                        resource_path=resource_path,
+                        query_params=query_params,
+                    )
         self.result['changed'] = True
 
     def delete_resource(self, moid, resource_path):
