@@ -6,8 +6,10 @@ __pycache__/
 # C extensions
 *.so
 
-# Editor
+# Editor and environment
 .vscode/
+collections/
+ansible.cfg
 
 # Distribution / packaging
 .Python
