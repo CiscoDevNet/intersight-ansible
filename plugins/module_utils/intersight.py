@@ -182,11 +182,10 @@ class IntersightModule():
         :param options: options dict with method and other params for API call
         :return: json http response object
         """
-
         try:
             response, info = self.intersight_call(**options)
             if not re.match(r'2..', str(info['status'])):
-                raise RuntimeError(info['status'], info['msg'], info['body'])
+                raise RuntimeError(info['status'], info['msg'], info.get('body',''))
         except Exception as e:
             self.module.fail_json(msg="API error: %s " % str(e))
 
