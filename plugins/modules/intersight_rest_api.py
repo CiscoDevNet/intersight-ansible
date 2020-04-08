@@ -192,7 +192,6 @@ def compare_values(expected, actual):
 
 
 def configure_resource(intersight, moid):
-    
     if not intersight.module.check_mode:
         if moid and intersight.module.params['update_method'] != 'post':
             # update the resource - user has to specify all the props they want updated
@@ -202,7 +201,6 @@ def configure_resource(intersight, moid):
                 'body': intersight.module.params['api_body'],
                 'moid': moid,
             }
-
             response_dict = intersight.call_api(**options)
             if response_dict.get('Results'):
                 # return the 1st element in the results list
@@ -280,6 +278,7 @@ def main():
             resource_values_match = compare_values(module.params['api_body'], intersight.result['api_response'])
         else:  # request_delete
             delete_resource(intersight, moid)
+            
     if request_config and not resource_values_match:
         configure_resource(intersight, moid)
 
