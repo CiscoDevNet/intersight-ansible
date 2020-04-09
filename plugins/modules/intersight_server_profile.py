@@ -52,6 +52,9 @@ options:
   imc_access_policy:
     description:
       - Name of IMC Access Policy to associate with this profile.
+  local_user_policy:
+    description:
+      - Name of Local User Policy to associate with this profile.
 author:
   - David Soper (@dsoper2)
 version_added: '2.10'
@@ -70,6 +73,7 @@ EXAMPLES = r'''
     description: Profile for Server1
     assigned_server: 5e3b517d6176752d319a9999
     imc_access_policy: sjc02-d23-access
+    local_user_policy: guest-admin
 
 - name: Delete Server Profile
   intersight_server_profile:
@@ -170,6 +174,7 @@ def main():
         description=dict(type='str', aliases=['descr'], default=''),
         assigned_server=dict(type='str', default=''),
         imc_access_policy=dict(type='str'),
+        local_user_policy=dict(type='str'),
     )
 
     module = AnsibleModule(
@@ -227,6 +232,9 @@ def main():
 
     if moid and intersight.module.params['imc_access_policy']:
         post_profile_to_policy(intersight, moid, resource_path='/access/Policies', policy_name=intersight.module.params['imc_access_policy'])
+
+    if moid and intersight.module.params['local_user_policy']:
+        post_profile_to_policy(intersight, moid, resource_path='/iam/EndPointUserPolicies', policy_name=intersight.module.params['local_user_policy'])
 
     module.exit_json(**intersight.result)
 
