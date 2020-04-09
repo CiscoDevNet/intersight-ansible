@@ -146,6 +146,10 @@ def get_resource(intersight):
         'resource_path': intersight.module.params['resource_path'],
         'query_params': intersight.module.params['query_params'],
     }
+    if intersight.module.params["api_body"].get("Name") is not None:
+      # filter values by name if there is any name in the api_body
+      target_name = intersight.module.params["api_body"]["Name"]
+      options["query_params"] = {"$filter": "Name eq '{0}'".format(target_name)}
     response = intersight.call_api(**options)
     if response.get('Results'):
         if intersight.module.params['return_list']:
@@ -274,7 +278,7 @@ def main():
             resource_values_match = compare_values(module.params['api_body'], intersight.result['api_response'])
         else:  # request_delete
             delete_resource(intersight, moid)
-
+            
     if request_config and not resource_values_match:
         configure_resource(intersight, moid)
 
