@@ -34,9 +34,9 @@ options:
   target_platform:
     description:
       - The platform for which the server profile is applicable.
-      - Can either be a server that is operating in standalone mode or which is attached to a Fabric Interconnect (fi_attached) managed by Intersight.
-    choices: [standalone, fi_attached]
-    default: standalone
+      - Can either be a server that is operating in Standalone mode or which is attached to a Fabric Interconnect (FIAttached) managed by Intersight.
+    choices: [Standalone, FIAttached]
+    default: Standalone
   tags:
     description:
       - List of tags in Key:<user-defined key> Value:<user-defined value> format.
@@ -66,7 +66,7 @@ EXAMPLES = r'''
     api_private_key: "{{ api_private_key }}"
     api_key_id: "{{ api_key_id }}"
     name: SP-Server1
-    target_platform: fi_attached
+    target_platform: FIAttached
     tags:
       - Key: Site
         Value: SJC02
@@ -169,7 +169,7 @@ def main():
     argument_spec.update(
         state=dict(type='str', choices=['present', 'absent'], default='present'),
         name=dict(type='str', required=True),
-        target_platform=dict(type='str', choices=['standalone', 'fi_attached'], default='standalone'),
+        target_platform=dict(type='str', choices=['Standalone', 'FIAttached'], default='Standalone'),
         tags=dict(type='list', default=[]),
         description=dict(type='str', aliases=['descr'], default=''),
         assigned_server=dict(type='str', default=''),
@@ -185,16 +185,28 @@ def main():
     intersight = IntersightModule(module)
     intersight.result['api_response'] = {}
     intersight.result['trace_id'] = ''
+    # get assigned server information
+    intersight.get_resource(
+        resource_path='/compute/PhysicalSummaries',
+        query_params={
+            '$filter': "Moid eq '" + intersight.module.params['assigned_server'] + "'",
+        }
+    )
+    source_object_type = None
+    if intersight.result['api_response'].get('SourceObjectType'):
+        source_object_type = intersight.result['api_response']['SourceObjectType']
     intersight.api_body = {
         'Name': intersight.module.params['name'],
         'Tags': intersight.module.params['tags'],
         'Description': intersight.module.params['description'],
         'AssignedServer': {
             'Moid': intersight.module.params['assigned_server'],
-            'ObjectType': 'compute.Blade',
+            'ObjectType': source_object_type,
         },
+        'TargetPlatform': intersight.module.params['target_platform'],
     }
 
+    intersight.result['api_response'] = {}
     # get the current state of the resource
     intersight.get_resource(
         resource_path='/server/Profiles',
