@@ -26,6 +26,11 @@ options:
       - If C(absent), will verify the resource is absent and will delete if needed.
     choices: [present, absent]
     default: present
+  organization:
+    description:
+      - The name of the Organization this resource is assigned to.
+      - Profiles and Policies that are created within a Custom Organization are applicable only to devices in the same Organization.
+    default: default
   name:
     description:
       - The name assigned to the Server Profile.
@@ -168,6 +173,7 @@ def main():
     argument_spec = intersight_argument_spec
     argument_spec.update(
         state=dict(type='str', choices=['present', 'absent'], default='present'),
+        organization=dict(type='str', default='default'),
         name=dict(type='str', required=True),
         target_platform=dict(type='str', choices=['Standalone', 'FIAttached'], default='Standalone'),
         tags=dict(type='list', default=[]),
@@ -185,6 +191,7 @@ def main():
     intersight = IntersightModule(module)
     intersight.result['api_response'] = {}
     intersight.result['trace_id'] = ''
+
     # get assigned server information
     intersight.get_resource(
         resource_path='/compute/PhysicalSummaries',
@@ -195,6 +202,18 @@ def main():
     source_object_type = None
     if intersight.result['api_response'].get('SourceObjectType'):
         source_object_type = intersight.result['api_response']['SourceObjectType']
+
+    # get the current state of the resource
+    intersight.result['api_response'] = {}
+    intersight.get_resource(
+        resource_path='/server/Profiles',
+        query_params={
+            '$filter': "Name eq '" + intersight.module.params['name'] + "'",
+            '$expand': 'Organization',
+        }
+    )
+
+    # create api_body for comparison with actual state
     intersight.api_body = {
         'Name': intersight.module.params['name'],
         'Tags': intersight.module.params['tags'],
@@ -204,16 +223,10 @@ def main():
             'ObjectType': source_object_type,
         },
         'TargetPlatform': intersight.module.params['target_platform'],
+        'Organization': {
+            'Name': intersight.module.params['organization'],
+        },
     }
-
-    intersight.result['api_response'] = {}
-    # get the current state of the resource
-    intersight.get_resource(
-        resource_path='/server/Profiles',
-        query_params={
-            '$filter': "Name eq '" + intersight.module.params['name'] + "'",
-        }
-    )
 
     moid = None
     resource_values_match = False
@@ -227,20 +240,39 @@ def main():
                 moid=moid,
                 resource_path='/server/Profiles',
             )
+            moid = None
 
-    if module.params['state'] == 'present':
-        if not resource_values_match:
-            intersight.configure_resource(
-                moid=moid,
-                resource_path='/server/Profiles',
-                body=intersight.api_body,
+    if module.params['state'] == 'present' and not resource_values_match:
+        # remove read-only Organization key
+        intersight.api_body.pop('Organization')
+        if not moid:
+            # GET Organization Moid
+            intersight.get_resource(
+                resource_path='/organization/Organizations',
                 query_params={
-                    '$filter': "Name eq '" + intersight.module.params['name'] + "'",
-                }
+                    '$filter': "Name eq '" + intersight.module.params['organization'] + "'",
+                    '$select': 'Moid',
+                },
             )
+            organization_moid = None
             if intersight.result['api_response'].get('Moid'):
                 # resource exists and moid was returned
-                moid = intersight.result['api_response']['Moid']
+                organization_moid = intersight.result['api_response']['Moid']
+            # Organization must be set, but can't be changed after initial POST
+            intersight.api_body['Organization'] = {
+                'Moid': organization_moid,
+            }
+        intersight.configure_resource(
+            moid=moid,
+            resource_path='/server/Profiles',
+            body=intersight.api_body,
+            query_params={
+                '$filter': "Name eq '" + intersight.module.params['name'] + "'",
+            }
+        )
+        if intersight.result['api_response'].get('Moid'):
+            # resource exists and moid was returned
+            moid = intersight.result['api_response']['Moid']
 
     if moid and intersight.module.params['imc_access_policy']:
         post_profile_to_policy(intersight, moid, resource_path='/access/Policies', policy_name=intersight.module.params['imc_access_policy'])

@@ -26,6 +26,11 @@ options:
       - If C(absent), will verify the resource is absent and will delete if needed.
     choices: [present, absent]
     default: present
+  organization:
+    description:
+      - The name of the Organization this resource is assigned to.
+      - Profiles and Policies that are created within a Custom Organization are applicable only to devices in the same Organization.
+    default: default
   name:
     description:
       - The name assigned to the Local User Policy.
@@ -149,6 +154,7 @@ def main():
     argument_spec = intersight_argument_spec
     argument_spec.update(
         state=dict(type='str', choices=['present', 'absent'], default='present'),
+        organization=dict(type='str', default='default'),
         name=dict(type='str', required=True),
         description=dict(type='str', aliases=['descr'], default=''),
         tags=dict(type='list', default=[]),
@@ -172,7 +178,7 @@ def main():
         resource_path='/iam/EndPointUserPolicies',
         query_params={
             '$filter': "Name eq '" + intersight.module.params['name'] + "'",
-            '$expand': 'EndPointUserRoles($expand=EndPointRole,EndPointUser)',
+            '$expand': 'EndPointUserRoles($expand=EndPointRole,EndPointUser),Organization',
         },
     )
 
@@ -209,6 +215,9 @@ def main():
                     'PasswordHistory': intersight.module.params['password_history'],
                 },
                 'EndPointUserRoles': end_point_user_roles,
+                'Organization': {
+                    'Name': intersight.module.params['organization'],
+                },
             }
             resource_values_match = compare_values(intersight.api_body, intersight.result['api_response'])
         else:  # state == 'absent'
@@ -216,6 +225,7 @@ def main():
                 moid=user_policy_moid,
                 resource_path='/iam/EndPointUserPolicies',
             )
+            user_policy_moid = None
 
     if module.params['state'] == 'present' and not resource_values_match:
         intersight.api_body = {
@@ -228,6 +238,23 @@ def main():
                 'PasswordHistory': intersight.module.params['password_history'],
             },
         }
+        organization_moid = None
+        if not user_policy_moid:
+            # GET Organization Moid
+            intersight.get_resource(
+                resource_path='/organization/Organizations',
+                query_params={
+                    '$filter': "Name eq '" + intersight.module.params['organization'] + "'",
+                    '$select': 'Moid',
+                },
+            )
+            if intersight.result['api_response'].get('Moid'):
+                # resource exists and moid was returned
+                organization_moid = intersight.result['api_response']['Moid']
+            # Organization must be set, but can't be changed after initial POST
+            intersight.api_body['Organization'] = {
+                'Moid': organization_moid,
+            }
         intersight.configure_resource(
             moid=user_policy_moid,
             resource_path='/iam/EndPointUserPolicies',
@@ -244,6 +271,10 @@ def main():
             intersight.api_body = {
                 'Name': user['username'],
             }
+            if organization_moid:
+                intersight.api_body['Organization'] = {
+                    'Moid': organization_moid,
+                }
             intersight.configure_resource(
                 moid=None,
                 resource_path='/iam/EndPointUsers',

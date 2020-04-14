@@ -26,6 +26,11 @@ options:
       - If C(absent), will verify the resource is absent and will delete if needed.
     choices: [present, absent]
     default: present
+  organization:
+    description:
+      - The name of the Organization this resource is assigned to.
+      - Profiles and Policies that are created within a Custom Organization are applicable only to devices in the same Organization.
+    default: default
   name:
     description:
       - The name assigned to the IMC Access Policy.
@@ -110,6 +115,7 @@ def main():
     argument_spec = intersight_argument_spec
     argument_spec.update(
         state=dict(type='str', choices=['present', 'absent'], default='present'),
+        organization=dict(type='str', default='default'),
         name=dict(type='str', required=True),
         description=dict(type='str', aliases=['descr'], default=''),
         tags=dict(type='list', default=[]),
@@ -130,6 +136,9 @@ def main():
         'Tags': intersight.module.params['tags'],
         'Description': intersight.module.params['description'],
         'InbandVlan': intersight.module.params['vlan_id'],
+        'Organization': {
+            'Name': intersight.module.params['organization'],
+        },
     }
 
     # get the current state of the resource
@@ -137,6 +146,7 @@ def main():
         resource_path='/access/Policies',
         query_params={
             '$filter': "Name eq '" + intersight.module.params['name'] + "'",
+            '$expand': 'Organization',
         },
     )
 
@@ -152,8 +162,28 @@ def main():
                 moid=moid,
                 resource_path='/access/Policies',
             )
+            moid = None
 
     if module.params['state'] == 'present' and not resource_values_match:
+        # remove read-only Organization key
+        intersight.api_body.pop('Organization')
+        if not moid:
+            # GET Organization Moid
+            intersight.get_resource(
+                resource_path='/organization/Organizations',
+                query_params={
+                    '$filter': "Name eq '" + intersight.module.params['organization'] + "'",
+                    '$select': 'Moid',
+                },
+            )
+            organization_moid = None
+            if intersight.result['api_response'].get('Moid'):
+                # resource exists and moid was returned
+                organization_moid = intersight.result['api_response']['Moid']
+            # Organization must be set, but can't be changed after initial POST
+            intersight.api_body['Organization'] = {
+                'Moid': organization_moid,
+            }
         intersight.configure_resource(
             moid=moid,
             resource_path='/access/Policies',
