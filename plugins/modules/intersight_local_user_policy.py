@@ -39,7 +39,7 @@ options:
   tags:
     description:
       - List of tags in Key:<user-defined key> Value:<user-defined value> format.
-  descrption:
+  description:
     description:
       - The user-defined description of the Local User policy.
       - Description can contain letters(a-z, A-Z), numbers(0-9), hyphen(-), period(.), colon(:), or an underscore(_).
@@ -93,6 +93,17 @@ options:
         description:
           - Valid login password of the user.
         required: true
+  purge:
+    description:
+      - The purge argument instructs the module to consider the resource definition absolute.
+      - If true, any previously configured usernames will be removed from the policy with the exception of the `admin` user which cannot be deleted.
+    default: false
+  always_update_password:
+    description:
+      - Since passwords are not returned by the API and are encrypted on the endpoint, this option will instruct the module when to change the password.
+      - If true, the password for each user will always be updated in the policy.
+      - If false, the password will be updated only if the user is created.
+    default: false
 author:
   - David Soper (@dsoper2)
 version_added: '2.10'
@@ -162,6 +173,8 @@ def main():
         enable_password_expiry=dict(type='bool', default=False, no_log=False),
         password_history=dict(type='int', default=5, no_log=False),
         local_users=dict(type='list', elements='dict', options=local_user, default=[]),
+        purge=dict(type='bool', default=False),
+        always_update_password=dict(type='bool', default=False, no_log=False),
     )
 
     module = AnsibleModule(
@@ -187,7 +200,12 @@ def main():
     if intersight.result['api_response'].get('Moid'):
         # resource exists and moid was returned
         user_policy_moid = intersight.result['api_response']['Moid']
-        if module.params['state'] == 'present':
+        #
+        # always_update_password
+        #   false: compare expected vs. actual (won't check passwords)
+        #   true: no compare
+        #
+        if module.params['state'] == 'present' and not module.params['always_update_password']:
             # Create api body used to check current state
             end_point_user_roles = []
             for user in intersight.module.params['local_users']:
@@ -220,7 +238,7 @@ def main():
                 },
             }
             resource_values_match = compare_values(intersight.api_body, intersight.result['api_response'])
-        else:  # state == 'absent'
+        elif module.params['state'] == 'absent':
             intersight.delete_resource(
                 moid=user_policy_moid,
                 resource_path='/iam/EndPointUserPolicies',
@@ -240,7 +258,7 @@ def main():
         }
         organization_moid = None
         if not user_policy_moid:
-            # GET Organization Moid
+            # create, get Organization Moid and add to policy
             intersight.get_resource(
                 resource_path='/organization/Organizations',
                 query_params={
@@ -255,6 +273,15 @@ def main():
             intersight.api_body['Organization'] = {
                 'Moid': organization_moid,
             }
+        elif module.params['purge']:
+            # update existing resource and purge any existing users
+            for end_point_user_role in intersight.result['api_response']['EndPointUserRoles']:
+                intersight.delete_resource(
+                    moid=end_point_user_role['Moid'],
+                    resource_path='/iam/EndPointUserRoles',
+                )
+        # configure the top-level policy resource
+        intersight.result['api_response'] = {}
         intersight.configure_resource(
             moid=user_policy_moid,
             resource_path='/iam/EndPointUserPolicies',
@@ -266,7 +293,8 @@ def main():
         if intersight.result['api_response'].get('Moid'):
             # resource exists and moid was returned
             user_policy_moid = intersight.result['api_response']['Moid']
-        # EndPointUser config
+
+        # EndPointUser local_users list config
         for user in intersight.module.params['local_users']:
             intersight.api_body = {
                 'Name': user['username'],
