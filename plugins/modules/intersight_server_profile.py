@@ -222,11 +222,12 @@ def main():
             'Moid': intersight.module.params['assigned_server'],
             'ObjectType': source_object_type,
         },
-        'TargetPlatform': intersight.module.params['target_platform'],
         'Organization': {
             'Name': intersight.module.params['organization'],
         },
     }
+    if intersight.module.params['target_platform'] == 'FIAttached':
+        intersight.api_body['TargetPlatform'] = intersight.module.params['target_platform']
 
     moid = None
     resource_values_match = False
