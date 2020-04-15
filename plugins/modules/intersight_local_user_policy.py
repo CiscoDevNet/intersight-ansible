@@ -257,8 +257,9 @@ def main():
             },
         }
         organization_moid = None
-        if not user_policy_moid:
-            # create, get Organization Moid and add to policy
+        if not user_policy_moid or module.params['purge']:
+            # get Organization Moid which is needed when resources are created
+            saved_response = intersight.result['api_response']
             intersight.get_resource(
                 resource_path='/organization/Organizations',
                 query_params={
@@ -269,17 +270,19 @@ def main():
             if intersight.result['api_response'].get('Moid'):
                 # resource exists and moid was returned
                 organization_moid = intersight.result['api_response']['Moid']
-            # Organization must be set, but can't be changed after initial POST
-            intersight.api_body['Organization'] = {
-                'Moid': organization_moid,
-            }
-        elif module.params['purge']:
-            # update existing resource and purge any existing users
-            for end_point_user_role in intersight.result['api_response']['EndPointUserRoles']:
-                intersight.delete_resource(
-                    moid=end_point_user_role['Moid'],
-                    resource_path='/iam/EndPointUserRoles',
-                )
+            intersight.result['api_response'] = saved_response
+            if not user_policy_moid:
+                # Initial create: Organization must be set, but can't be changed after initial POST
+                intersight.api_body['Organization'] = {
+                    'Moid': organization_moid,
+                }
+            elif module.params['purge']:
+                # update existing resource and purge any existing users
+                for end_point_user_role in intersight.result['api_response']['EndPointUserRoles']:
+                    intersight.delete_resource(
+                        moid=end_point_user_role['Moid'],
+                        resource_path='/iam/EndPointUserRoles',
+                    )
         # configure the top-level policy resource
         intersight.result['api_response'] = {}
         intersight.configure_resource(
