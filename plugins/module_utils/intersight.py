@@ -5,7 +5,7 @@
 # to the complete work.
 #
 # (c) 2016 Red Hat Inc.
-# (c) 2018 Cisco Systems Inc.
+# (c) 2020 Cisco Systems Inc.
 #
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
@@ -41,7 +41,7 @@ from ansible.module_utils.urls import fetch_url
 
 try:
     from cryptography.hazmat.primitives import serialization, hashes
-    from cryptography.hazmat.primitives.asymmetric import padding
+    from cryptography.hazmat.primitives.asymmetric import padding, ec
     from cryptography.hazmat.backends import default_backend
     HAS_CRYPTOGRAPHY = True
 except ImportError:
@@ -72,14 +72,14 @@ def get_sha256_digest(data):
 
 def prepare_str_to_sign(req_tgt, hdrs):
     """
-    Concatenates Intersight headers in preparation to be RSA signed
+    Concatenates Intersight headers in preparation to be signed
 
     :param req_tgt : http method plus endpoint
     :param hdrs: dict with header keys
     :return: concatenated header authorization string
     """
     ss = ""
-    ss = ss + "(request-target): " + req_tgt.lower() + "\n"
+    ss = ss + "(request-target): " + req_tgt + "\n"
 
     length = len(hdrs.items())
 
@@ -144,19 +144,31 @@ class IntersightModule():
         self.host = self.module.params['api_uri']
         self.public_key = self.module.params['api_key_id']
         self.private_key = open(self.module.params['api_private_key'], 'r').read()
-        self.digest_algorithm = 'rsa-sha256'
+        self.digest_algorithm = ''
         self.response_list = []
 
-    def get_rsasig_b64encode(self, data):
+    def get_sig_b64encode(self, data):
         """
-        Generates an RSA Signed SHA256 digest from a String
+        Generates a signed digest from a String
 
         :param digest: string to be signed & hashed
         :return: instance of digest object
         """
-
-        rsakey = serialization.load_pem_private_key(self.private_key.encode(), None, default_backend())
-        sign = rsakey.sign(data.encode(), padding.PKCS1v15(), hashes.SHA256())
+        # Python SDK code: Verify PEM Pre-Encapsulation Boundary
+        r = re.compile(r"\s*-----BEGIN (.*)-----\s+")
+        m = r.match(self.private_key)
+        if not m:
+            raise ValueError("Not a valid PEM pre boundary")
+        pem_header = m.group(1)
+        key = serialization.load_pem_private_key(self.private_key.encode(), None, default_backend())
+        if pem_header == 'RSA PRIVATE KEY':
+            sign = key.sign(data.encode(), padding.PKCS1v15(), hashes.SHA256())
+            self.digest_algorithm = 'rsa-sha256'
+        elif pem_header == 'EC PRIVATE KEY':
+            sign = key.sign(data.encode(), ec.ECDSA(hashes.SHA256()))
+            self.digest_algorithm = 'hs2019'
+        else:
+            raise Exception("Unsupported key: {0}".format(pem_header))
 
         return b64encode(sign)
 
@@ -171,7 +183,9 @@ class IntersightModule():
 
         auth_str = "Signature"
 
-        auth_str = auth_str + " " + "keyId=\"" + self.public_key + "\"," + "algorithm=\"" + self.digest_algorithm + "\"," + "headers=\"(request-target)"
+        auth_str = auth_str + " " + "keyId=\"" + self.public_key + "\"," + "algorithm=\"" + self.digest_algorithm + "\","
+
+        auth_str = auth_str + "headers=\"(request-target)"
 
         for key, dummy in hdrs.items():
             auth_str = auth_str + " " + key.lower()
@@ -265,7 +279,7 @@ class IntersightModule():
 
         # Check for query_params, encode, and concatenate onto URL
         if query_params:
-            query_path = "?" + urlencode(query_params).replace('+', '%20')
+            query_path = "?" + urlencode(query_params)
 
         # Handle PATCH/DELETE by Object "name" instead of "moid"
         if method in ('PATCH', 'DELETE'):
@@ -288,7 +302,7 @@ class IntersightModule():
 
         # Concatenate URLs for headers
         target_url = self.host + resource_path + query_path
-        request_target = method + " " + target_path + resource_path + query_path
+        request_target = method.lower() + " " + target_path + resource_path + query_path
 
         # Get the current GMT Date/Time
         cdate = get_gmt_date()
@@ -299,13 +313,13 @@ class IntersightModule():
 
         # Generate the authorization header
         auth_header = {
-            'Date': cdate,
             'Host': target_host,
-            'Digest': "SHA-256=" + b64_body_digest.decode('ascii')
+            'Date': cdate,
+            'Digest': "SHA-256=" + b64_body_digest.decode('ascii'),
         }
 
         string_to_sign = prepare_str_to_sign(request_target, auth_header)
-        b64_signed_msg = self.get_rsasig_b64encode(string_to_sign)
+        b64_signed_msg = self.get_sig_b64encode(string_to_sign)
         auth_header = self.get_auth_header(auth_header, b64_signed_msg)
 
         # Generate the HTTP requests header
