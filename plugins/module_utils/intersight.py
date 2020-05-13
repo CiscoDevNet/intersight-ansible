@@ -376,9 +376,13 @@ class IntersightModule():
                     'resource_path': resource_path,
                     'body': body,
                 }
-                self.call_api(**options)
-                # POSTs may not return any data so get the current state of the resource if query_params
-                if query_params:
+                response_dict = self.call_api(**options)
+                if response_dict:
+                    self.result['api_response'] = response_dict
+                    self.result['trace_id'] = response_dict.get('trace_id')
+                elif query_params:
+                    # POSTs may not return any data.
+                    # Get the current state of the resource if query_params.
                     self.get_resource(
                         resource_path=resource_path,
                         query_params=query_params,
