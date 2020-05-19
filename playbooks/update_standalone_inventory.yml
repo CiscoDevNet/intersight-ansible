@@ -28,7 +28,7 @@
     # Enclose tasks in a block that is only run once
     - block:
         # Find all servers
-        - cisco.intersight.intersight_facts:
+        - cisco.intersight.intersight_info:
             <<: *api_info
             server_names:
           register: all_results

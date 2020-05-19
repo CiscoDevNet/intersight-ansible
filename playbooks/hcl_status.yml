@@ -6,6 +6,8 @@
 #   e.g., ansible-playbook server_profiles.yml -e group=TME_Demo
 #
 - hosts: "{{ group | default('Intersight_Servers') }}"
+  collections:
+    - cisco.intersight
   connection: local
   gather_facts: false
   vars:
