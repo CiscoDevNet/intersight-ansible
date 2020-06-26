@@ -7,6 +7,8 @@
 #
 - hosts: "{{ group | default('Intersight_Servers') }}"
   connection: local
+  collections:
+    - cisco.intersight
   gather_facts: false
   vars:
     # Create an anchor for api_info that can be used throughout the file

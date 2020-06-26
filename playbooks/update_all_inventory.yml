@@ -48,7 +48,6 @@
             # Name server_moid=<Moid value> model=<Model value> boot_policy=<policy from tag> | 'na'
             line: "{{ item.Name }} serial={{ item.Serial }} server_moid={{ item.Moid }} model={{ item.Model }}"
             create: true
-          # Ansible and jmespath contains have type differences, so to/from_json used
           loop: "{{ all_results.intersight_servers }}"
           loop_control:
             label: "{{ item.Name }}"

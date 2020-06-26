@@ -165,6 +165,7 @@ def main():
         intersight.get_resource(
             resource_path=intersight.module.params['resource_path'],
             query_params=intersight.module.params['query_params'],
+            return_list=intersight.module.params['return_list'],
         )
 
     # determine requested operation (config, delete, or neither (get resource only))

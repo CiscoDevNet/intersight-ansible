@@ -9,6 +9,8 @@
     api_info: &api_info
       api_private_key: "{{ api_private_key }}"
       api_key_id: "{{ api_key_id }}"
+    image_url: "{{ image_url | default('http://172.28.224.62/UCSPE_4.0.4e.ova') }}"
+    vm_name: "{{ vm_name | default('ucspe-4-0-4e-orch') }}"
   tasks:
     - name: Get vCenter Moid
       intersight_rest_api:
@@ -35,8 +37,8 @@
               "ObjectType":"asset.DeviceRegistration"
             },
             "Datastore": "Atlanta Data",
-            "Image": "http://172.28.224.62/UCSPE_4.0.4e.ova",
-            "VmName": "ucspe-4-0-4e-orch",
+            "Image": "{{ image_url }}",
+            "VmName": "{{ vm_name }}",
             "PowerOn": false,
             "Datacenter": "SJC07",
             "Cluster": "Atlanta"
