@@ -28,10 +28,14 @@
     # Enclose tasks in a block that is only run once
     - block:
         # Find all servers
-        - cisco.intersight.intersight_info:
+        - cisco.intersight.intersight_rest_api:
             <<: *api_info
-            server_names:
-          register: all_results
+            resource_path: /compute/PhysicalSummaries
+            query_params:
+              $filter: "PlatformType eq 'IMC' and contains(Model, 'UCSC-C')"
+              $top: 1000
+            return_list: true
+          register: results
         # Place the servers in a group in the file
         - debug:
             msg: Inventory filepath "{{ filepath }}"
@@ -48,14 +52,9 @@
             # Name server_moid=<Moid value> model=<Model value> boot_policy=<policy from tag> | 'na'
             line: "{{ item.Name }} server_moid={{ item.Moid }} model={{ item.Model }}"
             create: true
-          # Ansible and jmespath contains have type differences, so to/from_json used
-          loop: "{{ all_results.intersight_servers | json_query(platform_query) | to_json | from_json | json_query(model_query) }}"
+          loop: "{{ results.api_response }}"
           loop_control:
             label: "{{ item.Name }}"
-          vars:
-            # Filter for IMC and C-Series only (no HX)
-            platform_query: "[?PlatformType=='IMC']"
-            model_query: "[?contains(Model, 'UCSC-C')]"
-          when: all_results.intersight_servers is defined
+          when: results.api_response is defined
       delegate_to: localhost
       run_once: true

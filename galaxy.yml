@@ -9,7 +9,7 @@ namespace: cisco
 name: intersight
 
 # The version of the collection. Must be compatible with semantic versioning
-version: 1.0.6
+version: 1.0.7
 
 # The path to the Markdown (.md) readme file. This path is relative to the root of the collection
 readme: README.md
@@ -45,19 +45,19 @@ tags: [cisco, intersight]
 # dependencies: {}
 
 # The URL of the originating SCM repository
-repository: https://github.com/CiscoDevNet/ansible-intersight
+repository: https://github.com/CiscoDevNet/intersight-ansible
 
 # The URL to any online docs
 documentation: https://intersight.com/apidocs
 
 # The URL to the homepage of the collection/project
-homepage: https://github.com/CiscoDevNet/ansible-intersight
+homepage: https://github.com/CiscoDevNet/intersight-ansible
 
 # The URL to the collection issue tracker
-issues: https://github.com/CiscoDevNet/ansible-intersight
+issues: https://github.com/CiscoDevNet/intersight-ansible
 
 # Exclude the following from the build (supported in Ansible 2.10)
 # build_ignore:
+#   - releases
 #   - playbooks/collections
 #   - 'playbooks/*tme*'
-#   - '*.tar.gz'
