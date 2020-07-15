@@ -1,0 +1,26 @@
+---
+# Example Playbook: cisco.intersight.intersight_ntp_policy
+# Runs on localhost since policies are only configured once
+- hosts: localhost
+  connection: local
+  collections:
+    - cisco.intersight
+  gather_facts: false
+  vars:
+    # Create an anchor for api_info that can be used throughout the file
+    api_info: &api_info
+      api_private_key: ~/Downloads/DevNetSecretKey.txt
+      api_key_id: 596cc79e5d91b400010d15ad/5db71f977564612d30cc3860/5f0f42d47564612d3363b87b
+  tasks:
+    - name: Configure NTP Policy
+      intersight_ntp_policy:
+        <<: *api_info
+        organization: DevNet
+        name: lab-ntp
+        description: NTP policy for lab use
+        tags:
+          - Key: Site
+            Value: RCDN
+        ntp_servers:
+          - ntp.esl.cisco.com
+        timezone: America/Chicago
