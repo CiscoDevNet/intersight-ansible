@@ -9,8 +9,9 @@
   vars:
     # Create an anchor for api_info that can be used throughout the file
     api_info: &api_info
-      api_private_key: ~/Downloads/DevNetSecretKey.txt
-      api_key_id: 596cc79e5d91b400010d15ad/5db71f977564612d30cc3860/5f0f42d47564612d3363b87b
+      api_private_key: "{{ api_private_key }}"
+      api_key_id: "{{ api_key_id }}"
+      api_uri: "{{ api_uri | default(omit) }}"
   tasks:
     - name: Configure NTP Policy
       intersight_ntp_policy:
