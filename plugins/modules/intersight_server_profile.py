@@ -63,6 +63,9 @@ options:
   ntp_policy:
     description:
       - Name of NTP Policy to associate with this profile.
+  virtual_media_policy:
+    description:
+      - Name of Virtual Media Policy to associate with this profile.
 author:
   - David Soper (@dsoper2)
 version_added: '2.10'
