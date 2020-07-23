@@ -60,6 +60,9 @@ options:
   local_user_policy:
     description:
       - Name of Local User Policy to associate with this profile.
+  ntp_policy:
+    description:
+      - Name of NTP Policy to associate with this profile.
 author:
   - David Soper (@dsoper2)
 version_added: '2.10'
@@ -67,7 +70,7 @@ version_added: '2.10'
 
 EXAMPLES = r'''
 - name: Configure Server Profile
-  intersight_server_profile:
+  cisco.intersight.intersight_server_profile:
     api_private_key: "{{ api_private_key }}"
     api_key_id: "{{ api_key_id }}"
     name: SP-Server1
@@ -79,9 +82,10 @@ EXAMPLES = r'''
     assigned_server: 5e3b517d6176752d319a9999
     imc_access_policy: sjc02-d23-access
     local_user_policy: guest-admin
+    ntp_policy: lab-ntp
 
 - name: Delete Server Profile
-  intersight_server_profile:
+  cisco.intersight.intersight_server_profile:
     api_private_key: "{{ api_private_key }}"
     api_key_id: "{{ api_key_id }}"
     name: SP-Server1
@@ -181,6 +185,7 @@ def main():
         assigned_server=dict(type='str', default=''),
         imc_access_policy=dict(type='str'),
         local_user_policy=dict(type='str'),
+        ntp_policy=dict(type='str'),
     )
 
     module = AnsibleModule(
@@ -192,7 +197,21 @@ def main():
     intersight.result['api_response'] = {}
     intersight.result['trace_id'] = ''
 
+    organization_moid = None
+    # GET Organization Moid
+    intersight.get_resource(
+        resource_path='/organization/Organizations',
+        query_params={
+            '$filter': "Name eq '" + intersight.module.params['organization'] + "'",
+            '$select': 'Moid',
+        },
+    )
+    if intersight.result['api_response'].get('Moid'):
+        # resource exists and moid was returned
+        organization_moid = intersight.result['api_response']['Moid']
+
     # get assigned server information
+    intersight.result['api_response'] = {}
     intersight.get_resource(
         resource_path='/compute/PhysicalSummaries',
         query_params={
@@ -205,25 +224,27 @@ def main():
 
     # get the current state of the resource
     intersight.result['api_response'] = {}
+    filter_str = "Name eq '" + intersight.module.params['name'] + "'"
+    filter_str += "and Organization.Moid eq '" + organization_moid + "'"
     intersight.get_resource(
         resource_path='/server/Profiles',
         query_params={
-            '$filter': "Name eq '" + intersight.module.params['name'] + "'",
+            '$filter': filter_str,
             '$expand': 'Organization',
         }
     )
 
     # create api_body for comparison with actual state
     intersight.api_body = {
+        'Organization': {
+            'Name': intersight.module.params['organization'],
+        },
         'Name': intersight.module.params['name'],
         'Tags': intersight.module.params['tags'],
         'Description': intersight.module.params['description'],
         'AssignedServer': {
             'Moid': intersight.module.params['assigned_server'],
             'ObjectType': source_object_type,
-        },
-        'Organization': {
-            'Name': intersight.module.params['organization'],
         },
     }
     if intersight.module.params['target_platform'] == 'FIAttached':
@@ -247,18 +268,6 @@ def main():
         # remove read-only Organization key
         intersight.api_body.pop('Organization')
         if not moid:
-            # GET Organization Moid
-            intersight.get_resource(
-                resource_path='/organization/Organizations',
-                query_params={
-                    '$filter': "Name eq '" + intersight.module.params['organization'] + "'",
-                    '$select': 'Moid',
-                },
-            )
-            organization_moid = None
-            if intersight.result['api_response'].get('Moid'):
-                # resource exists and moid was returned
-                organization_moid = intersight.result['api_response']['Moid']
             # Organization must be set, but can't be changed after initial POST
             intersight.api_body['Organization'] = {
                 'Moid': organization_moid,
@@ -268,7 +277,7 @@ def main():
             resource_path='/server/Profiles',
             body=intersight.api_body,
             query_params={
-                '$filter': "Name eq '" + intersight.module.params['name'] + "'",
+                '$filter': filter_str
             }
         )
         if intersight.result['api_response'].get('Moid'):
@@ -280,6 +289,9 @@ def main():
 
     if moid and intersight.module.params['local_user_policy']:
         post_profile_to_policy(intersight, moid, resource_path='/iam/EndPointUserPolicies', policy_name=intersight.module.params['local_user_policy'])
+
+    if moid and intersight.module.params['ntp_policy']:
+        post_profile_to_policy(intersight, moid, resource_path='/ntp/Policies', policy_name=intersight.module.params['ntp_policy'])
 
     module.exit_json(**intersight.result)
 
