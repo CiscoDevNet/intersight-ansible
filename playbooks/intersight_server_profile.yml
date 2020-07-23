@@ -43,7 +43,7 @@
         # ipmi_over_lan_policy:
         local_user_policy: guest-admin
         ntp_policy: lab-ntp
-        # virtual_kvm_policy:
+        virtual_kvm_policy: COS-VM
         # sd_card_policy:
         # lan_connectivity_policy:
         # san_connectivity_policy:
