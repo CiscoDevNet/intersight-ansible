@@ -86,5 +86,3 @@ ansible-playbook -i inventory update_all_inventory.yml
 
 * We are on Slack (https://ciscoucs.slack.com/) - Slack requires registration, but the ucspython team is open invitation to
   anyone.  Click [here](https://ucspython.herokuapp.com) to register 
-
-# Test
