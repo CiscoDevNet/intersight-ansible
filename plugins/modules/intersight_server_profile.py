@@ -63,8 +63,12 @@ options:
   ntp_policy:
     description:
       - Name of NTP Policy to associate with this profile.
+  virtual_media_policy:
+    description:
+      - Name of Virtual Media Policy to associate with this profile.
 author:
   - David Soper (@dsoper2)
+  - Sid Nath
 version_added: '2.10'
 '''
 
@@ -83,6 +87,7 @@ EXAMPLES = r'''
     imc_access_policy: sjc02-d23-access
     local_user_policy: guest-admin
     ntp_policy: lab-ntp
+    virtual_media_policy: COS-VM
 
 - name: Delete Server Profile
   cisco.intersight.intersight_server_profile:
@@ -186,6 +191,7 @@ def main():
         imc_access_policy=dict(type='str'),
         local_user_policy=dict(type='str'),
         ntp_policy=dict(type='str'),
+        virtual_media_policy=dict(type='str'),
     )
 
     module = AnsibleModule(
@@ -292,6 +298,9 @@ def main():
 
     if moid and intersight.module.params['ntp_policy']:
         post_profile_to_policy(intersight, moid, resource_path='/ntp/Policies', policy_name=intersight.module.params['ntp_policy'])
+
+    if moid and intersight.module.params['virtual_media_policy']:
+        post_profile_to_policy(intersight, moid, resource_path='/media/Policies', policy_name=intersight.module.params['virtial_media_policy'])
 
     module.exit_json(**intersight.result)
 
