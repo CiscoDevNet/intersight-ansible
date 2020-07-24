@@ -71,7 +71,7 @@ options:
       - Name of Boot Order Policy to associate with this profile.
 author:
   - David Soper (@dsoper2)
-  - Sid Nath
+  - Sid Nath (@SidNath21)
   - Tse Kai "Kevin" Chan (@BrightScale)
 version_added: '2.10'
 '''
@@ -88,6 +88,7 @@ EXAMPLES = r'''
         Value: SJC02
     description: Profile for Server1
     assigned_server: 5e3b517d6176752d319a9999
+    boot_order_policy: COS-Boot
     imc_access_policy: sjc02-d23-access
     local_user_policy: guest-admin
     ntp_policy: lab-ntp
@@ -305,9 +306,10 @@ def main():
         post_profile_to_policy(intersight, moid, resource_path='/ntp/Policies', policy_name=intersight.module.params['ntp_policy'])
 
     if moid and intersight.module.params['virtual_media_policy']:
-        post_profile_to_policy(intersight, moid, resource_path='/media/Policies', policy_name=intersight.module.params['virtial_media_policy'])
+        post_profile_to_policy(intersight, moid, resource_path='/vmedia/Policies', policy_name=intersight.module.params['virtual_media_policy'])
+
     if moid and intersight.module.params['boot_order_policy']:
-        post_profile_to_policy(intersight, moid, resource_path='/bootorder/Policies', policy_name=intersight.module.params['boot_order_policy'])
+        post_profile_to_policy(intersight, moid, resource_path='/boot/PrecisionPolicies', policy_name=intersight.module.params['boot_order_policy'])
     module.exit_json(**intersight.result)
 
 
