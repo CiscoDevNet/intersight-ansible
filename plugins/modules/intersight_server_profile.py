@@ -66,9 +66,13 @@ options:
   virtual_media_policy:
     description:
       - Name of Virtual Media Policy to associate with this profile.
+  boot_order_policy:
+    description:
+      - Name of Boot Order Policy to associate with this profile.
 author:
   - David Soper (@dsoper2)
   - Sid Nath
+  - Kevin Chan (@BrightScale)
 version_added: '2.10'
 '''
 
@@ -192,6 +196,7 @@ def main():
         local_user_policy=dict(type='str'),
         ntp_policy=dict(type='str'),
         virtual_media_policy=dict(type='str'),
+        boot_order_policy=dict(type='str'),
     )
 
     module = AnsibleModule(
@@ -301,7 +306,8 @@ def main():
 
     if moid and intersight.module.params['virtual_media_policy']:
         post_profile_to_policy(intersight, moid, resource_path='/media/Policies', policy_name=intersight.module.params['virtial_media_policy'])
-
+    if moid and intersight.module.params['boot_order_policy']:
+        post_profile_to_policy(intersight, moid, resource_path='/bootorder/Policies', policy_name=intersight.module.params['boot_order_policy'])
     module.exit_json(**intersight.result)
 
 
