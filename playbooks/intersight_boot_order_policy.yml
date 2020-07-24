@@ -1,0 +1,28 @@
+---
+# Example Playbook: cisco.intersight.intersight_boot_order_policy
+# Runs on localhost since policies are only configured once 
+#Author: Tse Kai "Kevin" Chan (@BrightScale)
+- hosts: localhost
+  connection: local
+  collections:
+    - cisco.intersight
+  gather_facts: false
+  vars:
+    # Create an anchor for api_info that can be used throughout the file
+    api_info: &api_info
+      api_private_key: "{{ api_private_key }}"
+      api_key_id: "{{ api_key_id }}"
+      api_uri: "{{ api_uri | default(omit) }}"
+  tasks:
+    - name: Configure Boot Order Policy
+      intersight_boot_order_policy:
+        <<: *api_info
+        organization: DevNet
+        name: COS-Boot
+        description: Boot Order policy for lab use
+        tags:
+          - Key: Site
+            Value: RCDN
+        boot_servers:
+          - boot.esl.cisco.com
+        timezone: America/Chicago
