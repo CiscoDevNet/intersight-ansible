@@ -37,7 +37,7 @@
         description: "Updated Profile for server name {{ inventory_hostname }}"
         assigned_server: "{{ server_moid }}"
         # bios_policy:
-        # boot_order_policy:
+        boot_order_policy: COS-Boot
         # device_connector_policy:
         # serial_over_lan_policy:
         # ipmi_over_lan_policy:
