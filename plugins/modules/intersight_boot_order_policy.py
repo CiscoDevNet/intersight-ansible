@@ -58,7 +58,7 @@ options:
     description:
       - Timezone of services on the endpoint.
 author:
-  - Kevin Chan (@BrightScale)
+  - Tse Kai "Kevin" Chan (@BrightScale)
 version_added: '2.10'
 '''
 

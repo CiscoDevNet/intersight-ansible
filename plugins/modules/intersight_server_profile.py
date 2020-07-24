@@ -72,7 +72,7 @@ options:
 author:
   - David Soper (@dsoper2)
   - Sid Nath
-  - Kevin Chan (@BrightScale)
+  - Tse Kai "Kevin" Chan (@BrightScale)
 version_added: '2.10'
 '''
 

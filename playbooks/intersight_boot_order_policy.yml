@@ -1,6 +1,7 @@
 ---
 # Example Playbook: cisco.intersight.intersight_boot_order_policy
-# Runs on localhost since policies are only configured once
+# Runs on localhost since policies are only configured once 
+#Author: Tse Kai "Kevin" Chan (@BrightScale)
 - hosts: localhost
   connection: local
   collections:
