@@ -60,8 +60,12 @@ options:
   local_user_policy:
     description:
       - Name of Local User Policy to associate with this profile.
+  storage_policy:
+    description:
+      - Name of Storage Policy to associate with this profile.
 author:
   - David Soper (@dsoper2)
+  - Soma Tummala (@SOMATUMMALA21)
 version_added: '2.10'
 '''
 
@@ -79,6 +83,7 @@ EXAMPLES = r'''
     assigned_server: 5e3b517d6176752d319a9999
     imc_access_policy: sjc02-d23-access
     local_user_policy: guest-admin
+    storage_policy: storage
 
 - name: Delete Server Profile
   intersight_server_profile:
@@ -280,6 +285,9 @@ def main():
 
     if moid and intersight.module.params['local_user_policy']:
         post_profile_to_policy(intersight, moid, resource_path='/iam/EndPointUserPolicies', policy_name=intersight.module.params['local_user_policy'])
+        
+     if moid and intersight.module.params['storage_policy']:
+        post_profile_to_policy(intersight, moid, resource_path='/iam/EndPointUserPolicies', policy_name=intersight.module.params['storage_policy'])
 
     module.exit_json(**intersight.result)
 
