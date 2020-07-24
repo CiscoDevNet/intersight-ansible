@@ -12,6 +12,7 @@ collections/
 ansible.cfg
 
 # Distribution / packaging
+.DS_Store
 .Python
 build/
 develop-eggs/
