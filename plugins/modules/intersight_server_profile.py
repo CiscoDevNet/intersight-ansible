@@ -45,7 +45,7 @@ options:
   tags:
     description:
       - List of tags in Key:<user-defined key> Value:<user-defined value> format.
-  descrption:
+  description:
     description:
       - The user-defined description of the Server Profile.
       - Description can contain letters(a-z, A-Z), numbers(0-9), hyphen(-), period(.), colon(:), or an underscore(_).
@@ -63,6 +63,9 @@ options:
   ntp_policy:
     description:
       - Name of NTP Policy to associate with this profile.
+  storage_policy:
+    description:
+      - Name of Storage Policy to associate with this profile.
   virtual_media_policy:
     description:
       - Name of Virtual Media Policy to associate with this profile.
@@ -73,6 +76,7 @@ author:
   - David Soper (@dsoper2)
   - Sid Nath (@SidNath21)
   - Tse Kai "Kevin" Chan (@BrightScale)
+  - Soma Tummala (@SOMATUMMALA21)
 version_added: '2.10'
 '''
 
@@ -92,6 +96,7 @@ EXAMPLES = r'''
     imc_access_policy: sjc02-d23-access
     local_user_policy: guest-admin
     ntp_policy: lab-ntp
+    storage_policy: storage
     virtual_media_policy: COS-VM
 
 - name: Delete Server Profile
@@ -196,6 +201,7 @@ def main():
         imc_access_policy=dict(type='str'),
         local_user_policy=dict(type='str'),
         ntp_policy=dict(type='str'),
+        storage_policy=dict(type='str'),
         virtual_media_policy=dict(type='str'),
         boot_order_policy=dict(type='str'),
     )
@@ -301,6 +307,9 @@ def main():
 
     if moid and intersight.module.params['local_user_policy']:
         post_profile_to_policy(intersight, moid, resource_path='/iam/EndPointUserPolicies', policy_name=intersight.module.params['local_user_policy'])
+
+    if moid and intersight.module.params['storage_policy']:
+        post_profile_to_policy(intersight, moid, resource_path='/iam/EndPointUserPolicies', policy_name=intersight.module.params['storage_policy'])
 
     if moid and intersight.module.params['ntp_policy']:
         post_profile_to_policy(intersight, moid, resource_path='/ntp/Policies', policy_name=intersight.module.params['ntp_policy'])
