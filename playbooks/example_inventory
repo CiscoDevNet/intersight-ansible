@@ -11,4 +11,4 @@ Intersight_Servers
 
 [all:vars]
 api_private_key=~/Downloads/SecretKey.txt
-api_key_id=596cc79e5d91b400010d15ad/5defa9627564612d30269658/5defa9b17564612d3026aa34
+api_key_id=596cc79e5d91b400010d15ad/5f0ce0ad7564612d3311a1f3/5f0ea8eb7564612d334ccb5a
