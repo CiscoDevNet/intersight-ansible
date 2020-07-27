@@ -22,6 +22,9 @@
         tags:
           - Key: Site
             Value: RCDN
-        # virtual_media_servers:
-        #   - vmedia.esl.cisco.com
-        # timezone: America/Chicago
+        cdd_virtual_media:
+          mount_type: nfs
+          volume: nfs-cdd
+          remote_hostname: 172.28.224.77
+          remote_path: /mnt/SHARE/ISOS/CENTOS
+          remote_file: CentOS7.iso
