@@ -50,6 +50,16 @@ options:
       - Enable or disable virtual media.
     type: bool
     default: true
+  enable:
+    description:
+      - If enabled, allows encryption of all Virtual Media communications
+    type: bool
+    default: false
+  enable:
+    description:
+      - If enabled, the virtual drives appear on the boot selection menu after mapping the image and rebooting the host.
+    type: bool
+    default: true
   cdd_virtual_media:
     description:
       - CDD Virtual Media image mapping options.
@@ -93,8 +103,62 @@ options:
       password:
         description:
           - The password for the selected username, if required.
+  hdd_virtual_media:
+    description:
+      - HDD Virtual Media image mapping options.
+    suboptions:
+      enable:
+        description:
+          - Enable or disable HDD image mapping.
+        type: bool
+        default: false
+      mount_type:
+        description:
+          - Type (protocol) of network share used by the remote_hostname.
+          - Ensure that the remote_hostname's communication port for the mount type that you choose is accessible from the managed endpoint.
+          - For CIFS as your mount type, ensure port 445 (which is its communication port) on the remote_hostname is accessible.
+          - For HTTP, ensure port 80 is accessible.
+          - For HTTPS, ensure port 443 is accessible.
+          - For NFS, ensure port 2049 is accessible.
+        choices: [nfs,cifs,http,https]
+        required: true
+      volume:
+        description:
+          - A user defined name of the image mounted for mapping.
+        required: true
+      remote_hostname:
+        description:
+          - Hostname or IP address of the server hosting the virtual media image.
+        required: true
+      remote_path:
+        description:
+          - Filepath (not including the filename) of the remote image.
+          - Ex. mnt/SHARE/ISOS
+        required: true
+      remote_file:
+        description:
+          - Filename of the remote image.
+          - Ex. custom_image.iso
+        required: true
+      username:
+        description:
+          - The username for the specified Mount Type, if required.
+      password:
+        description:
+          - The password for the selected username, if required.
+      mount_options:
+        description:
+          - Mount options for the Virtual Media mapping.
+          - For NFS, supported options are ro, rw, nolock, noexec, soft, port=VALUE, timeo=VALUE, retry=VALUE
+          - For CIFS, supported options are soft, nounix, noserverino, guest
+        required: false
+      authentication_protocol:
+        description:
+          - Authentication Protocol for CIFS Mount Type
+        required: false
 author:
   - David Soper (@dsoper2)
+  - Sid Nath (@SidNath21)
 version_added: '2.10'
 '''
 
@@ -112,6 +176,12 @@ EXAMPLES = r'''
     cdd_virtual_media:
       mount_type: nfs
       volume: nfs-cdd
+      remote_hostname: 172.28.224.77
+      remote_path: mnt/SHARE/ISOS/CENTOS
+      remote_file: CentOS7.iso
+    hdd_virtual_media:
+      mount_type: nfs
+      volume: nfs-hdd
       remote_hostname: 172.28.224.77
       remote_path: mnt/SHARE/ISOS/CENTOS
       remote_file: CentOS7.iso
@@ -159,7 +229,7 @@ def main():
         mount_options=dict(type='str', default=''),
         username=dict(type='str', default=''),
         password=dict(type='str', default='', no_log=True),
-        authentication_protocol=dict(type='str', default=''),
+        authentication_protocol=dict(type='str', default='none'),
     )
     argument_spec = intersight_argument_spec
     argument_spec.update(
@@ -169,7 +239,8 @@ def main():
         description=dict(type='str', aliases=['descr'], default=''),
         tags=dict(type='list', default=[]),
         enable=dict(type='bool', default=True),
-        cdd_virtual_media=dict(type='dict', options=virtual_media_mapping, default={}),
+        cdd_virtual_media=dict(type='dict', options=virtual_media_mapping),
+        hdd_virtual_media=dict(type='dict', options=virtual_media_mapping),
     )
 
     module = AnsibleModule(
@@ -189,7 +260,26 @@ def main():
         'Tags': intersight.module.params['tags'],
         'Description': intersight.module.params['description'],
         'Enabled': intersight.module.params['enable'],
+        'Mappings': [],
     }
+    if intersight.module.params.get('cdd_virtual_media'):
+        intersight.api_body['Mappings'].append(
+            {
+                "ClassId": "vmedia.Mapping",
+                "ObjectType": "vmedia.Mapping",
+                "AuthenticationProtocol": intersight.module.params['cdd_virtual_media']['authentication_protocol'],
+                "DeviceType": "cdd",
+                "HostName": intersight.module.params['cdd_virtual_media']['remote_hostname'],
+                "Password": intersight.module.params['cdd_virtual_media']['password'],
+                "MountOptions": intersight.module.params['cdd_virtual_media']['mount_options'],
+                "MountProtocol": intersight.module.params['cdd_virtual_media']['mount_type'],
+                "RemoteFile": intersight.module.params['cdd_virtual_media']['remote_file'],
+                "RemotePath": intersight.module.params['cdd_virtual_media']['remote_path'],
+                "Username": intersight.module.params['cdd_virtual_media']['username'],
+                "VolumeName": intersight.module.params['cdd_virtual_media']['volume'],
+            }
+        )
+    # if intersight.module.params.get('hdd_virtual_media'):
 
     organization_moid = None
     # GET Organization Moid
