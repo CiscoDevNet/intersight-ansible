@@ -59,7 +59,7 @@ options:
     description:
       - If enabled, the virtual drives appear on the boot selection menu after mapping the image and rebooting the host.
     type: bool
-    default: true  
+    default: true
   cdd_virtual_media:
     description:
       - CDD Virtual Media image mapping options.
@@ -147,8 +147,8 @@ options:
         description:
           - The password for the selected username, if required.
       mount_options:
-        description: 
-          - Mount options for the Virtual Media mapping. 
+        description:
+          - Mount options for the Virtual Media mapping.
           - For NFS, supported options are ro, rw, nolock, noexec, soft, port=VALUE, timeo=VALUE, retry=VALUE
           - For CIFS, supported options are soft, nounix, noserverino, guest
         required: false
@@ -156,7 +156,6 @@ options:
         description:
           - Authentication Protocol for CIFS Mount Type
         required: false
-  
 author:
   - David Soper (@dsoper2)
   - Sid Nath (@SidNath21)
@@ -230,7 +229,7 @@ def main():
         mount_options=dict(type='str', default=''),
         username=dict(type='str', default=''),
         password=dict(type='str', default='', no_log=True),
-        authentication_protocol=dict(type='str', default=''),
+        authentication_protocol=dict(type='str', default='none'),
     )
     argument_spec = intersight_argument_spec
     argument_spec.update(
@@ -240,8 +239,8 @@ def main():
         description=dict(type='str', aliases=['descr'], default=''),
         tags=dict(type='list', default=[]),
         enable=dict(type='bool', default=True),
-        cdd_virtual_media=dict(type='dict', options=virtual_media_mapping, default={}),
-        hdd_virtual_media=dict(type='dict', options=virtual_media_mapping, default={}),
+        cdd_virtual_media=dict(type='dict', options=virtual_media_mapping),
+        hdd_virtual_media=dict(type='dict', options=virtual_media_mapping),
     )
 
     module = AnsibleModule(
@@ -261,7 +260,26 @@ def main():
         'Tags': intersight.module.params['tags'],
         'Description': intersight.module.params['description'],
         'Enabled': intersight.module.params['enable'],
+        'Mappings': [],
     }
+    if intersight.module.params.get('cdd_virtual_media'):
+        intersight.api_body['Mappings'].append(
+            {
+                "ClassId": "vmedia.Mapping",
+                "ObjectType": "vmedia.Mapping",
+                "AuthenticationProtocol": intersight.module.params['cdd_virtual_media']['authentication_protocol'],
+                "DeviceType": "cdd",
+                "HostName": intersight.module.params['cdd_virtual_media']['remote_hostname'],
+                "Password": intersight.module.params['cdd_virtual_media']['password'],
+                "MountOptions": intersight.module.params['cdd_virtual_media']['mount_options'],
+                "MountProtocol": intersight.module.params['cdd_virtual_media']['mount_type'],
+                "RemoteFile": intersight.module.params['cdd_virtual_media']['remote_file'],
+                "RemotePath": intersight.module.params['cdd_virtual_media']['remote_path'],
+                "Username": intersight.module.params['cdd_virtual_media']['username'],
+                "VolumeName": intersight.module.params['cdd_virtual_media']['volume'],
+            }
+        )
+    # if intersight.module.params.get('hdd_virtual_media'):
 
     organization_moid = None
     # GET Organization Moid
