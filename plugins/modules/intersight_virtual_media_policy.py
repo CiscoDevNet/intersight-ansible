@@ -50,12 +50,12 @@ options:
       - Enable or disable virtual media.
     type: bool
     default: true
-  enable:
+  encryption:
     description:
       - If enabled, allows encryption of all Virtual Media communications
     type: bool
     default: false
-  enable:
+  low_power_usb:
     description:
       - If enabled, the virtual drives appear on the boot selection menu after mapping the image and rebooting the host.
     type: bool
@@ -219,6 +219,7 @@ from ansible_collections.cisco.intersight.plugins.module_utils.intersight import
 
 
 def main():
+    path = '/vmedia/Policies'
     virtual_media_mapping = dict(
         enable=dict(type='bool', default=True),
         mount_type=dict(type='str', choices=['nfs', 'cifs', 'http', 'https'], required=True),
@@ -239,6 +240,8 @@ def main():
         description=dict(type='str', aliases=['descr'], default=''),
         tags=dict(type='list', default=[]),
         enable=dict(type='bool', default=True),
+        encryption=dict(type='bool', default=False),
+        low_power_usb=dict(type='bool', default=True),
         cdd_virtual_media=dict(type='dict', options=virtual_media_mapping),
         hdd_virtual_media=dict(type='dict', options=virtual_media_mapping),
     )
@@ -260,8 +263,11 @@ def main():
         'Tags': intersight.module.params['tags'],
         'Description': intersight.module.params['description'],
         'Enabled': intersight.module.params['enable'],
+        "Encryption": intersight.module.params['encryption'],
+        "LowPowerUsb": intersight.module.params['low_power_usb'],
         'Mappings': [],
     }
+    
     if intersight.module.params.get('cdd_virtual_media'):
         intersight.api_body['Mappings'].append(
             {
@@ -271,6 +277,7 @@ def main():
                 "DeviceType": "cdd",
                 "HostName": intersight.module.params['cdd_virtual_media']['remote_hostname'],
                 "Password": intersight.module.params['cdd_virtual_media']['password'],
+                "IsPasswordSet": intersight.module.params['cdd_virtual_media']['password'] != '',
                 "MountOptions": intersight.module.params['cdd_virtual_media']['mount_options'],
                 "MountProtocol": intersight.module.params['cdd_virtual_media']['mount_type'],
                 "RemoteFile": intersight.module.params['cdd_virtual_media']['remote_file'],
@@ -279,7 +286,24 @@ def main():
                 "VolumeName": intersight.module.params['cdd_virtual_media']['volume'],
             }
         )
-    # if intersight.module.params.get('hdd_virtual_media'):
+    if intersight.module.params.get('hdd_virtual_media'):
+        intersight.api_body['Mappings'].append(
+            {
+                "ClassId": "vmedia.Mapping",
+                "ObjectType": "vmedia.Mapping",
+                "AuthenticationProtocol": intersight.module.params['hdd_virtual_media']['authentication_protocol'],
+                "DeviceType": "hdd",
+                "HostName": intersight.module.params['hdd_virtual_media']['remote_hostname'],
+                "Password": intersight.module.params['hdd_virtual_media']['password'],
+                "IsPasswordSet": intersight.module.params['hdd_virtual_media']['password'] != '',
+                "MountOptions": intersight.module.params['hdd_virtual_media']['mount_options'],
+                "MountProtocol": intersight.module.params['hdd_virtual_media']['mount_type'],
+                "RemoteFile": intersight.module.params['hdd_virtual_media']['remote_file'],
+                "RemotePath": intersight.module.params['hdd_virtual_media']['remote_path'],
+                "Username": intersight.module.params['hdd_virtual_media']['username'],
+                "VolumeName": intersight.module.params['hdd_virtual_media']['volume'],
+            }
+        )
 
     organization_moid = None
     # GET Organization Moid
@@ -299,7 +323,7 @@ def main():
     filter_str = "Name eq '" + intersight.module.params['name'] + "'"
     filter_str += "and Organization.Moid eq '" + organization_moid + "'"
     intersight.get_resource(
-        resource_path='/vmedia/Policies',
+        resource_path=path,
         query_params={
             '$filter': filter_str,
             '$expand': 'Organization',
@@ -316,7 +340,7 @@ def main():
         else:  # state == 'absent'
             intersight.delete_resource(
                 moid=moid,
-                resource_path='/vmedia/Policies',
+                resource_path=path,
             )
             moid = None
 
@@ -330,7 +354,7 @@ def main():
             }
         intersight.configure_resource(
             moid=moid,
-            resource_path='/vmedia/Policies',
+            resource_path=path,
             body=intersight.api_body,
             query_params={
                 '$filter': filter_str,
