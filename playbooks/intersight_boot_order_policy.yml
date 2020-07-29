@@ -1,7 +1,7 @@
 ---
 # Example Playbook: cisco.intersight.intersight_boot_order_policy
-# Runs on localhost since policies are only configured once 
-#Author: Tse Kai "Kevin" Chan (@BrightScale)
+# Runs on localhost since policies are only configured once
+# Author: Tse Kai "Kevin" Chan (@BrightScale)
 - hosts: localhost
   connection: local
   collections:
@@ -23,6 +23,10 @@
         tags:
           - Key: Site
             Value: RCDN
-        boot_servers:
-          - boot.esl.cisco.com
-        timezone: America/Chicago
+        configured_boot_mode: Legacy
+        boot_devices:
+          - device_type: local_disk
+            device_name: Boot-Lun
+            controller_slot: MRAID
+          - device_type: virtual_media
+            device_name: vmedia
