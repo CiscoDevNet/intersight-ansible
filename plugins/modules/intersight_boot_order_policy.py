@@ -70,7 +70,7 @@ options:
       device_type:
         description:
           - Device type used with this boot option.
-        choices: [local_disk, virtual_media]
+        choices: [iscsi, local_cdd, local_disk, nvme, pch_storage, pxe, san, sd_card, uefi_shell, usb, virtual_media]
         required: true
       device_name:
         description:
@@ -80,6 +80,16 @@ options:
           - It can have underscores and hyphens.
           - It cannot be more than 30 characters.
         required: true
+      network_slot:
+      	description:
+      	  - The slot id of the controller for the iscsi and pxe device.
+      	  - Option is used when device_type is iscsi and pxe.
+      	choices: [1 - 255, MLOM, L, L1, L2, OCP]
+      port:
+      	description:
+      	  - The port id of the controller for the iscsi and pxe device.
+      	  - Option is used when device_type is iscsi and pxe.
+      	  - The port id need to be an integer from 0 to 255.
       controller_slot:
         description:
           - The slot id of the controller for the local disk device.
@@ -97,6 +107,43 @@ options:
         description:
           - Details of the bootloader to be used during boot from local disk.
           - Option is used when device_type is local_disk and configured_boot_mode is Uefi.
+      ip_type:
+      	description:
+      	  - The IP Address family type to use during the PXE Boot process.
+      	  - Option is used when device_type is pxe.
+      	chocies:[None, IPv4, IPv6]
+      	default: None
+      interface_source:
+      	description:
+      	  - Lists the supported Interface Source for PXE device.
+      	  - Option is used when device_type is pxe.
+      	choices: [name, mac, port]
+      	default: name
+      intefrace_name:
+      	description:
+      	  - The name of the underlying virtual ethernet interface used by the PXE boot device.
+      	  - Option is used when device_type is pxe and interface_source is name.
+      mac_address:
+      	description:
+      	  - The MAC Address of the underlying virtual ethernet interface used by the PXE boot device.
+      	  - Option is used when device_type is pxe and interface_source is mac.
+      sd_card_subtype:
+      	description:
+      	  - The subtype for the selected device type.
+      	  - Option is used when device_type is sd_card.
+      	choices: [None, flex-util, flex-flash, SDCARD]
+      	default: None
+      lun:
+      	description:
+      	  - The Logical Unit Number (LUN) of the device.
+      	  - Option is used when device_type is pch, san and sd_card.
+      	  - The LUN need to be an integer from 0 to 255.
+      usb_subtype:
+      	description:
+      	  - The subtype for the selected device type.
+      	  - Option is used when device_type is usb.
+      	choices: [None, usb-cd, usb-fdd, usb-hdd]
+      	default: None
       virtual_media_subtype:
         description:
           - The subtype for the selected device type.
@@ -183,9 +230,55 @@ def main():
         port=dict(type='int', default=0),
         # local disk options
         controller_slot=dict(type='str', default=''),
+        # bootloader options
         bootloader_name=dict(type='str', default=''),
         bootloader_description=dict(type='str', default=''),
         bootloader_path=dict(type='str', default=''),
+        #pxe only options
+        ip_type=dict(
+        	type='str',
+        	choices=[
+        		'None',
+                'IPv4',
+                'IPv6'
+        	],
+        	default='None'
+        ),
+        interface_source=dict(
+        	type='str',
+        	choices=[
+        		'name',
+        		'mac',
+        		'port'
+        	],
+        	default='name'
+        ),
+        interface_name=dict(type='str',default=''),
+        mac_address=dict(type='str',defualt=''),
+        #sd card options
+        sd_card_subtype=dict(
+        	type='str',
+        	choices=[
+        		'None',
+        		'flex-util',
+        		'flex-flash',
+        		'SDCARD'
+        	],
+        	default='None',
+        ),
+        #lun for pch, san, sd_card
+        lun=dict(type='int', default=0),
+        #usb options
+        usb_subtype=dict(
+        	type='str',
+        	choices=[
+				'None', 
+				'usb-cd', 
+				'usb-fdd', 
+				'usb-hdd'
+        	],
+        	default='None',
+        ),
         # virtual media options
         virtual_media_subtype=dict(
             type='str',
@@ -376,7 +469,7 @@ def main():
                         "ObjectType": "boot.Usb",
                         "Enabled": device['enabled'],
                         "Name": device['device_name'],
-                        "SubType": device['subtype'],
+                        "SubType": device['usb_subtype'],
                     }
                 )
             elif device['device_type'] == 'virtual_media':
