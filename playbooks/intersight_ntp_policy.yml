@@ -16,7 +16,7 @@
     - name: Configure NTP Policy
       intersight_ntp_policy:
         <<: *api_info
-        organization: DevNet
+        organization: "{{ organization | default(omit) }}"
         name: lab-ntp
         description: NTP policy for lab use
         tags:

@@ -70,7 +70,8 @@ options:
       device_type:
         description:
           - Device type used with this boot option.
-        choices: [iscsi, local_cdd, local_disk, nvme, pch_storage, pxe, san, sd_card, uefi_shell, usb, virtual_media]
+          - Choices are based on each device title in the API schema.
+        choices: [iSCSI, Local CDD, Local Disk, NVMe, PCH Storage, PXE, SAN, SD Card, UEFI Shell, USB, Virtual Media]
         required: true
       device_name:
         description:
@@ -81,15 +82,15 @@ options:
           - It cannot be more than 30 characters.
         required: true
       network_slot:
-      	description:
-      	  - The slot id of the controller for the iscsi and pxe device.
-      	  - Option is used when device_type is iscsi and pxe.
-      	choices: [1 - 255, MLOM, L, L1, L2, OCP]
+        description:
+          - The slot id of the controller for the iscsi and pxe device.
+          - Option is used when device_type is iscsi and pxe.
+        choices: [1 - 255, MLOM, L, L1, L2, OCP]
       port:
-      	description:
-      	  - The port id of the controller for the iscsi and pxe device.
-      	  - Option is used when device_type is iscsi and pxe.
-      	  - The port id need to be an integer from 0 to 255.
+        description:
+          - The port id of the controller for the iscsi and pxe device.
+          - Option is used when device_type is iscsi and pxe.
+          - The port id need to be an integer from 0 to 255.
       controller_slot:
         description:
           - The slot id of the controller for the local disk device.
@@ -108,42 +109,42 @@ options:
           - Details of the bootloader to be used during boot from local disk.
           - Option is used when device_type is local_disk and configured_boot_mode is Uefi.
       ip_type:
-      	description:
-      	  - The IP Address family type to use during the PXE Boot process.
-      	  - Option is used when device_type is pxe.
-      	chocies:[None, IPv4, IPv6]
-      	default: None
+        description:
+          - The IP Address family type to use during the PXE Boot process.
+          - Option is used when device_type is pxe.
+        chocies: [None, IPv4, IPv6]
+        default: None
       interface_source:
-      	description:
-      	  - Lists the supported Interface Source for PXE device.
-      	  - Option is used when device_type is pxe.
-      	choices: [name, mac, port]
-      	default: name
+        description:
+          - Lists the supported Interface Source for PXE device.
+          - Option is used when device_type is pxe.
+        choices: [name, mac, port]
+        default: name
       intefrace_name:
-      	description:
-      	  - The name of the underlying virtual ethernet interface used by the PXE boot device.
-      	  - Option is used when device_type is pxe and interface_source is name.
+        description:
+          - The name of the underlying virtual ethernet interface used by the PXE boot device.
+          - Option is used when device_type is pxe and interface_source is name.
       mac_address:
-      	description:
-      	  - The MAC Address of the underlying virtual ethernet interface used by the PXE boot device.
-      	  - Option is used when device_type is pxe and interface_source is mac.
+        description:
+          - The MAC Address of the underlying virtual ethernet interface used by the PXE boot device.
+          - Option is used when device_type is pxe and interface_source is mac.
       sd_card_subtype:
-      	description:
-      	  - The subtype for the selected device type.
-      	  - Option is used when device_type is sd_card.
-      	choices: [None, flex-util, flex-flash, SDCARD]
-      	default: None
+        description:
+          - The subtype for the selected device type.
+          - Option is used when device_type is sd_card.
+        choices: [None, flex-util, flex-flash, SDCARD]
+        default: None
       lun:
-      	description:
-      	  - The Logical Unit Number (LUN) of the device.
-      	  - Option is used when device_type is pch, san and sd_card.
-      	  - The LUN need to be an integer from 0 to 255.
+        description:
+          - The Logical Unit Number (LUN) of the device.
+          - Option is used when device_type is pch, san and sd_card.
+          - The LUN need to be an integer from 0 to 255.
       usb_subtype:
-      	description:
-      	  - The subtype for the selected device type.
-      	  - Option is used when device_type is usb.
-      	choices: [None, usb-cd, usb-fdd, usb-hdd]
-      	default: None
+        description:
+          - The subtype for the selected device type.
+          - Option is used when device_type is usb.
+        choices: [None, usb-cd, usb-fdd, usb-hdd]
+        default: None
       virtual_media_subtype:
         description:
           - The subtype for the selected device type.
@@ -168,7 +169,7 @@ EXAMPLES = r'''
         Value: RCDN
     configured_boot_mode: legacy
     boot_devices:
-      - device_type: local_disk
+      - device_type: Local Disk
         device_name: Boot-Lun
         controller_slot: MRAID
 
@@ -201,7 +202,7 @@ api_repsonse:
 
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible_collections.cisco.intersight.plugins.module_utils.intersight import IntersightModule, intersight_argument_spec, compare_values
+from ansible_collections.cisco.intersight.plugins.module_utils.intersight import IntersightModule, intersight_argument_spec
 
 
 def main():
@@ -210,17 +211,17 @@ def main():
         device_type=dict(
             type='str',
             choices=[
-                'iscsi',
-                'local_cdd',
-                'local_disk',
-                'nvme',
-                'pch_storage',
-                'pxe',
-                'san',
-                'sd_card',
-                'uefi_shell',
-                'usb',
-                'virtual_media'
+                'iSCSI',
+                'Local CDD',
+                'Local Disk',
+                'NVMe',
+                'PCH Storage',
+                'PXE',
+                'SAN',
+                'SD Card',
+                'UEFI Shell',
+                'USB',
+                'Virtual Media',
             ],
             required=True,
         ),
@@ -234,50 +235,50 @@ def main():
         bootloader_name=dict(type='str', default=''),
         bootloader_description=dict(type='str', default=''),
         bootloader_path=dict(type='str', default=''),
-        #pxe only options
+        # pxe only options
         ip_type=dict(
-        	type='str',
-        	choices=[
-        		'None',
+            type='str',
+            choices=[
+                'None',
                 'IPv4',
                 'IPv6'
-        	],
-        	default='None'
+            ],
+            default='None'
         ),
         interface_source=dict(
-        	type='str',
-        	choices=[
-        		'name',
-        		'mac',
-        		'port'
-        	],
-        	default='name'
+            type='str',
+            choices=[
+                'name',
+                'mac',
+                'port'
+            ],
+            default='name'
         ),
-        interface_name=dict(type='str',default=''),
-        mac_address=dict(type='str',defualt=''),
-        #sd card options
+        interface_name=dict(type='str', default=''),
+        mac_address=dict(type='str', defualt=''),
+        # sd card options
         sd_card_subtype=dict(
-        	type='str',
-        	choices=[
-        		'None',
-        		'flex-util',
-        		'flex-flash',
-        		'SDCARD'
-        	],
-        	default='None',
+            type='str',
+            choices=[
+                'None',
+                'flex-util',
+                'flex-flash',
+                'SDCARD'
+            ],
+            default='None',
         ),
-        #lun for pch, san, sd_card
+        # lun for pch, san, sd_card
         lun=dict(type='int', default=0),
-        #usb options
+        # usb options
         usb_subtype=dict(
-        	type='str',
-        	choices=[
-				'None', 
-				'usb-cd', 
-				'usb-fdd', 
-				'usb-hdd'
-        	],
-        	default='None',
+            type='str',
+            choices=[
+                'None',
+                'usb-cd',
+                'usb-fdd',
+                'usb-hdd'
+            ],
+            default='None',
         ),
         # virtual media options
         virtual_media_subtype=dict(
@@ -318,7 +319,7 @@ def main():
     #
     # Resource path used to configure policy
     resource_path = '/boot/PrecisionPolicies'
-    # Defined API body used in compares or create
+    # Define API body used in compares or create
     intersight.api_body = {
         'Organization': {
             'Name': intersight.module.params['organization'],
@@ -332,7 +333,7 @@ def main():
     }
     if intersight.module.params.get('boot_devices'):
         for device in intersight.module.params['boot_devices']:
-            if device['device_type'] == 'iscsi':
+            if device['device_type'] == 'iSCSI':
                 intersight.api_body['BootDevices'].append(
                     {
                         "ClassId": "boot.Iscsi",
@@ -343,7 +344,7 @@ def main():
                         "Port": device['port'],
                     }
                 )
-            elif device['device_type'] == 'local_cdd':
+            elif device['device_type'] == 'Local CDD':
                 intersight.api_body['BootDevices'].append(
                     {
                         "ClassId": "boot.LocalCDD",
@@ -352,7 +353,7 @@ def main():
                         "Name": device['device_name'],
                     }
                 )
-            elif device['device_type'] == 'local_disk':
+            elif device['device_type'] == 'Local Disk':
                 intersight.api_body['BootDevices'].append(
                     {
                         "ClassId": "boot.LocalDisk",
@@ -369,7 +370,7 @@ def main():
                         },
                     }
                 )
-            elif device['device_type'] == 'nvme':
+            elif device['device_type'] == 'NVMe':
                 intersight.api_body['BootDevices'].append(
                     {
                         "ClassId": "boot.NVMe",
@@ -385,7 +386,7 @@ def main():
                         },
                     }
                 )
-            elif device['device_type'] == 'pch_storage':
+            elif device['device_type'] == 'PCH Storage':
                 intersight.api_body['BootDevices'].append(
                     {
                         "ClassId": "boot.PchStorage",
@@ -402,7 +403,7 @@ def main():
                         "Lun": device['lun'],
                     }
                 )
-            elif device['device_type'] == 'pxe':
+            elif device['device_type'] == 'PXE':
                 intersight.api_body['BootDevices'].append(
                     {
                         "ClassId": "boot.Pxe",
@@ -417,7 +418,7 @@ def main():
                         "MacAddress": device['mac_address'],
                     }
                 )
-            elif device['device_type'] == 'san':
+            elif device['device_type'] == 'SAN':
                 intersight.api_body['BootDevices'].append(
                     {
                         "ClassId": "boot.San",
@@ -435,7 +436,7 @@ def main():
                         },
                     }
                 )
-            elif device['device_type'] == 'sd_card':
+            elif device['device_type'] == 'SD Card':
                 intersight.api_body['BootDevices'].append(
                     {
                         "ClassId": "boot.SdCard",
@@ -453,7 +454,7 @@ def main():
                         },
                     }
                 )
-            elif device['device_type'] == 'uefi_shell':
+            elif device['device_type'] == 'UEFI Shell':
                 intersight.api_body['BootDevices'].append(
                     {
                         "ClassId": "boot.UefiShell",
@@ -462,7 +463,7 @@ def main():
                         "Name": device['device_name'],
                     }
                 )
-            elif device['device_type'] == 'usb':
+            elif device['device_type'] == 'USB':
                 intersight.api_body['BootDevices'].append(
                     {
                         "ClassId": "boot.Usb",
@@ -472,7 +473,7 @@ def main():
                         "SubType": device['usb_subtype'],
                     }
                 )
-            elif device['device_type'] == 'virtual_media':
+            elif device['device_type'] == 'Virtual Media':
                 intersight.api_body['BootDevices'].append(
                     {
                         "ClassId": "boot.VirtualMedia",
@@ -485,62 +486,7 @@ def main():
     #
     # Code below should be common across all policy modules
     #
-    # intersight.configure_policy(...)
-    organization_moid = None
-    # GET Organization Moid
-    intersight.get_resource(
-        resource_path='/organization/Organizations',
-        query_params={
-            '$filter': "Name eq '" + intersight.module.params['organization'] + "'",
-            '$select': 'Moid',
-        },
-    )
-    if intersight.result['api_response'].get('Moid'):
-        # resource exists and moid was returned
-        organization_moid = intersight.result['api_response']['Moid']
-
-    intersight.result['api_response'] = {}
-    # get the current state of the resource
-    filter_str = "Name eq '" + intersight.module.params['name'] + "'"
-    filter_str += "and Organization.Moid eq '" + organization_moid + "'"
-    intersight.get_resource(
-        resource_path=resource_path,
-        query_params={
-            '$filter': filter_str,
-            '$expand': 'Organization',
-        },
-    )
-
-    moid = None
-    resource_values_match = False
-    if intersight.result['api_response'].get('Moid'):
-        # resource exists and moid was returned
-        moid = intersight.result['api_response']['Moid']
-        if module.params['state'] == 'present':
-            resource_values_match = compare_values(intersight.api_body, intersight.result['api_response'])
-        else:  # state == 'absent'
-            intersight.delete_resource(
-                moid=moid,
-                resource_path=resource_path,
-            )
-            moid = None
-
-    if module.params['state'] == 'present' and not resource_values_match:
-        # remove read-only Organization key
-        intersight.api_body.pop('Organization')
-        if not moid:
-            # Organization must be set, but can't be changed after initial POST
-            intersight.api_body['Organization'] = {
-                'Moid': organization_moid,
-            }
-        intersight.configure_resource(
-            moid=moid,
-            resource_path=resource_path,
-            body=intersight.api_body,
-            query_params={
-                '$filter': filter_str,
-            },
-        )
+    intersight.configure_policy_or_profile(resource_path=resource_path)
 
     module.exit_json(**intersight.result)
 

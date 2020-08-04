@@ -17,7 +17,7 @@
     - name: Configure Boot Order Policy
       intersight_boot_order_policy:
         <<: *api_info
-        organization: DevNet
+        organization: "{{ organization | default(omit) }}"
         name: COS-Boot
         description: Boot Order policy for lab use
         tags:
@@ -25,8 +25,8 @@
             Value: RCDN
         configured_boot_mode: Legacy
         boot_devices:
-          - device_type: local_disk
+          - device_type: Local Disk
             device_name: Boot-Lun
             controller_slot: MRAID
-          - device_type: virtual_media
+          - device_type: Virtual Media
             device_name: vmedia
