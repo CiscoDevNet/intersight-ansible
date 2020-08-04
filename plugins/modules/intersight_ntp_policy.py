@@ -40,7 +40,7 @@ options:
     description:
       - List of tags in Key:<user-defined key> Value:<user-defined value> format.
     type: list
-  descrption:
+  description:
     description:
       - The user-defined description of the NTP policy.
       - Description can contain letters(a-z, A-Z), numbers(0-9), hyphen(-), period(.), colon(:), or an underscore(_).
@@ -106,7 +106,7 @@ api_repsonse:
 
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible_collections.cisco.intersight.plugins.module_utils.intersight import IntersightModule, intersight_argument_spec, compare_values
+from ansible_collections.cisco.intersight.plugins.module_utils.intersight import IntersightModule, intersight_argument_spec
 
 
 def main():
@@ -130,7 +130,12 @@ def main():
     intersight = IntersightModule(module)
     intersight.result['api_response'] = {}
     intersight.result['trace_id'] = ''
-    # Defined API body used in compares or create
+    #
+    # Argument spec above, resource path, and API body should be the only code changed in each policy module
+    #
+    # Resource path used to configure policy
+    resource_path = '/ntp/Policies'
+    # Define API body used in compares or create
     intersight.api_body = {
         'Organization': {
             'Name': intersight.module.params['organization'],
@@ -143,61 +148,10 @@ def main():
         'Timezone': intersight.module.params['timezone'],
     }
 
-    organization_moid = None
-    # GET Organization Moid
-    intersight.get_resource(
-        resource_path='/organization/Organizations',
-        query_params={
-            '$filter': "Name eq '" + intersight.module.params['organization'] + "'",
-            '$select': 'Moid',
-        },
-    )
-    if intersight.result['api_response'].get('Moid'):
-        # resource exists and moid was returned
-        organization_moid = intersight.result['api_response']['Moid']
-
-    intersight.result['api_response'] = {}
-    # get the current state of the resource
-    filter_str = "Name eq '" + intersight.module.params['name'] + "'"
-    filter_str += "and Organization.Moid eq '" + organization_moid + "'"
-    intersight.get_resource(
-        resource_path='/ntp/Policies',
-        query_params={
-            '$filter': filter_str,
-            '$expand': 'Organization',
-        },
-    )
-
-    moid = None
-    resource_values_match = False
-    if intersight.result['api_response'].get('Moid'):
-        # resource exists and moid was returned
-        moid = intersight.result['api_response']['Moid']
-        if module.params['state'] == 'present':
-            resource_values_match = compare_values(intersight.api_body, intersight.result['api_response'])
-        else:  # state == 'absent'
-            intersight.delete_resource(
-                moid=moid,
-                resource_path='/ntp/Policies',
-            )
-            moid = None
-
-    if module.params['state'] == 'present' and not resource_values_match:
-        # remove read-only Organization key
-        intersight.api_body.pop('Organization')
-        if not moid:
-            # Organization must be set, but can't be changed after initial POST
-            intersight.api_body['Organization'] = {
-                'Moid': organization_moid,
-            }
-        intersight.configure_resource(
-            moid=moid,
-            resource_path='/ntp/Policies',
-            body=intersight.api_body,
-            query_params={
-                '$filter': filter_str,
-            },
-        )
+    #
+    # Code below should be common across all policy modules
+    #
+    intersight.configure_policy_or_profile(resource_path=resource_path)
 
     module.exit_json(**intersight.result)
 

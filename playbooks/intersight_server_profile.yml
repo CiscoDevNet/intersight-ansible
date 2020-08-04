@@ -29,23 +29,19 @@
     - name: "Configure {{ profile_name }} Server Profile"
       intersight_server_profile:
         <<: *api_info
-        organization: DevNet
+        organization: "{{ organization | default(omit) }}"
         name: "{{ profile_name }}"
+        target_platform: "{{ mode | default(omit) }}"
         tags:
           - Key: Site
             Value: SJC02
         description: "Updated Profile for server name {{ inventory_hostname }}"
         assigned_server: "{{ server_moid }}"
-        # bios_policy:
-        boot_order_policy: COS-Boot
-        # device_connector_policy:
-        # serial_over_lan_policy:
-        # ipmi_over_lan_policy:
-        local_user_policy: guest-admin
-        ntp_policy: lab-ntp
-        virtual_media_policy: COS-VM
-        # sd_card_policy:
-        # lan_connectivity_policy:
-        # san_connectivity_policy:
+        boot_order_policy: "{{ boot_order_policy | default(omit) }}"
+        imc_access_policy: "{{ imc_access_policy | default(omit) }}"
+        lan_connectivity_policy: "{{ lan_connectivity_policy | default(omit) }}"
+        local_user_policy: "{{ local_user_policy | default(omit) }}"
+        ntp_policy: "{{ ntp_policy | default(omit) }}"
+        virtual_media_policy: "{{ virtual_media_policy | default(omit) }}"
       when: server_moid is defined
       delegate_to: localhost

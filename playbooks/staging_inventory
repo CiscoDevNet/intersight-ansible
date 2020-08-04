@@ -1,0 +1,23 @@
+[Intersight_HX]
+# Note: at least one host (e.g., sjc07-r13-501) must be present for update_*_inventory.yml to work
+sjc07-r13-501
+sjc07-r13-503
+
+[Intersight_Servers]
+IMM-6454-D23-1-1 serial=FCH2141JB6R server_moid=5f1f2afe6176752d3062d07c model=UCSB-B200-M5 mode=FIAttached
+IMM-6454-D23-1-2 serial=FCH2141JB8E server_moid=5f21ca5c6176752d30e82c5c model=UCSB-B200-M5 mode=FIAttached
+
+[Intersight:children]
+Intersight_HX
+Intersight_Servers
+
+[all:vars]
+api_private_key=~/Downloads/StagingIMMSecretKey.txt
+api_key_id=59c54c4178579100011d558a/5f11f61e7564612d335292d9/5f11f6cd7564612d3352a9e0
+api_uri=https://staging.starshipcloud.com/api/v1
+boot_order_policy=local-disk_vmedia
+imc_access_policy=sjc02-d23-access
+lan_connectivity_policy=sjc02-d23-lan
+local_user_policy=guest-admin
+ntp_policy=lab-ntp
+virtual_media_policy=nfs-cdd-centos7-1810

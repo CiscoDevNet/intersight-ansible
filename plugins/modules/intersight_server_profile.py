@@ -54,9 +54,15 @@ options:
     description:
       - Managed Obect ID (MOID) of assigned server.
       - Option can be omitted if user wishes to assign server later.
+  boot_order_policy:
+    description:
+      - Name of Boot Order Policy to associate with this profile.
   imc_access_policy:
     description:
       - Name of IMC Access Policy to associate with this profile.
+  lan_connectivity_policy:
+    description:
+      - Name of LAN Connectivity Policy to associate with this profile.
   local_user_policy:
     description:
       - Name of Local User Policy to associate with this profile.
@@ -69,9 +75,6 @@ options:
   virtual_media_policy:
     description:
       - Name of Virtual Media Policy to associate with this profile.
-  boot_order_policy:
-    description:
-      - Name of Boot Order Policy to associate with this profile.
 author:
   - David Soper (@dsoper2)
   - Sid Nath (@SidNath21)
@@ -94,6 +97,7 @@ EXAMPLES = r'''
     assigned_server: 5e3b517d6176752d319a9999
     boot_order_policy: COS-Boot
     imc_access_policy: sjc02-d23-access
+    lan_connectivity_policy: sjc02-d23-lan
     local_user_policy: guest-admin
     ntp_policy: lab-ntp
     storage_policy: storage
@@ -133,7 +137,7 @@ api_repsonse:
 
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible_collections.cisco.intersight.plugins.module_utils.intersight import IntersightModule, intersight_argument_spec, compare_values
+from ansible_collections.cisco.intersight.plugins.module_utils.intersight import IntersightModule, intersight_argument_spec
 
 
 def post_profile_to_policy(intersight, moid, resource_path, policy_name):
@@ -198,12 +202,13 @@ def main():
         tags=dict(type='list', default=[]),
         description=dict(type='str', aliases=['descr'], default=''),
         assigned_server=dict(type='str', default=''),
+        boot_order_policy=dict(type='str'),
         imc_access_policy=dict(type='str'),
+        lan_connectivity_policy=dict(type='str'),
         local_user_policy=dict(type='str'),
         ntp_policy=dict(type='str'),
         storage_policy=dict(type='str'),
         virtual_media_policy=dict(type='str'),
-        boot_order_policy=dict(type='str'),
     )
 
     module = AnsibleModule(
@@ -214,21 +219,11 @@ def main():
     intersight = IntersightModule(module)
     intersight.result['api_response'] = {}
     intersight.result['trace_id'] = ''
-
-    organization_moid = None
-    # GET Organization Moid
-    intersight.get_resource(
-        resource_path='/organization/Organizations',
-        query_params={
-            '$filter': "Name eq '" + intersight.module.params['organization'] + "'",
-            '$select': 'Moid',
-        },
-    )
-    if intersight.result['api_response'].get('Moid'):
-        # resource exists and moid was returned
-        organization_moid = intersight.result['api_response']['Moid']
-
-    # get assigned server information
+    #
+    # Argument spec above, resource path, and API body should be the only code changed in this module
+    #
+    resource_path = '/server/Profiles'
+    # Get assigned server information
     intersight.result['api_response'] = {}
     intersight.get_resource(
         resource_path='/compute/PhysicalSummaries',
@@ -239,20 +234,7 @@ def main():
     source_object_type = None
     if intersight.result['api_response'].get('SourceObjectType'):
         source_object_type = intersight.result['api_response']['SourceObjectType']
-
-    # get the current state of the resource
-    intersight.result['api_response'] = {}
-    filter_str = "Name eq '" + intersight.module.params['name'] + "'"
-    filter_str += "and Organization.Moid eq '" + organization_moid + "'"
-    intersight.get_resource(
-        resource_path='/server/Profiles',
-        query_params={
-            '$filter': filter_str,
-            '$expand': 'Organization',
-        }
-    )
-
-    # create api_body for comparison with actual state
+    # Define API body used in compares or create
     intersight.api_body = {
         'Organization': {
             'Name': intersight.module.params['organization'],
@@ -268,57 +250,30 @@ def main():
     if intersight.module.params['target_platform'] == 'FIAttached':
         intersight.api_body['TargetPlatform'] = intersight.module.params['target_platform']
 
-    moid = None
-    resource_values_match = False
-    if intersight.result['api_response'].get('Moid'):
-        # resource exists and moid was returned
-        moid = intersight.result['api_response']['Moid']
-        if module.params['state'] == 'present':
-            resource_values_match = compare_values(intersight.api_body, intersight.result['api_response'])
-        else:  # state == 'absent'
-            intersight.delete_resource(
-                moid=moid,
-                resource_path='/server/Profiles',
-            )
-            moid = None
+    # Configure the profile
+    moid = intersight.configure_policy_or_profile(resource_path=resource_path)
 
-    if module.params['state'] == 'present' and not resource_values_match:
-        # remove read-only Organization key
-        intersight.api_body.pop('Organization')
-        if not moid:
-            # Organization must be set, but can't be changed after initial POST
-            intersight.api_body['Organization'] = {
-                'Moid': organization_moid,
-            }
-        intersight.configure_resource(
-            moid=moid,
-            resource_path='/server/Profiles',
-            body=intersight.api_body,
-            query_params={
-                '$filter': filter_str
-            }
-        )
-        if intersight.result['api_response'].get('Moid'):
-            # resource exists and moid was returned
-            moid = intersight.result['api_response']['Moid']
+    if moid and intersight.module.params['boot_order_policy']:
+        post_profile_to_policy(intersight, moid, resource_path='/boot/PrecisionPolicies', policy_name=intersight.module.params['boot_order_policy'])
 
     if moid and intersight.module.params['imc_access_policy']:
         post_profile_to_policy(intersight, moid, resource_path='/access/Policies', policy_name=intersight.module.params['imc_access_policy'])
 
+    if moid and intersight.module.params['lan_connectivity_policy']:
+        post_profile_to_policy(intersight, moid, resource_path='/vnic/LanConnectivityPolicies', policy_name=intersight.module.params['lan_connectivity_policy'])
+
     if moid and intersight.module.params['local_user_policy']:
         post_profile_to_policy(intersight, moid, resource_path='/iam/EndPointUserPolicies', policy_name=intersight.module.params['local_user_policy'])
-
-    if moid and intersight.module.params['storage_policy']:
-        post_profile_to_policy(intersight, moid, resource_path='/storage/StoragePolicies', policy_name=intersight.module.params['storage_policy'])
 
     if moid and intersight.module.params['ntp_policy']:
         post_profile_to_policy(intersight, moid, resource_path='/ntp/Policies', policy_name=intersight.module.params['ntp_policy'])
 
+    if moid and intersight.module.params['storage_policy']:
+        post_profile_to_policy(intersight, moid, resource_path='/storage/StoragePolicies', policy_name=intersight.module.params['storage_policy'])
+
     if moid and intersight.module.params['virtual_media_policy']:
         post_profile_to_policy(intersight, moid, resource_path='/vmedia/Policies', policy_name=intersight.module.params['virtual_media_policy'])
 
-    if moid and intersight.module.params['boot_order_policy']:
-        post_profile_to_policy(intersight, moid, resource_path='/boot/PrecisionPolicies', policy_name=intersight.module.params['boot_order_policy'])
     module.exit_json(**intersight.result)
 
 

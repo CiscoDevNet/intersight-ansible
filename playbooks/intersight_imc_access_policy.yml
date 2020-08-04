@@ -1,5 +1,5 @@
 ---
-# Example Playbook: cisco.intersight.intersight_ntp_policy
+# Example Playbook: cisco.intersight.intersight_..._policy
 # Runs on localhost since policies are only configured once
 - hosts: localhost
   connection: local
@@ -13,15 +13,13 @@
       api_key_id: "{{ api_key_id }}"
       api_uri: "{{ api_uri | default(omit) }}"
   tasks:
-    - name: Configure NTP Policy
-      intersight_ntp_policy:
+    - name: Configure IMC Access policy
+      intersight_imc_access_policy:
         <<: *api_info
-        organization: "{{ organization | default(omit) }}"
-        name: lab-ntp
-        description: NTP policy for lab use
+        name: sjc02-d23-access
         tags:
           - Key: Site
-            Value: RCDN
-        ntp_servers:
-          - ntp.esl.cisco.com
-        timezone: America/Chicago
+            Value: SJC02
+        description: Updated IMC access for SJC02 rack D23
+        vlan_id: 131
+        ip_pool: sjc02-d23-ext-mgmt
