@@ -17,3 +17,7 @@ Intersight_Servers
 api_private_key=~/Downloads/DevNetSecretKey.txt
 api_key_id=596cc79e5d91b400010d15ad/5db71f977564612d30cc3860/5f0f42d47564612d3363b87b
 organization=DevNet
+boot_order_policy=COS-Boot
+local_user_policy=guest-admin
+ntp_policy=lab-ntp
+virtual_media_policy=COS-VM
