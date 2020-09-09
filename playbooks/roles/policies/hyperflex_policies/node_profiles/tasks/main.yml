@@ -9,7 +9,7 @@
       api_uri: "{{ api_uri | default(omit) }}"
       validate_certs: "{{ validate_certs | default(omit) }}"
       state: "{{ state | default(omit) }}"
-  intersight_facts:
+  cisco.intersight.intersight_info:
     <<: *api_info
     server_names:
       - "{{ item }}"
