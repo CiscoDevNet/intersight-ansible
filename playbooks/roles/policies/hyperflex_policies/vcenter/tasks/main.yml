@@ -1,5 +1,5 @@
 ---
-- name: "Configure {{ hx_vcenter_config_policy }} vCenter Config Policy"
+- name: "Configure vCenter Config Policy"
   vars:
     # Create an anchor for api_info that can be used throughout the file
     api_info: &api_info

@@ -1,5 +1,5 @@
 ---
-- name: "Configure {{ hx_software_policy }} Software Version Policy"
+- name: "Configure Software Version Policy"
   vars:
     # Create an anchor for api_info that can be used throughout the file
     api_info: &api_info

@@ -1,5 +1,5 @@
 ---
-- name: "Configure {{ hx_node_config_policy }} Node Configuration Policy"
+- name: "Configure Node Configuration Policy"
   vars:
     # Create an anchor for api_info that can be used throughout the file
     api_info: &api_info

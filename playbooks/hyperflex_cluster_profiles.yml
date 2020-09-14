@@ -139,25 +139,25 @@
         prompt: "Proceed with physical node assignment? (yes/no)"
         echo: yes
       register: assign_response
+      run_once: true
       tags: ['prompt_assign']
 
     # Assign servers to cluster profile and set deployment action
-    - include_role:
+    - import_role:
         name: policies/hyperflex_policies/node_profiles
       tags: ['assign']
       when: assign_response.user_input|bool
-      # delegate_to: localhost
-      run_once: true
 
     - name: "Prompt to deploy"
       pause:
         prompt: "Proceed with cluster deployment? (yes/no)"
         echo: yes
       register: deploy_response
+      run_once: true
       tags: ['prompt_deploy']
 
     # Set cluster profile deployment action
-    - include_role:
+    - import_role:
         name: policies/hyperflex_policies/deploy
       tags: ['deploy']
       when: deploy_response.user_input|bool
