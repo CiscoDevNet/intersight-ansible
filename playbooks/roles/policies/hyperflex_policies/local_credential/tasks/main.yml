@@ -1,5 +1,5 @@
 ---
-- name: "Configure {{ hx_local_credential_policy }} Local Credential Policy"
+- name: "Configure Local Credential Policy"
   vars:
     # Create an anchor for api_info that can be used throughout the file
     api_info: &api_info

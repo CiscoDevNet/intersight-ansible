@@ -1,5 +1,5 @@
 ---
-- name: "Configure {{ hx_cluster_network_policy }} Cluster Network Policy"
+- name: "Configure Cluster Network Policy"
   vars:
     # Create an anchor for api_info that can be used throughout the file
     api_info: &api_info

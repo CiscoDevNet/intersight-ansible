@@ -16,7 +16,7 @@
   loop: "{{ hx_servers }}"
   register: inventory
 # Get Cluster Profile Attributes
-- name: "Get {{ hx_cluster_name }} HyperFlex Cluster Profile"
+- name: "Get HyperFlex Cluster Profile"
   intersight_rest_api:
     <<: *api_info
     resource_path: /hyperflex/ClusterProfiles

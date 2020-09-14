@@ -1,5 +1,5 @@
 ---
-- name: "Configure {{ hx_cluster_storage_policy }} Cluster Storage Policy"
+- name: "Configure Cluster Storage Policy"
   vars:
     # Create an anchor for api_info that can be used throughout the file
     api_info: &api_info

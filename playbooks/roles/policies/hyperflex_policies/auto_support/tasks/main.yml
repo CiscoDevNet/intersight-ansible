@@ -1,5 +1,5 @@
 ---
-- name: "Configure {{ hx_auto_support_policy }} Auto Support Policy"
+- name: "Configure Auto Support Policy"
   vars:
     # Create an anchor for api_info that can be used throughout the file
     api_info: &api_info

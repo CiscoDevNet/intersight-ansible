@@ -20,6 +20,7 @@
     prompt: "Set the deployment action. Valid choices are Validate, Deploy, Continue or Retry."
     echo: yes
   register: hx_action
+  run_once: true
 # Set cluster deployment action
 - name: Set Cluster Action
   vars:
