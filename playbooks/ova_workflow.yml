@@ -17,7 +17,7 @@
         <<: *api_info
         resource_path: /asset/DeviceRegistrations
         query_params:
-          $filter: DeviceHostname eq '172.28.225.220'
+          $filter: DeviceIpAddress eq '172.28.225.220'
       register: vcenter
     - name: Execute OVA deploy workflow
       intersight_rest_api:
@@ -27,8 +27,9 @@
         api_body: {
           "Name": "ucspe_vm",
           "Organization": {
-            "Selector": "Name eq 'default'",
-            "ObjectType": "organization.Organization"
+            # "Selector": "Name eq 'default'",
+            # "ObjectType": "organization.Organization"
+            "Moid": "5dde9f116972652d33539d39"
           },
           "Action": "Start",
           "Input": {

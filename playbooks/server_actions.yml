@@ -14,7 +14,7 @@
       vars:
         # power and reset state
         # options: Policy, PowerOn, PowerOff, PowerCycle, HardReset, Shutdown, Reboot
-        # Can override on the command line: ansible-playbook ... -e power_state=PowerCyle
+        # Can override on the command line: ansible-playbook ... -e power_state=PowerCycle
         power_state: PowerOn
         # led locator state
         # options: On, Off, None

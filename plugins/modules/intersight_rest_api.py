@@ -163,9 +163,9 @@ def main():
         # get the current state of the resource
         # skip if this is a post to /asset/DeviceClaims or similar resource without GET
         intersight.get_resource(
-            resource_path=intersight.module.params['resource_path'],
-            query_params=intersight.module.params['query_params'],
-            return_list=intersight.module.params['return_list'],
+            resource_path=module.params['resource_path'],
+            query_params=module.params['query_params'],
+            return_list=module.params['return_list'],
         )
 
     # determine requested operation (config, delete, or neither (get resource only))
@@ -187,15 +187,16 @@ def main():
         else:  # request_delete
             intersight.delete_resource(
                 moid=moid,
-                resource_path=intersight.module.params['resource_path'],
+                resource_path=module.params['resource_path'],
             )
 
     if request_config and not resource_values_match:
         intersight.configure_resource(
             moid=moid,
-            resource_path=intersight.module.params['resource_path'],
-            body=intersight.module.params['api_body'],
-            query_params=intersight.module.params['query_params'],
+            resource_path=module.params['resource_path'],
+            body=module.params['api_body'],
+            query_params=module.params['query_params'],
+            update_method=module.params['update_method'],
         )
 
     module.exit_json(**intersight.result)
