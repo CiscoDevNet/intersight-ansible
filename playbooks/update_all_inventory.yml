@@ -45,7 +45,7 @@
             insertafter: "^\\[{{ host_group }}\\]"
             regexp: "^{{ item.Name }} serial={{ item.Serial }} "
             # Each line of the inventory has the following:
-            line: "{{ item.Name }} serial={{ item.Serial }} server_moid={{ item.Moid }} model={{ item.Model }} mode={{ item.ManagementMode }}"
+            line: "{{ item.Name }} serial={{ item.Serial }} server_moid={{ item.Moid }} model={{ item.Model }} mode={{ item.ManagementMode }} object_type={{ item.SourceObjectType | regex_replace('compute.')}}"
             create: true
           loop: "{{ all_results.intersight_servers }}"
           loop_control:

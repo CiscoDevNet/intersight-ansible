@@ -35,7 +35,7 @@
     - name: Configure Local User policy
       intersight_local_user_policy:
         <<: *api_info
-        name: guest-admin
+        name: "{{ local_user_policy | default('guest-admin') }}"
         tags:
           - Key: username
             Value: guest

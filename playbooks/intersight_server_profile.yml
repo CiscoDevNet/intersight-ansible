@@ -26,6 +26,9 @@
     #
     # Configure profiles specific to server (run for each server in the inventory)
     #
+    - set_fact:
+        mode: FIAttached
+      when: mode == 'Intersight'
     - name: "Configure {{ profile_name }} Server Profile"
       intersight_server_profile:
         <<: *api_info

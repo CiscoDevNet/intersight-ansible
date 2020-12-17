@@ -27,7 +27,11 @@
     - set_fact:
         remote_file: ucs-c240m5-huu-4.0.4f.iso
       when: model is search("UCSC-C240-M5.*")
+    - set_fact:
+        remote_file: ucs-c220m5-huu-4.0.4h.iso
+      when: model is search("UCSC-C220-M5.*")
     # Update server firmware with a post based on server moid
+    # distributable: {"Source":{"FileLocation":"172.28.224.77//mnt/SHARE/ISOS/HUU/4.0/ucs-c220m5-huu-4.0.4h.iso","ObjectType":"softwarerepository.NfsServer"},"Version":"4.0(4h)","Catalog":"5cd993686567612d30aaa762","Name":"ucs-c220m5-huu-4.0.4h","SupportedModels":["UCSC-C220-M5SX","UCSC-C220-M5L","UCSC-C220-M5SN","HX220C-M5SX","HXAF220C-M5SX"],"Description":"","Tags":[{"Key":"cisco.meta.distributabletype","Value":"STANDALONE"},{"Key":"cisco.meta.repositorytype","Value":"NetworkShare"}]}
     - name: Update server firmware
       cisco.intersight.intersight_rest_api:
         <<: *api_info
@@ -37,17 +41,15 @@
         update_method: post
         # nw_upgrade_full supported in UI, nw_upgrade_mount_only has partial API support
         api_body: {
-          "NetworkShare": {
-            "MapType": "nfs",
-            "Upgradeoption": "nw_upgrade_mount_only",
-            "NfsServer": {
-              "RemoteIp": "172.28.224.77",
-              "RemoteShare": "/mnt/SHARE/ISOS/HUU/4.0",
-              "RemoteFile": "{{ remote_file }}"
-            }
-          },
           "UpgradeType": "network_upgrade",
+          "Distributable": "5faee2bf6567612d31968ebe",
+          "DirectDownload": {},
+          "NetworkShare": {
+            "Upgradeoption": "nw_upgrade_mount_only",
+            "MapType":"nfs"
+          },
           "Server": {
+            "ObjectType": "compute.RackUnit",
             "Moid": "{{ server_moid }}"
           }
         }

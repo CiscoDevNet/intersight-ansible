@@ -16,10 +16,10 @@
     - name: Configure IMC Access policy
       intersight_imc_access_policy:
         <<: *api_info
-        name: sjc02-d23-access
+        name: "{{ imc_access_name | default('sjc02-d23-access') }}"
         tags:
           - Key: Site
             Value: SJC02
-        description: Updated IMC access for SJC02 rack D23
-        vlan_id: 131
-        ip_pool: sjc02-d23-ext-mgmt
+        description: Updated IMC access for SJC labs
+        vlan_id: "{{ imc_access_vlan | default(131) }}"
+        ip_pool: "{{ ip_pool | default('sjc02-d23-ext-mgmt') }}"
