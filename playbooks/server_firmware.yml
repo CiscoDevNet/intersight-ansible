@@ -60,14 +60,6 @@
       when: model is search("UCSC-C220-M5.*")
     - set_fact:
         file_location: "{{ file_share }}/{{ file_name }}"
-    # Update server firmware with a post based on server moid
-    # distributable: {"Source":
-    # {"FileLocation":"172.28.224.77//mnt/SHARE/ISOS/HUU/4.0/ucs-c220m5-huu-4.0.4h.iso",
-    # "ObjectType":"softwarerepository.NfsServer"},"Version":"4.0(4h)",
-    # "Catalog":"5cd993686567612d30aaa762","Name":"ucs-c220m5-huu-4.0.4h",
-    # "SupportedModels":["UCSC-C220-M5SX","UCSC-C220-M5L","UCSC-C220-M5SN","HX220C-M5SX","HXAF220C-M5SX"],
-    # "Description":"","Tags":[{"Key":"cisco.meta.distributabletype","Value":"STANDALONE"},
-    # {"Key":"cisco.meta.repositorytype","Value":"NetworkShare"}]}
     # Set the distributable type based on the management mode and server type
     - set_fact:
         dist_type: STANDALONE
@@ -86,23 +78,12 @@
           },
           "ImportAction": "None",
           "Name": "{{ file_name }}",
-          # "FileLocation": "{{ file_location }}",
           "Origin": "User",
           "Source": {
             "ObjectType": "softwarerepository.NfsServer",
             "FileLocation": "{{ file_location }}"
           },
           "SupportedModels": "{{ supported_models }}",
-          # "Tags": [
-          #   {
-          #     "Key": "cisco.meta.distributabletype",
-          #     "Value": "{{ dist_type }}",
-          #   },
-          #   {
-          #     "Key": "cisco.meta.repositorytype",
-          #     "Value": "NetworkShare"
-          #   }
-          # ],
           "Version": "{{ fw_version }}"
         }
       delegate_to: localhost
