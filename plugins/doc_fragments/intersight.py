@@ -19,8 +19,12 @@ class ModuleDocFragment(object):
 options:
   api_private_key:
     description:
-    - 'Filename (absolute path) of a PEM formatted file that contains your private key to be used for Intersight API authentication.'
-    type: path
+    - 'Filename (absolute path) or string of PEM formatted private key data to be used for Intersight API authentication.'
+    - If a string is used, Ansible vault should be used to encrypt string data.
+    - "Ex. ansible-vault encrypt_string --vault-id tme@/Users/dsoper/Documents/vault_password_file '-----BEGIN EC PRIVATE KEY-----"
+    - "    <your private key data>"
+    - "    -----END EC PRIVATE KEY-----'"
+    type: path or str
     required: yes
   api_uri:
     description:
