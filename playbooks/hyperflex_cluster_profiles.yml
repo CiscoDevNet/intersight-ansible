@@ -51,12 +51,13 @@
       private: no
 
   tasks:
-    # Cluster Profile
+    # Intersight Org
     - import_role:
         name: policies/hyperflex_policies/intersight_org
       vars:
         org_name: "{{ intersight_org_name }}"
       tags: ['org']
+    # Cluster Profile
     - import_role:
         name: policies/hyperflex_policies/cluster_profile
       vars:

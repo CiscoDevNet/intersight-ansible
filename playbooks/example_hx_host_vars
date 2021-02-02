@@ -4,7 +4,7 @@ hx_cluster_name: M5-Hybrid
 hx_mgmt_platform: FI
 hx_hypervisor_type: ESXi
 hxdp_version: 4.5(1a)
-ucs_firmware_version: 4.1(3a)
+ucs_firmware_version: 4.2(1a)
 hx_mgmt_mac_prefix: 00:25:B5:7F
 #hx_replication_factor: 3
 #hx_vdi_optimization: false
