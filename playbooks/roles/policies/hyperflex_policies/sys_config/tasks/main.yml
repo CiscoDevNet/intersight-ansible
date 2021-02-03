@@ -14,6 +14,9 @@
     query_params:
       $filter: "Name eq '{{ hx_sys_config_policy }}'"
     api_body: {
+      "Organization": {
+        "Moid": "{{ intersight_org.api_response.Moid }}"
+      },
       "Name": "{{ hx_sys_config_policy }}",
       "Timezone":"{{ hx_sys_config_timezone }}",
       "DnsServers":"{{ hx_sys_config_dns_servers }}",

@@ -14,6 +14,9 @@
     query_params:
       $filter: "Name eq '{{ hx_software_policy }}'"
     api_body: {
+      "Organization": {
+        "Moid": "{{ intersight_org.api_response.Moid }}"
+      },
       "Name":"{{ hx_software_policy }}",
       "HxdpVersion":"{{ hxdp_version }}",
       "ClusterProfiles": [

@@ -43,6 +43,12 @@
       private: no
 
   tasks:
+    # Intersight Org
+    - import_role:
+        name: policies/hyperflex_policies/intersight_org
+      vars:
+        org_name: "{{ intersight_org_name }}"
+      tags: ['org']
     # Cluster Profile
     - import_role:
         name: policies/hyperflex_policies/edge_cluster_profile

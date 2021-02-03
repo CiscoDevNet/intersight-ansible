@@ -14,6 +14,9 @@
     query_params:
       $filter: "Name eq '{{ hx_cluster_storage_policy }}'"
     api_body: {
+      "Organization": {
+        "Moid": "{{ intersight_org.api_response.Moid }}"
+      },
       "Name":"{{ hx_cluster_storage_policy }}",
       "VdiOptimization":"{{ hx_vdi_optimization }}",
       "DiskPartitionCleanup":"{{ hx_disk_cleanup }}",
