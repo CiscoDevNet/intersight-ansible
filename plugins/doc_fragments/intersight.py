@@ -24,7 +24,7 @@ options:
     - "Ex. ansible-vault encrypt_string --vault-id tme@/Users/dsoper/Documents/vault_password_file '-----BEGIN EC PRIVATE KEY-----"
     - "    <your private key data>"
     - "    -----END EC PRIVATE KEY-----'"
-    type: path or str
+    type: str
     required: yes
   api_uri:
     description:
