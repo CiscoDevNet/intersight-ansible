@@ -38,6 +38,7 @@ import hashlib
 from ansible.module_utils.six import iteritems
 from ansible.module_utils.six.moves.urllib.parse import urlparse, urlencode
 from ansible.module_utils.urls import fetch_url
+from ansible.module_utils.basic import env_fallback
 
 try:
     from cryptography.hazmat.primitives import serialization, hashes
@@ -48,9 +49,9 @@ except ImportError:
     HAS_CRYPTOGRAPHY = False
 
 intersight_argument_spec = dict(
-    api_private_key=dict(type='path', required=True),
-    api_uri=dict(type='str', default='https://intersight.com/api/v1'),
-    api_key_id=dict(type='str', required=True),
+    api_private_key=dict(fallback=(env_fallback, ['INTERSIGHT_API_PRIVATE_KEY']), type='path', required=True),
+    api_uri=dict(fallback=(env_fallback, ['INTERSIGHT_API_URI']), type='str', default='https://intersight.com/api/v1'),
+    api_key_id=dict(fallback=(env_fallback, ['INTERSIGHT_API_KEY_ID']), type='str', required=True),
     validate_certs=dict(type='bool', default=True),
     use_proxy=dict(type='bool', default=True),
 )
