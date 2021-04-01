@@ -33,7 +33,8 @@
     api_body: {
       "Name":"{{ hx_node_profile_prefix }}-{{ '%02d' % (idx + 1) }}",
       "AssignedServer": {
-        "Moid": "{{ item.intersight_servers[0].Moid }}"
+        "Moid": "{{ item.intersight_servers[0].Moid }}",
+        "ObjectType": "compute.RackUnit"
       },
       "ClusterProfile": {
         "Moid": "{{ profile.api_response.Moid }}"
