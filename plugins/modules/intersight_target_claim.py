@@ -109,8 +109,7 @@ def main():
     argument_spec.update(
         claim_code=dict(type='str'),
         device_id=dict(type='str', required=True),
-        state=dict(type='str', choices=[
-                   'absent', 'present'], default='present'),
+        state=dict(type='str', choices=['absent', 'present'], default='present'),
     )
 
     module = AnsibleModule(
@@ -161,8 +160,7 @@ def main():
         # Check if target exists
         if intersight.result['api_response'].get('Moid'):
             intersight.delete_resource(
-                moid=intersight.result['api_response'].get(
-                    'RegisteredDevice').get('DeviceClaim').get('Moid'),
+                moid=intersight.result['api_response'].get('RegisteredDevice').get('DeviceClaim').get('Moid'),
                 resource_path='/asset/DeviceClaims',
             )
 

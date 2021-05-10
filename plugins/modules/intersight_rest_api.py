@@ -138,12 +138,10 @@ def main():
     argument_spec.update(
         resource_path=dict(type='str', required=True),
         query_params=dict(type='dict', default={}),
-        update_method=dict(type='str', choices=[
-                           'patch', 'post'], default='patch'),
+        update_method=dict(type='str', choices=['patch', 'post'], default='patch'),
         api_body=dict(type='dict', default={}),
         return_list=dict(type='bool', default=False),
-        state=dict(type='str', choices=[
-                   'absent', 'present'], default='present'),
+        state=dict(type='str', choices=['absent', 'present'], default='present'),
     )
 
     module = AnsibleModule(
@@ -183,8 +181,7 @@ def main():
         # resource exists and moid was returned
         moid = intersight.result['api_response']['Moid']
         if request_config:
-            resource_values_match = compare_values(
-                module.params['api_body'], intersight.result['api_response'])
+            resource_values_match = compare_values(module.params['api_body'], intersight.result['api_response'])
         else:  # request_delete
             intersight.delete_resource(
                 moid=moid,
