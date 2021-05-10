@@ -4,6 +4,8 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
+from ansible_collections.cisco.intersight.plugins.module_utils.intersight import IntersightModule, intersight_argument_spec, compare_values
+from ansible.module_utils.basic import AnsibleModule
 __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
@@ -131,10 +133,6 @@ api_repsonse:
 '''
 
 
-from ansible.module_utils.basic import AnsibleModule
-from ansible_collections.cisco.intersight.plugins.module_utils.intersight import IntersightModule, intersight_argument_spec, compare_values
-
-
 def main():
     argument_spec = intersight_argument_spec
     argument_spec.update(
@@ -198,6 +196,8 @@ def main():
             query_params=module.params['query_params'],
             update_method=module.params['update_method'],
         )
+    if module.params['return_list'] and not isinstance(intersight.result['api_response'], list):
+        intersight.result['api_response'] = []
 
     module.exit_json(**intersight.result)
 
