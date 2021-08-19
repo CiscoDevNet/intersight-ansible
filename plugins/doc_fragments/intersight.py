@@ -26,24 +26,18 @@ options:
     - "    -----END EC PRIVATE KEY-----'"
     - If not set, the value of the INTERSIGHT_API_PRIVATE_KEY environment variable is used.
     type: str
-    env:
-      - name: INTERSIGHT_API_PRIVATE_KEY
     required: yes
   api_uri:
     description:
     - URI used to access the Intersight API.
     - If not set, the value of the INTERSIGHT_API_URI environment variable is used.
     type: str
-    env:
-      - name: INTERSIGHT_API_URI
     default: https://intersight.com/api/v1
   api_key_id:
     description:
     - Public API Key ID associated with the private key.
     - If not set, the value of the INTERSIGHT_API_KEY_ID environment variable is used.
     type: str
-    env:
-      - name: INTERSIGHT_API_KEY_ID
     required: yes
   validate_certs:
     description:

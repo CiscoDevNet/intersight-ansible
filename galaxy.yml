@@ -9,7 +9,7 @@ namespace: cisco
 name: intersight
 
 # The version of the collection. Must be compatible with semantic versioning
-version: 1.0.16
+version: 1.0.17
 
 # The path to the Markdown (.md) readme file. This path is relative to the root of the collection
 readme: README.md
