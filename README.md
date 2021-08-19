@@ -1,6 +1,6 @@
 # cisco.intersight Ansible Collection
 
-Ansible collection for managing and automating Cisco Intersight environments.  Modules and roles are provided for common Cisco Intersight tasks.  A lab guide with detailed installation and usage examples is included in the misc directory of this collection (https://github.com/CiscoDevNet/intersight-ansible/blob/master/misc/CL2020%20EMEAR%20DEVWKS-1542%20Intersight%20Ansible%20Lab%20Guide.pdf)
+Ansible collection for managing and automating Cisco Intersight environments.  Modules and roles are provided for common Cisco Intersight tasks.  Detailed installation and usage examples are included in a lab guide in the misc directory of this collection at https://github.com/CiscoDevNet/intersight-ansible/blob/master/misc/CL2020%20EMEAR%20DEVWKS-1542%20Intersight%20Ansible%20Lab%20Guide.pdf 
 
 * Note: This collection is not compatible with versions of Ansible before v2.8.
 
