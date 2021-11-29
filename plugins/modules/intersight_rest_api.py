@@ -140,6 +140,7 @@ def main():
         query_params=dict(type='dict', default={}),
         update_method=dict(type='str', choices=['patch', 'post'], default='patch'),
         api_body=dict(type='dict', default={}),
+        list_body=dict(type='list', default=[]),
         return_list=dict(type='bool', default=False),
         state=dict(type='str', choices=['absent', 'present'], default='present'),
     )
@@ -150,12 +151,16 @@ def main():
         mutually_exclusive=[
             ['return_list', 'api_body'],
             ['return_list', 'state'],
+            ['api_body', 'list_body'],
         ],
     )
 
     intersight = IntersightModule(module)
     intersight.result['api_response'] = {}
     intersight.result['trace_id'] = ''
+
+    if module.params['list_body']:
+      module.params['api_body'] = module.params['list_body']
 
     if module.params['update_method'] != 'post' or module.params['query_params']:
         # get the current state of the resource
