@@ -22,6 +22,10 @@
       api_uri: "{{ api_uri | default(omit) }}"
       validate_certs: "{{ validate_certs | default(omit) }}"
       state: "{{ state | default(omit) }}"
+    # How many results to return per inventory file
+    per_page: 500
+    # Total servers to query
+    max_servers: 15000
     # Change filepath if you want to update a different inventory file
     filepath: "{{ inventory_file }}"
     # Change host_group if you want to use another group name for your servers in the created inventory
@@ -29,15 +33,25 @@
   tasks:
     # Enclose tasks in a block that is only run once
     - block:
+        # Set an api response for the 1st loop iteration
+        - set_fact:
+            servers:
+              api_response:
+                - Moid: fake
+          run_once: true
         # Find all servers
         - cisco.intersight.intersight_rest_api:
             <<: *api_info
             resource_path: /compute/PhysicalSummaries
             query_params:
-              $filter: "PlatformType eq 'IMC' and contains(Model, 'UCSC-C')"
-              $top: 1000
+              $filter: "ManagementMode eq 'IntersightStandalone' and contains(Model, 'UCSC-C')"
+              $select: Name,Model,Serial
+              $top: "{{ per_page }}"
+              $skip: "{{ item }}"
             return_list: true
-          register: results
+          loop: "{{ range(0, max_servers|int, per_page|int) | list }}"
+          register: servers
+          when: servers.api_response
         # Place the servers in a group in the file
         - debug:
             msg: Inventory filepath "{{ filepath }}"
@@ -45,18 +59,9 @@
             path: "{{ filepath }}"
             line: "[{{ host_group }}]"
             create: true
-        # Update standalone servers (IMC) in the file
-        - lineinfile:
-            path: "{{ filepath }}"
-            insertafter: "^\\[{{ host_group }}\\]"
-            regexp: "^{{ item.Name }} "
-            # Each line of the inventory has the following:
-            # Name server_moid=<Moid value> model=<Model value> boot_policy=<policy from tag> | 'na'
-            line: "{{ item.Name }} server_moid={{ item.Moid }} model={{ item.Model }}"
-            create: true
-          loop: "{{ results.api_response }}"
+        - include_tasks: servers_to_file.yml
+          loop: "{{ servers.results }}"
           loop_control:
-            label: "{{ item.Name }}"
-          when: results.api_response is defined
+            loop_var: outer_item
       delegate_to: localhost
       run_once: true
