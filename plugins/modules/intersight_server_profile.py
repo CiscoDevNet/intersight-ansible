@@ -223,17 +223,6 @@ def main():
     # Argument spec above, resource path, and API body should be the only code changed in this module
     #
     resource_path = '/server/Profiles'
-    # Get assigned server information
-    intersight.result['api_response'] = {}
-    intersight.get_resource(
-        resource_path='/compute/PhysicalSummaries',
-        query_params={
-            '$filter': "Moid eq '" + intersight.module.params['assigned_server'] + "'",
-        }
-    )
-    source_object_type = None
-    if intersight.result['api_response'].get('SourceObjectType'):
-        source_object_type = intersight.result['api_response']['SourceObjectType']
     # Define API body used in compares or create
     intersight.api_body = {
         'Organization': {
@@ -242,11 +231,23 @@ def main():
         'Name': intersight.module.params['name'],
         'Tags': intersight.module.params['tags'],
         'Description': intersight.module.params['description'],
-        'AssignedServer': {
+    }
+    intersight.result['api_response'] = {}
+    # Get assigned server information (if defined)
+    if intersight.module.params['assigned_server']:
+        intersight.get_resource(
+            resource_path='/compute/PhysicalSummaries',
+            query_params={
+                '$filter': "Moid eq '" + intersight.module.params['assigned_server'] + "'",
+            }
+        )
+        source_object_type = None
+        if intersight.result['api_response'].get('SourceObjectType'):
+            source_object_type = intersight.result['api_response']['SourceObjectType']
+        intersight.api_body['AssignedServer'] = {
             'Moid': intersight.module.params['assigned_server'],
             'ObjectType': source_object_type,
-        },
-    }
+        }
     if intersight.module.params['target_platform'] == 'FIAttached':
         intersight.api_body['TargetPlatform'] = intersight.module.params['target_platform']
 
