@@ -146,8 +146,10 @@ api_repsonse:
         "EndPointUserRoles": [
             {
                 "ChangePassword": true,
-                "Enabled": true,
-                ...
+                "Enabled": true
+            }
+        ]
+    }
 '''
 
 
