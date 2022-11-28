@@ -147,7 +147,7 @@ class IntersightModule():
         try:
             with open(self.module.params['api_private_key'], 'r') as f:
                 self.private_key = f.read()
-        except FileNotFoundError:
+        except (FileNotFoundError, OSError):
             self.private_key = self.module.params['api_private_key']
         self.digest_algorithm = ''
         self.response_list = []
