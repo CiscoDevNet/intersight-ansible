@@ -40,7 +40,7 @@
         35666439356634353530363566313864333966386263623566323564656366356264313166353038
         66643566313361636231616338633939323131643061646664396264366538386230366364326633
         3831
-      api_key_id: "{{ api_key_id }}"
+      api_key_id: "{{ api_key_id | default(omit) }}"
       api_uri: "{{ api_uri | default(omit) }}"
       validate_certs: "{{ validate_certs | default(omit) }}"
       state: "{{ state | default(omit) }}"
