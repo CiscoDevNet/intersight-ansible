@@ -112,7 +112,7 @@ options:
         description:
           - The IP Address family type to use during the PXE Boot process.
           - Option is used when device_type is pxe.
-        chocies: [None, IPv4, IPv6]
+        choices: [None, IPv4, IPv6]
         default: None
       interface_source:
         description:
