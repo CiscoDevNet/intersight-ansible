@@ -32,7 +32,7 @@
     - name: "Configure {{ port_name }} Port Policy"
       intersight_rest_api:
         <<: *api_info
-        state: "{{ port_state | default('present') }}"
+        state: "{{ state | default('present') }}"
         resource_path: /fabric/PortPolicies
         query_params:
           $filter: "Name eq '{{ port_name }}'"

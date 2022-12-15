@@ -33,6 +33,6 @@
         query_params:
           $filter: "Name eq '{{ profile_name }}'"
         api_body: {
-          "Action": "{{ action | default('Deploy') }}"
+          "Action": "{{ profile_action | default('Deploy') }}"
         }
       delegate_to: localhost
