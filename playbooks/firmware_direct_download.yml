@@ -13,12 +13,14 @@
   vars:
     # Create an anchor for api_info that can be used throughout the file
     api_info: &api_info
-      api_private_key: "{{ api_private_key }}"
-      api_key_id: "{{ api_key_id }}"
+      # if api_key vars are omitted, INTERSIGHT_API_KEY_ID, INTERSIGHT_API_PRIVATE_KEY,
+      # and INTERSIGHT_API_URI environment variables used for API key data
+      api_private_key: "{{ api_private_key | default(omit) }}"
+      api_key_id: "{{ api_key_id | default(omit) }}"
       api_uri: "{{ api_uri | default(omit) }}"
       validate_certs: "{{ validate_certs | default(omit) }}"
-      state: "{{ state | default(omit) }}"
-    fw_version: 4.1(2b)
+    # Firmware Version
+    fw_version: 4.2(2d)
   tasks:
     # Set the distributable type based on the management mode and server type
     - set_fact:
@@ -36,7 +38,7 @@
         <<: *api_info
         resource_path: /firmware/Distributables
         query_params:
-          $filter: "SupportedModels eq '{{ model }}' and Version eq '{{ fw_version }}' and Tags.Key eq 'cisco.meta.distributabletype' and Tags.Value eq '{{ dist_type }}' and Tags.Key eq 'cisco.meta.repositorytype' and Tags.Value eq 'Cisco'"
+          $filter: "SupportedModels eq '{{ model }}' and Version eq '{{ fw_version }}' and Tags.Key eq 'cisco.meta.distributabletype' and Tags.Value eq '{{ dist_type }}' and Tags.Key eq 'cisco.meta.repositorytype' and Tags.Value eq 'IntersightCloud'"
       delegate_to: localhost
       register: fw_resp
     # Update server firmware with a post based on server moid
@@ -66,8 +68,8 @@
       when:
         - server_moid is defined
         - fw_resp.api_response.Moid is defined
-    # Wait for download to complete
-    - name: Check firmware download status
+    # Wait for download/update to complete
+    - name: Check firmware download/update status
       intersight_rest_api:
         <<: *api_info
         resource_path: /firmware/UpgradeStatuses
@@ -76,7 +78,7 @@
       delegate_to: localhost
       register: status_resp
       until: status_resp.api_response.Overallstatus == 'pending' or status_resp.api_response.Overallstatus == 'success'
-      # 60 minutes to allow download to complete
+      # 60 minutes to allow download/update to complete
       retries: 60
       delay: 60
       when:
