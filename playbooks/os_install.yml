@@ -20,7 +20,7 @@
       api_uri: "{{ api_uri | default(omit) }}"
       validate_certs: "{{ validate_certs | default(omit) }}"
     # OS and SCU Versions
-    os_version: ESXi 6.7 U3
+    os_version: ESXi 7.0 U3
     os_config: ESXi7.0ConfigFile
     scu_version: 6.2.2a
     org_name: default
@@ -59,7 +59,7 @@
         <<: *api_info
         resource_path: /softwarerepository/OperatingSystemFiles
         query_params:
-          $filter: "Version eq '{{ os_version }}'"
+          $filter: "Version eq '{{ os_version }}' and PermissionResources.Moid eq '{{ org_resp.api_response.Moid }}'"
       register: os_resp
       delegate_to: localhost
     # Get the SCU File Moid
@@ -68,7 +68,7 @@
         <<: *api_info
         resource_path: /firmware/ServerConfigurationUtilityDistributables
         query_params:
-          $filter: "Version eq '{{ scu_version }}'"
+          $filter: "Version eq '{{ scu_version }}' and PermissionResources.Moid eq '{{ org_resp.api_response.Moid }}'"
       register: scu_resp
       delegate_to: localhost
     # Get the OS Config File Moid
