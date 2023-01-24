@@ -42,6 +42,11 @@ options:
     description:
     - The paylod for API requests used to modify resources.
     type: dict
+  list_body:
+    description:
+    - The paylod for API requests used to modify resources.
+    - Should be used instead of api_body if a list is required in the API payload.
+    type: list
   return_list:
     description:
     - If C(yes), will return a list of API results in the api_response.
@@ -160,7 +165,7 @@ def main():
     intersight.result['trace_id'] = ''
 
     if module.params['list_body']:
-      module.params['api_body'] = module.params['list_body']
+        module.params['api_body'] = module.params['list_body']
 
     if module.params['update_method'] != 'post' or module.params['query_params']:
         # get the current state of the resource
