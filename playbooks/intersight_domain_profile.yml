@@ -17,13 +17,13 @@
       api_uri: "{{ api_uri | default(omit) }}"
       validate_certs: "{{ validate_certs | default(omit) }}"
     # Domain Profile name
-    profile_name: emulator
+    profile_name: SJC07-R14-R15
     org_name: dsoper-DevNet
     port_policy: server-1-6-eth-pc-47-48
     qos_policy: required-qos
     # Fabric Intersight A and B Serial Numbers
-    fia_sn: FDO23021WJ6
-    fib_sn: FDO23070UA2
+    fia_sn: FDO23450Q6D
+    fib_sn: FDO23480DAL
   tasks:
     # Get the Organization Moid
     - name: "Get {{ org_name }} Organization Moid"
