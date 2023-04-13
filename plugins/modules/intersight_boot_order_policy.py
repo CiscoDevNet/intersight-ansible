@@ -255,7 +255,7 @@ def main():
             default='name'
         ),
         interface_name=dict(type='str', default=''),
-        mac_address=dict(type='str', defualt=''),
+        mac_address=dict(type='str', default=''),
         # sd card options
         sd_card_subtype=dict(
             type='str',
@@ -347,8 +347,8 @@ def main():
             elif device['device_type'] == 'Local CDD':
                 intersight.api_body['BootDevices'].append(
                     {
-                        "ClassId": "boot.LocalCDD",
-                        "ObjectType": "boot.LocalCDD",
+                        "ClassId": "boot.LocalCdd",
+                        "ObjectType": "boot.LocalCdd",
                         "Enabled": device['enabled'],
                         "Name": device['device_name'],
                     }
