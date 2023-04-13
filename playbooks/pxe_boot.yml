@@ -17,7 +17,7 @@
       api_uri: "{{ api_uri | default(omit) }}"
       validate_certs: "{{ validate_certs | default(omit) }}"
       state: "{{ state | default('present') }}"
-    # Domain Profile name
+    # Organization name
     org_name: dsoper-DevNet
   tasks:
     - name: Configure Boot Order Policy with PXE
