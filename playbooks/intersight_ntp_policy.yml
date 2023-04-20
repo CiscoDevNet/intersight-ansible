@@ -15,11 +15,13 @@
       api_key_id: "{{ api_key_id | default(omit) }}"
       api_uri: "{{ api_uri | default(omit) }}"
       validate_certs: "{{ validate_certs | default(omit) }}"
+      state: "{{ state | default('present') }}"
+    org_name: DCP-X-Sandbox
   tasks:
     - name: Configure NTP Policy
       intersight_ntp_policy:
         <<: *api_info
-        organization: "{{ organization | default(omit) }}"
+        organization: "{{ org_name }}"
         name: lab-ntp
         description: NTP policy for lab use
         tags:
