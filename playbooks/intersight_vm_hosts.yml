@@ -24,7 +24,8 @@
         <<: *api_info
         resource_path: /virtualization/VirtualMachines
         query_params:
-          $expand: Inventory($expand=Host)
+          $select: Name,Inventory
+          $expand: Inventory($expand=Host($select=HypervisorType,Model,Name,Serial))
           $top: 1000
         return_list: true
       register: vm_resp
@@ -37,9 +38,11 @@
         path: "{{ filename }}"
         line: VM,Hypervisor,Model,Hostname,Serial
         create: true
+    # Only write VMs that have Host information to the .csv file
     - lineinfile:
         path: "{{ filename }}"
         line: "{{ item.Name }},{{ item.Inventory.Host.HypervisorType }},{{ item.Inventory.Host.Model }},{{ item.Inventory.Host.Name }},{{ item.Inventory.Host.Serial  }}"
       loop: "{{ vm_resp.api_response }}"
       loop_control:
         label: "{{ item.Name }}"
+      when: item.Inventory.Host is defined
