@@ -267,7 +267,7 @@ def main():
         "LowPowerUsb": intersight.module.params['low_power_usb'],
         'Mappings': [],
     }
-    
+
     if intersight.module.params.get('cdd_virtual_media'):
         intersight.api_body['Mappings'].append(
             {

@@ -30,6 +30,9 @@
 # Author: Matthew Garrett
 # Contributors: David Soper, Chris Gascoigne, John McDonough
 
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
 from base64 import b64encode
 from email.utils import formatdate
 import re
@@ -267,19 +270,19 @@ class IntersightModule():
         bodyString = ""
 
         # Verify an accepted HTTP verb was chosen
-        if(method not in ['GET', 'POST', 'PATCH', 'DELETE']):
+        if (method not in ['GET', 'POST', 'PATCH', 'DELETE']):
             raise ValueError('Please select a valid HTTP verb (GET/POST/PATCH/DELETE)')
 
         # Verify the resource path isn't empy & is a valid <str> object
-        if(resource_path != "" and not (resource_path, str)):
+        if (resource_path != "" and not (resource_path, str)):
             raise TypeError('The *resource_path* value is required and must be of type "<str>"')
 
         # Verify the query parameters isn't empy & is a valid <dict> object
-        if(query_params is not None and not isinstance(query_params, dict)):
+        if (query_params is not None and not isinstance(query_params, dict)):
             raise TypeError('The *query_params* value must be of type "<dict>"')
 
         # Verify the MOID is not null & of proper length
-        if(moid is not None and len(moid.encode('utf-8')) != 24):
+        if (moid is not None and len(moid.encode('utf-8')) != 24):
             raise ValueError('Invalid *moid* value!')
 
         # Check for query_params, encode, and concatenate onto URL
