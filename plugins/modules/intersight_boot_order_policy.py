@@ -24,31 +24,37 @@ options:
     description:
       - If C(present), will verify the resource is present and will create if needed.
       - If C(absent), will verify the resource is absent and will delete if needed.
+    type: str
     choices: [present, absent]
     default: present
   organization:
     description:
       - The name of the Organization this resource is assigned to.
       - Profiles and Policies that are created within a Custom Organization are applicable only to devices in the same Organization.
+    type: str
     default: default
   name:
     description:
       - The name assigned to the Boot Order policy.
       - The name must be between 1 and 62 alphanumeric characters, allowing special characters :-_.
+    type: str
     required: true
   tags:
     description:
       - List of tags in Key:<user-defined key> Value:<user-defined value> format.
     type: list
+    elements: dict
   description:
     description:
       - The user-defined description of the Boot Order policy.
       - Description can contain letters(a-z, A-Z), numbers(0-9), hyphen(-), period(.), colon(:), or an underscore(_).
+    type: str
     aliases: [descr]
   configured_boot_mode:
     description:
       - Sets the BIOS boot mode.
       - UEFI uses the GUID Partition Table (GPT) whereas Legacy mode uses the Master Boot Record (MBR) partitioning scheme.
+    type: str
     choices: [Legacy, Uefi]
     default: Legacy
   uefi_enable_secure_boot:
@@ -61,6 +67,7 @@ options:
     description:
       - List of Boot Devices configured on the endpoint.
     type: list
+    elements: dict
     suboptions:
       enabled:
         description:
@@ -71,6 +78,7 @@ options:
         description:
           - Device type used with this boot option.
           - Choices are based on each device title in the API schema.
+        type: str
         choices: [iSCSI, Local CDD, Local Disk, NVMe, PCH Storage, PXE, SAN, SD Card, UEFI Shell, USB, Virtual Media]
         required: true
       device_name:
@@ -80,58 +88,70 @@ options:
           - It should start and end with an alphanumeric character.
           - It can have underscores and hyphens.
           - It cannot be more than 30 characters.
+        type: str
         required: true
       network_slot:
         description:
           - The slot id of the controller for the iscsi and pxe device.
           - Option is used when device_type is iscsi and pxe.
+        type: str
         choices: [1 - 255, MLOM, L, L1, L2, OCP]
       port:
         description:
           - The port id of the controller for the iscsi and pxe device.
           - Option is used when device_type is iscsi and pxe.
           - The port id need to be an integer from 0 to 255.
+        type: int
       controller_slot:
         description:
           - The slot id of the controller for the local disk device.
           - Option is used when device_type is local_disk.
+        type: str
         choices: [1-255, M, HBA, SAS, RAID, MRAID, MSTOR-RAID]
       bootloader_name:
         description:
           - Details of the bootloader to be used during boot from local disk.
           - Option is used when device_type is local_disk and configured_boot_mode is Uefi.
+        type: str
       bootloader_description:
         description:
           - Details of the bootloader to be used during boot from local disk.
           - Option is used when device_type is local_disk and configured_boot_mode is Uefi.
+        type: str
       bootloader_path:
         description:
           - Details of the bootloader to be used during boot from local disk.
           - Option is used when device_type is local_disk and configured_boot_mode is Uefi.
+        type: str
       ip_type:
         description:
           - The IP Address family type to use during the PXE Boot process.
           - Option is used when device_type is pxe.
+        type: str
         choices: [None, IPv4, IPv6]
         default: None
       interface_source:
         description:
           - Lists the supported Interface Source for PXE device.
           - Option is used when device_type is pxe.
+        type: str
         choices: [name, mac, port]
         default: name
-      intefrace_name:
+      interface_name:
         description:
           - The name of the underlying virtual ethernet interface used by the PXE boot device.
           - Option is used when device_type is pxe and interface_source is name.
+        type: str
       mac_address:
         description:
           - The MAC Address of the underlying virtual ethernet interface used by the PXE boot device.
           - Option is used when device_type is pxe and interface_source is mac.
+        type: str
       sd_card_subtype:
         description:
           - The subtype for the selected device type.
           - Option is used when device_type is sd_card.
+        type: str
         choices: [None, flex-util, flex-flash, SDCARD]
         default: None
       lun:
@@ -139,21 +159,23 @@ options:
           - The Logical Unit Number (LUN) of the device.
           - Option is used when device_type is pch, san and sd_card.
           - The LUN need to be an integer from 0 to 255.
+        type: int
       usb_subtype:
         description:
           - The subtype for the selected device type.
           - Option is used when device_type is usb.
+        type: str
         choices: [None, usb-cd, usb-fdd, usb-hdd]
         default: None
       virtual_media_subtype:
         description:
           - The subtype for the selected device type.
           - Option is used when device_type is virtual_media.
+        type: str
         choices: [None, cimc-mapped-dvd, cimc-mapped-hdd, kvm-mapped-dvd, kvm-mapped-hdd, kvm-mapped-fdd]
         default: None
 author:
   - Tse Kai "Kevin" Chan (@BrightScale)
-version_added: '2.10'
 '''
 
 EXAMPLES = r'''
@@ -227,14 +249,14 @@ def main():
         ),
         device_name=dict(type='str', required=True),
         # iscsi and pxe options
-        network_slot=dict(type='str', default=''),
-        port=dict(type='int', default=0),
+        network_slot=dict(type='str', choices=['1 - 255', 'MLOM', 'L', 'L1', 'L2', 'OCP']),
+        port=dict(type='int'),
         # local disk options
-        controller_slot=dict(type='str', default=''),
+        controller_slot=dict(type='str', choices=['1-255', 'M', 'HBA', 'SAS', 'RAID', 'MRAID', 'MSTOR-RAID']),
         # bootloader options
-        bootloader_name=dict(type='str', default=''),
-        bootloader_description=dict(type='str', default=''),
-        bootloader_path=dict(type='str', default=''),
+        bootloader_name=dict(type='str'),
+        bootloader_description=dict(type='str'),
+        bootloader_path=dict(type='str'),
         # pxe only options
         ip_type=dict(
             type='str',
@@ -254,8 +276,8 @@ def main():
             ],
             default='name'
         ),
-        interface_name=dict(type='str', default=''),
-        mac_address=dict(type='str', default=''),
+        interface_name=dict(type='str'),
+        mac_address=dict(type='str'),
         # sd card options
         sd_card_subtype=dict(
             type='str',
@@ -268,7 +290,7 @@ def main():
             default='None',
         ),
         # lun for pch, san, sd_card
-        lun=dict(type='int', default=0),
+        lun=dict(type='int'),
         # usb options
         usb_subtype=dict(
             type='str',
@@ -299,8 +321,8 @@ def main():
         state=dict(type='str', choices=['present', 'absent'], default='present'),
         organization=dict(type='str', default='default'),
         name=dict(type='str', required=True),
-        description=dict(type='str', aliases=['descr'], default=''),
-        tags=dict(type='list', default=[]),
+        description=dict(type='str', aliases=['descr']),
+        tags=dict(type='list', elements='dict'),
         configured_boot_mode=dict(type='str', choices=['Legacy', 'Uefi'], default='Legacy'),
         uefi_enable_secure_boot=dict(type='bool', default=False),
         boot_devices=dict(type='list', elements='dict', options=boot_device),

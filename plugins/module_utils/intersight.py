@@ -52,7 +52,7 @@ except ImportError:
     HAS_CRYPTOGRAPHY = False
 
 intersight_argument_spec = dict(
-    api_private_key=dict(fallback=(env_fallback, ['INTERSIGHT_API_PRIVATE_KEY']), type='path', required=True, no_log=True),
+    api_private_key=dict(fallback=(env_fallback, ['INTERSIGHT_API_PRIVATE_KEY']), type='str', required=True, no_log=True),
     api_uri=dict(fallback=(env_fallback, ['INTERSIGHT_API_URI']), type='str', default='https://intersight.com/api/v1'),
     api_key_id=dict(fallback=(env_fallback, ['INTERSIGHT_API_KEY_ID']), type='str', required=True),
     validate_certs=dict(type='bool', default=True),
