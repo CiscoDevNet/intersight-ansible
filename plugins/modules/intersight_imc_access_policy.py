@@ -24,25 +24,31 @@ options:
     description:
       - If C(present), will verify the resource is present and will create if needed.
       - If C(absent), will verify the resource is absent and will delete if needed.
+    type: str
     choices: [present, absent]
     default: present
   organization:
     description:
       - The name of the Organization this resource is assigned to.
       - Profiles and Policies that are created within a Custom Organization are applicable only to devices in the same Organization.
+    type: str
     default: default
   name:
     description:
       - The name assigned to the IMC Access Policy.
       - The name must be between 1 and 62 alphanumeric characters, allowing special characters :-_.
+    type: str
     required: true
   tags:
     description:
       - List of tags in Key:<user-defined key> Value:<user-defined value> format.
-  descrption:
+    type: list
+    elements: dict
+  description:
     description:
       - The user-defined description of the IMC access policy.
       - Description can contain letters(a-z, A-Z), numbers(0-9), hyphen(-), period(.), colon(:), or an underscore(_).
+    type: str
     aliases: [descr]
   vlan_id:
     description:
@@ -52,10 +58,10 @@ options:
   ip_pool:
     description:
       - IP Pool used to assign IP address and other required network settings.
+    type: str
     required: true
 author:
   - David Soper (@dsoper2)
-version_added: '2.10'
 '''
 
 EXAMPLES = r'''
@@ -117,8 +123,8 @@ def main():
         state=dict(type='str', choices=['present', 'absent'], default='present'),
         organization=dict(type='str', default='default'),
         name=dict(type='str', required=True),
-        description=dict(type='str', aliases=['descr'], default=''),
-        tags=dict(type='list', default=[]),
+        description=dict(type='str', aliases=['descr']),
+        tags=dict(type='list', elements='dict'),
         vlan_id=dict(type='int', required=True),
         ip_pool=dict(type='str', required=True),
     )

@@ -16,6 +16,8 @@
       api_uri: "{{ api_uri | default(omit) }}"
       validate_certs: "{{ validate_certs | default(omit) }}"
       state: "{{ state | default(omit) }}"
+    # Organization name
+    org_name: dsoper-DevNet
     #
     # Example using vault:
     # 1. Place the vault password into a plain text file (this is the password for vault access - do not check this into any repos!)
@@ -39,6 +41,7 @@
     - name: Configure Local User policy
       intersight_local_user_policy:
         <<: *api_info
+        organization: "{{ org_name }}"
         name: "{{ local_user_policy | default('guest-admin') }}"
         tags:
           - Key: username

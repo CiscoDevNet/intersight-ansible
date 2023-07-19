@@ -4,8 +4,6 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
-from ansible_collections.cisco.intersight.plugins.module_utils.intersight import IntersightModule, intersight_argument_spec, compare_values
-from ansible.module_utils.basic import AnsibleModule
 __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
@@ -47,6 +45,7 @@ options:
     - The paylod for API requests used to modify resources.
     - Should be used instead of api_body if a list is required in the API payload.
     type: list
+    elements: dict
   return_list:
     description:
     - If C(yes), will return a list of API results in the api_response.
@@ -58,12 +57,12 @@ options:
     description:
     - If C(present), will verify the resource is present and will create if needed.
     - If C(absent), will verify the resource is absent and will delete if needed.
+    type: str
     choices: [present, absent]
     default: present
 author:
 - David Soper (@dsoper2)
 - CiscoUcs (@CiscoUcs)
-version_added: '2.8'
 '''
 
 EXAMPLES = r'''
@@ -137,15 +136,18 @@ api_repsonse:
     }
 '''
 
+from ansible_collections.cisco.intersight.plugins.module_utils.intersight import IntersightModule, intersight_argument_spec, compare_values
+from ansible.module_utils.basic import AnsibleModule
+
 
 def main():
     argument_spec = intersight_argument_spec
     argument_spec.update(
         resource_path=dict(type='str', required=True),
-        query_params=dict(type='dict', default={}),
+        query_params=dict(type='dict'),
         update_method=dict(type='str', choices=['patch', 'post'], default='patch'),
-        api_body=dict(type='dict', default={}),
-        list_body=dict(type='list', default=[]),
+        api_body=dict(type='dict'),
+        list_body=dict(type='list', elements='dict'),
         return_list=dict(type='bool', default=False),
         state=dict(type='str', choices=['absent', 'present'], default='present'),
     )

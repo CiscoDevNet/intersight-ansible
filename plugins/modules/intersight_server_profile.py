@@ -24,63 +24,77 @@ options:
     description:
       - If C(present), will verify the resource is present and will create if needed.
       - If C(absent), will verify the resource is absent and will delete if needed.
+    type: str
     choices: [present, absent]
     default: present
   organization:
     description:
       - The name of the Organization this resource is assigned to.
       - Profiles and Policies that are created within a Custom Organization are applicable only to devices in the same Organization.
+    type: str
     default: default
   name:
     description:
       - The name assigned to the Server Profile.
       - The name must be between 1 and 62 alphanumeric characters, allowing special characters :-_.
+    type: str
     required: true
   target_platform:
     description:
       - The platform for which the server profile is applicable.
       - Can either be a server that is operating in Standalone mode or which is attached to a Fabric Interconnect (FIAttached) managed by Intersight.
+    type: str
     choices: [Standalone, FIAttached]
     default: Standalone
   tags:
     description:
       - List of tags in Key:<user-defined key> Value:<user-defined value> format.
+    type: list
+    elements: dict
   description:
     description:
       - The user-defined description of the Server Profile.
       - Description can contain letters(a-z, A-Z), numbers(0-9), hyphen(-), period(.), colon(:), or an underscore(_).
+    type: str
     aliases: [descr]
   assigned_server:
     description:
       - Managed Obect ID (MOID) of assigned server.
       - Option can be omitted if user wishes to assign server later.
+    type: str
   boot_order_policy:
     description:
       - Name of Boot Order Policy to associate with this profile.
+    type: str
   imc_access_policy:
     description:
       - Name of IMC Access Policy to associate with this profile.
+    type: str
   lan_connectivity_policy:
     description:
       - Name of LAN Connectivity Policy to associate with this profile.
+    type: str
   local_user_policy:
     description:
       - Name of Local User Policy to associate with this profile.
+    type: str
   ntp_policy:
     description:
       - Name of NTP Policy to associate with this profile.
+    type: str
   storage_policy:
     description:
       - Name of Storage Policy to associate with this profile.
+    type: str
   virtual_media_policy:
     description:
       - Name of Virtual Media Policy to associate with this profile.
+    type: str
 author:
   - David Soper (@dsoper2)
   - Sid Nath (@SidNath21)
   - Tse Kai "Kevin" Chan (@BrightScale)
   - Soma Tummala (@SOMATUMMALA21)
-version_added: '2.10'
 '''
 
 EXAMPLES = r'''
@@ -199,9 +213,9 @@ def main():
         organization=dict(type='str', default='default'),
         name=dict(type='str', required=True),
         target_platform=dict(type='str', choices=['Standalone', 'FIAttached'], default='Standalone'),
-        tags=dict(type='list', default=[]),
-        description=dict(type='str', aliases=['descr'], default=''),
-        assigned_server=dict(type='str', default=''),
+        tags=dict(type='list', elements='dict'),
+        description=dict(type='str', aliases=['descr']),
+        assigned_server=dict(type='str'),
         boot_order_policy=dict(type='str'),
         imc_access_policy=dict(type='str'),
         lan_connectivity_policy=dict(type='str'),

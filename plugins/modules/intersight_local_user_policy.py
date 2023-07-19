@@ -24,25 +24,31 @@ options:
     description:
       - If C(present), will verify the resource is present and will create if needed.
       - If C(absent), will verify the resource is absent and will delete if needed.
+    type: str
     choices: [present, absent]
     default: present
   organization:
     description:
       - The name of the Organization this resource is assigned to.
       - Profiles and Policies that are created within a Custom Organization are applicable only to devices in the same Organization.
+    type: str
     default: default
   name:
     description:
       - The name assigned to the Local User Policy.
       - The name must be between 1 and 62 alphanumeric characters, allowing special characters :-_.
+    type: str
     required: true
   tags:
     description:
       - List of tags in Key:<user-defined key> Value:<user-defined value> format.
+    type: list
+    elements: dict
   description:
     description:
       - The user-defined description of the Local User policy.
       - Description can contain letters(a-z, A-Z), numbers(0-9), hyphen(-), period(.), colon(:), or an underscore(_).
+    type: str
     aliases: [descr]
   enforce_strong_password:
     description:
@@ -74,10 +80,13 @@ options:
       - An admin user already exists on the endpoint.
       - Add the admin user here only if you want to change the password, or enable or disable the user.
       - To add admin user, provide a username as 'admin', select the admin user role, and then proceed.
+    type: list
+    elements: dict
     suboptions:
       username:
         description:
           - Name of the user created on the endpoint.
+        type: str
         required: true
       enable:
         description:
@@ -87,26 +96,29 @@ options:
       role:
         description:
           - Roles associated with the user on the endpoint.
+        type: str
         choices: [admin, readonly, user]
         required: true
       password:
         description:
           - Valid login password of the user.
+        type: str
         required: true
   purge:
     description:
       - The purge argument instructs the module to consider the resource definition absolute.
       - If true, any previously configured usernames will be removed from the policy with the exception of the `admin` user which cannot be deleted.
+    type: bool
     default: false
   always_update_password:
     description:
       - Since passwords are not returned by the API and are encrypted on the endpoint, this option will instruct the module when to change the password.
       - If true, the password for each user will always be updated in the policy.
       - If false, the password will be updated only if the user is created.
+    type: bool
     default: false
 author:
   - David Soper (@dsoper2)
-version_added: '2.10'
 '''
 
 EXAMPLES = r'''
@@ -169,12 +181,12 @@ def main():
         state=dict(type='str', choices=['present', 'absent'], default='present'),
         organization=dict(type='str', default='default'),
         name=dict(type='str', required=True),
-        description=dict(type='str', aliases=['descr'], default=''),
-        tags=dict(type='list', default=[]),
+        description=dict(type='str', aliases=['descr']),
+        tags=dict(type='list', elements='dict'),
         enforce_strong_password=dict(type='bool', default=True, no_log=False),
         enable_password_expiry=dict(type='bool', default=False, no_log=False),
         password_history=dict(type='int', default=5, no_log=False),
-        local_users=dict(type='list', elements='dict', options=local_user, default=[]),
+        local_users=dict(type='list', elements='dict', options=local_user),
         purge=dict(type='bool', default=False),
         always_update_password=dict(type='bool', default=False, no_log=False),
     )

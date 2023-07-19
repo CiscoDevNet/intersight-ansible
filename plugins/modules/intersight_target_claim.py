@@ -4,8 +4,6 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
-from ansible_collections.cisco.intersight.plugins.module_utils.intersight import IntersightModule, intersight_argument_spec
-from ansible.module_utils.basic import AnsibleModule
 __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
@@ -27,23 +25,23 @@ options:
     - Claim code required for registering a new Target
     - Required if I(state=present)
     type: str
-    required: no
+    required: false
   device_id:
     description:
     - Device id (serial number) of target
     - Targets containing multiple Target ids (e.g. IMM) can be formatted as <target1_id>&<target2_id>
-    type: dict
-    required: yes
+    type: str
+    required: true
   state:
     description:
     - If C(present), will verify the resource is present and will create if needed.
     - If C(absent), will verify the resource is absent and will delete if needed.
+    type: str
     choices: [present, absent]
     default: present
 author:
 - Brandon Beck (@techBeck03)
 - CiscoUcs (@CiscoUcs)
-version_added: '2.8'
 '''
 
 EXAMPLES = r'''
@@ -102,6 +100,9 @@ api_repsonse:
       "trace_id": "NB3e883980a98adace8f7b9c2409cced1a"
     }
 '''
+
+from ansible_collections.cisco.intersight.plugins.module_utils.intersight import IntersightModule, intersight_argument_spec
+from ansible.module_utils.basic import AnsibleModule
 
 
 def main():

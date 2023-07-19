@@ -24,26 +24,31 @@ options:
     description:
       - If C(present), will verify the resource is present and will create if needed.
       - If C(absent), will verify the resource is absent and will delete if needed.
+    type: str
     choices: [present, absent]
     default: present
   organization:
     description:
       - The name of the Organization this resource is assigned to.
       - Profiles and Policies that are created within a Custom Organization are applicable only to devices in the same Organization.
+    type: str
     default: default
   name:
     description:
       - The name assigned to the NTP policy.
       - The name must be between 1 and 62 alphanumeric characters, allowing special characters :-_.
+    type: str
     required: true
   tags:
     description:
       - List of tags in Key:<user-defined key> Value:<user-defined value> format.
     type: list
-  descrption:
+    elements: dict
+  description:
     description:
       - The user-defined description of the NTP policy.
       - Description can contain letters(a-z, A-Z), numbers(0-9), hyphen(-), period(.), colon(:), or an underscore(_).
+    type: str
     aliases: [descr]
   enable:
     description:
@@ -63,6 +68,7 @@ options:
   cdd_virtual_media:
     description:
       - CDD Virtual Media image mapping options.
+    type: dict
     suboptions:
       enable:
         description:
@@ -77,41 +83,62 @@ options:
           - For HTTP, ensure port 80 is accessible.
           - For HTTPS, ensure port 443 is accessible.
           - For NFS, ensure port 2049 is accessible.
+        type: str
         choices: [nfs,cifs,http,https]
         required: true
       volume:
         description:
           - A user defined name of the image mounted for mapping.
+        type: str
         required: true
       remote_hostname:
         description:
           - Hostname or IP address of the server hosting the virtual media image.
+        type: str
         required: true
       remote_path:
         description:
           - Filepath (not including the filename) of the remote image.
           - Ex. mnt/SHARE/ISOS
+        type: str
         required: true
       remote_file:
         description:
           - Filename of the remote image.
           - Ex. custom_image.iso
+        type: str
         required: true
       username:
         description:
           - The username for the specified Mount Type, if required.
+        type: str
       password:
         description:
           - The password for the selected username, if required.
+        type: str
+      mount_options:
+        description:
+          - Mount options for the Virtual Media mapping.
+          - For NFS, supported options are ro, rw, nolock, noexec, soft, port=VALUE, timeo=VALUE, retry=VALUE
+          - For CIFS, supported options are soft, nounix, noserverino, guest
+        type: str
+        required: false
+      authentication_protocol:
+        description:
+          - Authentication Protocol for CIFS Mount Type
+        type: str
+        default: none
+        required: false
   hdd_virtual_media:
     description:
       - HDD Virtual Media image mapping options.
+    type: dict
     suboptions:
       enable:
         description:
           - Enable or disable HDD image mapping.
         type: bool
-        default: false
+        default: true
       mount_type:
         description:
           - Type (protocol) of network share used by the remote_hostname.
@@ -120,46 +147,55 @@ options:
           - For HTTP, ensure port 80 is accessible.
           - For HTTPS, ensure port 443 is accessible.
           - For NFS, ensure port 2049 is accessible.
+        type: str
         choices: [nfs,cifs,http,https]
         required: true
       volume:
         description:
           - A user defined name of the image mounted for mapping.
+        type: str
         required: true
       remote_hostname:
         description:
           - Hostname or IP address of the server hosting the virtual media image.
+        type: str
         required: true
       remote_path:
         description:
           - Filepath (not including the filename) of the remote image.
           - Ex. mnt/SHARE/ISOS
+        type: str
         required: true
       remote_file:
         description:
           - Filename of the remote image.
           - Ex. custom_image.iso
+        type: str
         required: true
       username:
         description:
           - The username for the specified Mount Type, if required.
+        type: str
       password:
         description:
           - The password for the selected username, if required.
+        type: str
       mount_options:
         description:
           - Mount options for the Virtual Media mapping.
           - For NFS, supported options are ro, rw, nolock, noexec, soft, port=VALUE, timeo=VALUE, retry=VALUE
           - For CIFS, supported options are soft, nounix, noserverino, guest
+        type: str
         required: false
       authentication_protocol:
         description:
           - Authentication Protocol for CIFS Mount Type
+        type: str
+        default: none
         required: false
 author:
   - David Soper (@dsoper2)
   - Sid Nath (@SidNath21)
-version_added: '2.10'
 '''
 
 EXAMPLES = r'''
@@ -227,9 +263,9 @@ def main():
         remote_hostname=dict(type='str', required=True),
         remote_path=dict(type='str', required=True),
         remote_file=dict(type='str', required=True),
-        mount_options=dict(type='str', default=''),
-        username=dict(type='str', default=''),
-        password=dict(type='str', default='', no_log=True),
+        mount_options=dict(type='str'),
+        username=dict(type='str'),
+        password=dict(type='str', no_log=True),
         authentication_protocol=dict(type='str', default='none'),
     )
     argument_spec = intersight_argument_spec
@@ -237,8 +273,8 @@ def main():
         state=dict(type='str', choices=['present', 'absent'], default='present'),
         organization=dict(type='str', default='default'),
         name=dict(type='str', required=True),
-        description=dict(type='str', aliases=['descr'], default=''),
-        tags=dict(type='list', default=[]),
+        description=dict(type='str', aliases=['descr']),
+        tags=dict(type='list', elements='dict'),
         enable=dict(type='bool', default=True),
         encryption=dict(type='bool', default=False),
         low_power_usb=dict(type='bool', default=True),
