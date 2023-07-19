@@ -6,7 +6,7 @@ Ansible collection for managing and automating Cisco Intersight environments.  M
 
 ## Requirements
 
-- Ansible v2.8 or newer
+- Ansible v2.9.10 or newer
 - Python 3 (Python 2 is no longer supported with this collection)
 
 
@@ -87,3 +87,7 @@ ansible-playbook -i inventory update_all_inventory.yml
 
 * We are on Slack (https://ciscoucs.slack.com/) - Slack requires registration, but the ucspython team is open invitation to
   anyone.  Click [here](https://ucspython.herokuapp.com) to register 
+
+# License
+
+Licensed under the [MIT License](https://github.com/CiscoDevNet/intersight-ansible/blob/main/LICENSE.txt).

@@ -24,11 +24,10 @@ options:
     - Server names to retrieve information from.
     - An empty list will return all servers.
     type: list
-    required: yes
+    elements: str
 author:
 - David Soper (@dsoper2)
 - CiscoUcs (@CiscoUcs)
-version_added: '2.8'
 '''
 
 EXAMPLES = r'''
@@ -97,7 +96,7 @@ def get_servers(module, intersight):
 def main():
     argument_spec = intersight_argument_spec
     argument_spec.update(
-        server_names=dict(type='list', required=True),
+        server_names=dict(type='list', elements='str'),
     )
 
     module = AnsibleModule(
