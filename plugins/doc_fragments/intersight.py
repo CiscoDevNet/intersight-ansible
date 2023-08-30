@@ -25,7 +25,7 @@ options:
     - "    <your private key data>"
     - "    -----END EC PRIVATE KEY-----'"
     - If not set, the value of the INTERSIGHT_API_PRIVATE_KEY environment variable is used.
-    type: str
+    type: path
     required: yes
   api_uri:
     description:
