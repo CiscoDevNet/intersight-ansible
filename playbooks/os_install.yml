@@ -22,7 +22,7 @@
     # OS and SCU Versions
     os_version: ESXi 7.0 U3
     os_config: ESXi7.0ConfigFile
-    scu_version: 6.2.2a
+    scu_version: 6.2.3b
     org_name: default
     #
     # Example using vault:
@@ -108,13 +108,19 @@
                 },
                 "Answers": {
                   "Hostname": "sjc07-r14-1-1-6",
-                  "IpConfigType": "DHCP",
+                  "IpConfigType": "static",
                   "RootPassword": "{{ vault_password }}",
                   "IsRootPasswordCrypted": false,
                   "Source": "Template",
                   "IpConfiguration": {
-                    "ObjectType": "os.Ipv4Configuration"
-                  }
+                    "ObjectType": "os.Ipv4Configuration",
+                    "IpV4Config": {
+                      "Gateway": "10.10.10.1",
+                      "IpAddress": "10.10.10.10",
+                      "Netmask": "255.255.255.0"
+                    },
+                  },
+                  "NameServer": "10.10.10.2"
                 },
                 "ConfigurationFile": {
                   "Moid": "{{ os_config_resp.api_response.Moid }}",
