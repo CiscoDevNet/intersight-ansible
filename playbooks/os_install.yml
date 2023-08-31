@@ -119,7 +119,7 @@
                   },
                   "IsRootPasswordCrypted": false,
                   "Nameserver": "170.70.168.183",
-                  "RootPassword": "password",
+                  "RootPassword": "{{ vault_password }}",
                   "Source": "Template"
                 },
                 "ConfigurationFile": {
