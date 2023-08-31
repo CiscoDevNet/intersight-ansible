@@ -107,20 +107,20 @@
                   "Moid": "{{ org_resp.api_response.Moid }}"
                 },
                 "Answers": {
-                  "Hostname": "sjc07-r14-1-1-6",
+                  "Hostname": "localhost",
                   "IpConfigType": "static",
-                  "RootPassword": "{{ vault_password }}",
-                  "IsRootPasswordCrypted": false,
-                  "Source": "Template",
                   "IpConfiguration": {
-                    "ObjectType": "os.Ipv4Configuration",
                     "IpV4Config": {
-                      "Gateway": "10.10.10.1",
-                      "IpAddress": "10.10.10.10",
-                      "Netmask": "255.255.255.0"
+                      "Gateway": "172.22.248.1",
+                      "IpAddress": "172.22.248.230",
+                      "Netmask": "255.255.252.0"
                     },
+                    "ObjectType": "os.Ipv4Configuration"
                   },
-                  "NameServer": "10.10.10.2"
+                  "IsRootPasswordCrypted": false,
+                  "Nameserver": "170.70.168.183",
+                  "RootPassword": "password",
+                  "Source": "Template"
                 },
                 "ConfigurationFile": {
                   "Moid": "{{ os_config_resp.api_response.Moid }}",
@@ -128,10 +128,10 @@
                 },
                 "AdditionalParameters": null,
                 "InstallTarget": {
-                  "ObjectType": "os.PhysicalDisk",
-                  "Name": "Disk 1",
-                  "StorageControllerSlotId": "1",
-                  "SerialNumber": "99B0A05NFJXF"
+                  "Id": "0",
+                  "Name": "DevNet-RAID1",
+                  "ObjectType": "os.VirtualDrive",
+                  "StorageControllerSlotId": "1"
                 },
                 "Server": {
                   "ObjectType": "compute.{{ object_type }}",
