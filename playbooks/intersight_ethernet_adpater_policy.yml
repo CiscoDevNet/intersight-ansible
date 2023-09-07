@@ -1,0 +1,81 @@
+---
+# Example Playbook: cisco.intersight.intersight_ethernet_adapter_policy
+# Runs on localhost since policies are only configured once
+# Author: Surendra Ramarao (@CRSurendra)
+- hosts: localhost
+  connection: local
+  collections:
+    - cisco.intersight
+  gather_facts: false
+  vars:
+    # Create an anchor for api_info that can be used throughout the file
+    api_info: &api_info
+      # if api_key vars are omitted, INTERSIGHT_API_KEY_ID, INTERSIGHT_API_PRIVATE_KEY,
+      # and INTERSIGHT_API_URI environment variables used for API key data
+      api_private_key: "{{ api_private_key | default(omit) }}"
+      api_key_id: "{{ api_key_id | default(omit) }}"
+      api_uri: "{{ api_uri | default(omit) }}"
+      validate_certs: "{{ validate_certs | default(omit) }}"
+      state: "{{ state | default('present') }}"
+    # Organization name
+    org_name: Cloudera-SZR-Org
+  tasks:
+    - name: Configure Ethernet Adpater Policy
+      intersight_ethernet_adapter_policy:
+        <<: *api_info
+        organization: "{{ org_name }}"
+        name: TEST_EAP
+        description: EA Policy for lab use
+        tags:
+          - Key: Site
+            Value: RCDN
+        advanced_filter: true
+        arfs_settings:
+          - enabled: true
+        completion_queue_settings:
+          - count: 4
+        interrupt_scaling: true
+        interrupt_settings:
+          - coalescing_time: 100
+            coalescing_type: MIN
+            count: 5
+            mode: MSIx
+        nvgre_settings:
+          - enabled: false
+        ptp_settings:
+          - enabled : true
+        roce_settings:
+          - class_of_service: 4
+            enabled: true
+            memory_regions: 256
+            queue_pairs: 128
+            resource_groups: 2
+            version: 2
+        rss_hash_settings:
+          - ipv4_hash: true
+            ipv6_ext_hash: false
+            ipv6_hash: true
+            tcp_ipv4_hash: true
+            tcp_ipv6_ext_hash: false
+            tcp_ipv6_hash: true
+            udp_ipv4_hash: true
+            udp_ipv6_hash: false
+        rx_queue_settings:
+          - count: 5
+            ring_size: 256
+        tcp_offload_settings:
+          - large_receive: true
+            large_send: false
+            tx_checksum: true
+            rx_checksum: true
+        tx_queue_settings:
+          - count: 1
+            ring_size: 64
+        vxlan_settings:
+          - enabled: true
+            
+
+
+        
+
+        
