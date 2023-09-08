@@ -35,7 +35,7 @@ options:
     type: str
   name:
     description:
-      - The name assigned to the LAN Connectivity policy.
+      - The name assigned to the Ethernet Adapter policy.
       - The name must be between 1 and 62 alphanumeric characters, allowing special characters :-_.
     required: true
     type: str
@@ -348,7 +348,7 @@ EXAMPLES = r'''
     vxlan_settings:
       enabled: True
 
-- name: Delete LAN Connectivity Policy
+- name: Delete Ethernet Adapter Policy
   cisco.intersight.intersight_ethernet_adapter_policy:
     api_private_key: "{{ api_private_key }}"
     api_key_id: "{{ api_key_id }}"
