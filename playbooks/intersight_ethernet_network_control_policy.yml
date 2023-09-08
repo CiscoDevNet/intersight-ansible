@@ -1,5 +1,5 @@
 ---
-# Example Playbook: cisco.intersight.intersight_ethernet_netowrk_policy
+# Example Playbook: cisco.intersight.intersight_ethernet_netowrk_control_policy
 # Runs on localhost since policies are only configured once
 # Author: Surendra Ramarao (@CRSurendra)
 - hosts: localhost
@@ -20,18 +20,23 @@
     # Organization name
     org_name: Cloudera-SZR-Org
   tasks:
-    - name: Configure Ethernet Netwrork Policy
-      intersight_ethernet_network_policy:
+    - name: Configure Ethernet Netwrork Control Policy
+      intersight_ethernet_network_control_policy:
         <<: *api_info
         organization: "{{ org_name }}"
-        name: TEST_ENP
-        description: Ethernet Network Policy for lab use
+        name: TEST_ENCP
+        description: Ethernet Network Control Policy for lab use
         tags:
           - Key: Site
             Value: RCDN
-        vlan_settings:
-          - default_vlan: 693
-            mode: ACCESS
+        cdp_enabled: true
+        forge_mac: allow
+        lldp_settings:
+          - receive_enabled: true
+            transmit_enabled: false
+        mac_registration_mode: nativeVlanOnly
+        uplink_fail_action: linkDown
+      
         
         
 
