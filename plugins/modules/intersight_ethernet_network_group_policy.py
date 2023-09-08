@@ -12,11 +12,11 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = r'''
 ---
-module: intersight_ethernet_network_control_policy
-short_description: Fabric Ethernet Network Control Policy configuration for Cisco Intersight
+module: intersight_ethernet_network_group_policy
+short_description: Fabric Ethernet Network Group Policy configuration for Cisco Intersight
 description:
-  - Fabric Ethernet Network Control Policy configuration for Cisco Intersight.
-  - Used to configure Fabric Ethernet Network Control Policy on Cisco Intersight managed devices.
+  - Fabric Ethernet Network Group Policy configuration for Cisco Intersight.
+  - Used to configure Fabric Ethernet Network Group Policy on Cisco Intersight managed devices.
   - For more information see L(Cisco Intersight,https://intersight.com/apidocs).
 extends_documentation_fragment: intersight
 options:
@@ -50,75 +50,48 @@ options:
       - Description can contain letters(a-z, A-Z), numbers(0-9), hyphen(-), period(.), colon(:), or an underscore(_).
     aliases: [descr]
     type: str
-  cdp_enabled:
+  vlan_settings:
     description:
-      -  Enables the CDP on an interface.
-    default: False
-    type: bool
-  forge_mac:
-    description:
-      -  Determines if the MAC forging is allowed or denied on an interface.
-      -  allow - Allows mac forging on an interface.
-      -  deny - Denies mac forging on an interface.
-    choices: ['allow' , 'deny']
-    default: allow
-    type: str
-  lldp_settings:
-    description:
-      -  Determines the LLDP setting on an interface on the switch.
+      -  VLAN configuration for the virtual interface.
     type: list
     elements: dict
     suboptions:
-      receive_enabled:
+      allowed_vlans:
         description:
-          - Determines if the LLDP frames can be received by an interface on the switch.
-        type: bool
-        default: True
-      transmit_enabled:
+          - Allowed VLAN IDs of the virtual interface. A list of comma seperated VLAN ids and/or VLAN id ranges.
+        type: str
+      native_vlan:
         description:
-          - Determines if the LLDP frames can be transmitted by an interface on the switch.
-        type: bool
-        default: False
-  mac_registration_mode:
-    description:
-      -  Determines the MAC addresses that have to be registered with the switch.
-      -  nativeVlanOnly - Register only the MAC addresses learnt on the native VLAN.
-      -  allVlans - Register all the MAC addresses learnt on all the allowed VLANs.
-    choices: ['nativeVlanOnly' , 'allVlans']
-    default: nativeVlanOnly
-    type: str
-  uplink_fail_action:
-    description:
-      -  Determines the state of the virtual interface (vethernet / vfc) on the switch when a suitable uplink is not pinned.
-      -  linkDown - The vethernet will go down in case a suitable uplink is not pinned.
-      -  warning - The vethernet will remain up even if a suitable uplink is not pinned.
-    choices: ['linkDown' , 'warning']
-    default: linkDown
-    type: str
+          - Native VLAN ID of the virtual interface or the corresponding vethernet on the peer Fabric Interconnect to which the virtual interface is connected.
+          - If the native VLAN is not a part of the allowed VLANs, it will automatically be added to the list of allowed VLANs.
+        type: int
+        default: 1
 author:
   - Surendra Ramarao (@CRSurendra)
 '''
 
 EXAMPLES = r'''
-- name: Configure Fabric Ethernet Network Control Policy
-  cisco.intersight.intersight_ethernet_network_control_policy:
+- name: Configure Fabric Ethernet Network Group Policy
+  cisco.intersight.intersight_ethernet_network_group_policy:
     api_private_key: "{{ api_private_key }}"
     api_key_id: "{{ api_key_id }}"
     organization: DevNet
-    name: COS-ENCP
-    description: Fabric Ethernet Network Control Policy for COS
+    name: COS-ENGP
+    description: Fabric Ethernet Network Group Policy for COS
     tags:
       - Key: Site
         Value: RCDN
-    cdp_enabled: true
+    vlan_settings:
+      - allowed_vlans: 1-3, 5
+        native_vlan: 1
 
 
-- name: Delete Fabric Ethernet Network Control Policy
-  cisco.intersight.intersight_ethernet_network_control_policy:
+- name: Delete Fabric Ethernet Network Group Policy
+  cisco.intersight.intersight_ethernet_network_group_policy:
     api_private_key: "{{ api_private_key }}"
     api_key_id: "{{ api_key_id }}"
     organization: DevNet
-    name: COS-ENCP
+    name: COS-ENGP
     state: absent
 '''
 
@@ -130,7 +103,7 @@ api_repsonse:
   sample:
     "api_response": {
         "Name": "COS-ENWP",
-        "ObjectType": "fabric.EthNetworkControlPolicy",
+        "ObjectType": "fabric.EthNetworkGroupPolicy",
         "Tags": [
             {
                 "Key": "Site",
@@ -143,11 +116,6 @@ api_repsonse:
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible_collections.cisco.intersight.plugins.module_utils.intersight import IntersightModule, intersight_argument_spec
-
-
-def check_and_add_prop(prop, prop_key, params, api_body):
-    if prop_key in params.keys():
-        api_body[prop] = params[prop_key]
 
 
 def check_and_add_prop_dict(prop, prop_key, params, api_body):
@@ -164,9 +132,9 @@ def to_camel_case(snake_str):
 
 
 def main():
-    lldp_settings_spec = {
-        "receive_enabled" : {"type": "bool", "default": True},
-        "transmit_enabled" : {"type": "bool", "default": False}
+    vlan_settings_spec = {
+        "allowed_vlans" : {"type": "str"},
+        "native_vlan" : {"type": "int", "default": 1}
     }
     argument_spec = intersight_argument_spec
     argument_spec.update(
@@ -175,38 +143,10 @@ def main():
         name={"type": "str", "required": True},
         description={"type": "str", "aliases": ['descr']},
         tags={"type": "list", "elements": "dict"},
-        cdp_enabled={
-            "type": "bool",
-            "default": False
-        },
-        forge_mac={
-            "type": "str",
-            "choices": [
-                'allow',
-                'deny'
-            ],
-            "default": "allow"
-        },
-        lldp_settings={
+        vlan_settings={
             "type": "list",
             "elements": "dict",
-            "options": lldp_settings_spec
-        },
-        mac_registration_mode={
-            "type": "str",
-            "choices": [
-                'nativeVlanOnly',
-                'allVlans'
-            ],
-            "default": "nativeVlanOnly"
-        },
-        uplink_fail_action={
-            "type": "str",
-            "choices": [
-                'linkDown',
-                'warning'
-            ],
-            "default": "linkDown"
+            "options": vlan_settings_spec
         },
     )
 
@@ -222,7 +162,7 @@ def main():
     # Argument spec above, resource path, and API body should be the only code changed in each policy module
     #
     # Resource path used to configure policy
-    resource_path = '/fabric/EthNetworkControlPolicies'
+    resource_path = '/fabric/EthNetworkGroupPolicies'
     # Define API body used in compares or create
     intersight.api_body = {
         'Organization': {
@@ -232,12 +172,7 @@ def main():
         'Tags': intersight.module.params['tags'],
         'Description': intersight.module.params['description'],
     }
-    check_and_add_prop('CdpEnabled', 'cdp_enabled', intersight.module.params, intersight.api_body)
-    check_and_add_prop('ForgeMac', 'forge_mac', intersight.module.params, intersight.api_body)
-    check_and_add_prop_dict('LldpSettings', 'lldp_settings', intersight.module.params, intersight.api_body)
-    check_and_add_prop('MacRegistrationMode', 'mac_registration_mode', intersight.module.params, intersight.api_body)
-    check_and_add_prop('UplinkFailAction', 'uplink_fail_action', intersight.module.params, intersight.api_body)
-    check_and_add_prop('NetworkPolicy', 'network_policy', intersight.module.params, intersight.api_body)
+    check_and_add_prop_dict('VlanSettings', 'vlan_settings', intersight.module.params, intersight.api_body)
     #
     # Code below should be common across all policy modules
     #
