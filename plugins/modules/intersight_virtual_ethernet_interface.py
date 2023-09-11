@@ -228,7 +228,7 @@ api_repsonse:
 
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible_collections.cisco.intersight.plugins.module_utils.intersight import IntersightModule, intersight_argument_spec
+from ansible_collections.cisco.intersight.plugins.module_utils.intersight import IntersightModule, intersight_argument_spec, compare_values
 
 
 def check_and_add_prop(prop, prop_key, params, api_body):
@@ -377,10 +377,26 @@ def main():
     check_and_add_prop_policy('LanConnectivityPolicy', 'lan_connectivity_policy', lan_connectivity_policy, intersight.api_body)
     check_and_add_prop_policy('MacPool', 'mac_pool', mac_pool, intersight.api_body)
 
-    #
-    # Code below should be common across all policy modules
-    #
-    intersight.configure_resource(moid=None, resource_path=resource_path, body=intersight.api_body, query_params=None)
+    # Get the current state of the resource
+    filter_str = "Name eq '" + intersight.module.params['name'] + "'"
+    filter_str += "and Parent.Moid eq '" + lan_connectivity_policy['Moid'] + "'"
+
+    intersight.get_resource(
+            resource_path=resource_path,
+            query_params={
+                '$filter': filter_str,
+            }
+        )
+    vnic_moid = None
+    resource_values_match = False
+    if intersight.result['api_response'].get('Moid'):
+      # resource exists and moid was returned
+      vnic_moid = intersight.result['api_response']['Moid']
+      resource_values_match = compare_values(intersight.api_body, intersight.result['api_response'])
+    intersight.result['api_response'] = {}
+    intersight.result['trace_id'] = ''
+    if not resource_values_match:
+      intersight.configure_resource(moid=vnic_moid, resource_path=resource_path, body=intersight.api_body, query_params=None)
     
     module.exit_json(**intersight.result)
 
