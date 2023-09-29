@@ -50,10 +50,16 @@ options:
       - Description can contain letters(a-z, A-Z), numbers(0-9), hyphen(-), period(.), colon(:), or an underscore(_).
     type: str
     aliases: [descr]
+  out_of_band:
+    description:
+      - If C(true), will enable Out-Of-Band configuration.
+      - If C(false), will enable In-Band configuration.
+    type: bool
+    default: false
   vlan_id:
     description:
       - VLAN to be used for server access over Inband network.
-    required: true
+      - Required if C(out_of_band) is C(false).
     type: int
   ip_pool:
     description:
@@ -125,34 +131,89 @@ def main():
         name=dict(type='str', required=True),
         description=dict(type='str', aliases=['descr']),
         tags=dict(type='list', elements='dict'),
-        vlan_id=dict(type='int', required=True),
+        out_of_band=dict(type='bool', default=False),
+        vlan_id=dict(type='int'),
         ip_pool=dict(type='str', required=True),
     )
 
     module = AnsibleModule(
         argument_spec,
+        required_if=[
+            ('out_of_band', False, ['vlan_id']),
+        ],
         supports_check_mode=True,
     )
 
     intersight = IntersightModule(module)
+
+    organization_moid = None
+    # GET Organization Moid
+    intersight.get_resource(
+        resource_path='/organization/Organizations',
+        query_params={
+            '$filter': "Name eq '" + intersight.module.params['organization'] + "'",
+            '$select': 'Moid',
+        },
+    )
+    if intersight.result['api_response'].get('Moid'):
+        # resource exists and moid was returned
+        organization_moid = intersight.result['api_response']['Moid']
+
+    ip_pool_moid = None
+    # GET IP Pool Moid
+    filter_str = "Name eq '" + intersight.module.params['ip_pool'] + "'"
+    filter_str += "and Organization.Moid eq '" + organization_moid + "'"
+    intersight.get_resource(
+        resource_path='/ippool/Pools',
+        query_params={
+            '$filter': filter_str,
+            '$select': 'Moid',
+        },
+    )
+    if intersight.result['api_response'].get('Moid'):
+        # resource exists and moid was returned
+        ip_pool_moid = intersight.result['api_response']['Moid']
+
     intersight.result['api_response'] = {}
     intersight.result['trace_id'] = ''
     intersight.api_body = {
         'Name': intersight.module.params['name'],
         'Tags': intersight.module.params['tags'],
         'Description': intersight.module.params['description'],
-        'InbandVlan': intersight.module.params['vlan_id'],
         'Organization': {
             'Name': intersight.module.params['organization'],
         },
     }
 
+    if intersight.module.params['out_of_band']:
+        intersight.api_body['ConfigurationType'] = {
+            'ObjectType': 'access.ConfigurationType',
+            'ConfigureInband': False,
+            'ConfigureOutOfBand': True,
+        }
+        intersight.api_body['OutOfBandIpPool'] = {
+            'ObjectType': 'ippool.Pool',
+            'Moid': ip_pool_moid,
+        }
+    else:
+        intersight.api_body['InbandVlan'] = intersight.module.params['vlan_id']
+        intersight.api_body['ConfigurationType'] = {
+            'ObjectType': 'access.ConfigurationType',
+            'ConfigureInband': True,
+            'ConfigureOutOfBand': False,
+        }
+        intersight.api_body['InbandIpPool'] = {
+            'ObjectType': 'ippool.Pool',
+            'Moid': ip_pool_moid,
+        }
+
     # get the current state of the resource
+    filter_str = "Name eq '" + intersight.module.params['name'] + "'"
+    filter_str += "and Organization.Moid eq '" + organization_moid + "'"
     intersight.get_resource(
         resource_path='/access/Policies',
         query_params={
-            '$filter': "Name eq '" + intersight.module.params['name'] + "'",
-            '$expand': 'Organization',
+            '$filter': filter_str,
         },
     )
 
@@ -174,18 +235,6 @@ def main():
         # remove read-only Organization key
         intersight.api_body.pop('Organization')
         if not moid:
-            # GET Organization Moid
-            intersight.get_resource(
-                resource_path='/organization/Organizations',
-                query_params={
-                    '$filter': "Name eq '" + intersight.module.params['organization'] + "'",
-                    '$select': 'Moid',
-                },
-            )
-            organization_moid = None
-            if intersight.result['api_response'].get('Moid'):
-                # resource exists and moid was returned
-                organization_moid = intersight.result['api_response']['Moid']
             # Organization must be set, but can't be changed after initial POST
             intersight.api_body['Organization'] = {
                 'Moid': organization_moid,
@@ -195,7 +244,7 @@ def main():
             resource_path='/access/Policies',
             body=intersight.api_body,
             query_params={
-                '$filter': "Name eq '" + intersight.module.params['name'] + "'",
+                '$filter': filter_str,
             },
         )
 
