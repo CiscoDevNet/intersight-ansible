@@ -29,11 +29,13 @@
         tags:
           - Key: Site
             Value: RCDN
-        configured_boot_mode: Legacy
+        configured_boot_mode: Uefi
         boot_devices:
           - device_type: Local Disk
             device_name: Boot-Lun
             controller_slot: MRAID
+          - device_type: NVMe
+            device_name: NVMe
           - device_type: Virtual Media
             device_name: vmedia
           - device_type: Local CDD

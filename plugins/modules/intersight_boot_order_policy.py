@@ -113,16 +113,19 @@ options:
           - Details of the bootloader to be used during boot from local disk.
           - Option is used when device_type is local_disk and configured_boot_mode is Uefi.
         type: str
+        default: ''
       bootloader_description:
         description:
           - Details of the bootloader to be used during boot from local disk.
           - Option is used when device_type is local_disk and configured_boot_mode is Uefi.
         type: str
+        default: ''
       bootloader_path:
         description:
           - Details of the bootloader to be used during boot from local disk.
           - Option is used when device_type is local_disk and configured_boot_mode is Uefi.
         type: str
+        default: ''
       ip_type:
         description:
           - The IP Address family type to use during the PXE Boot process.
@@ -254,9 +257,9 @@ def main():
         # local disk options
         controller_slot=dict(type='str', choices=['1-255', 'M', 'HBA', 'SAS', 'RAID', 'MRAID', 'MSTOR-RAID']),
         # bootloader options
-        bootloader_name=dict(type='str'),
-        bootloader_description=dict(type='str'),
-        bootloader_path=dict(type='str'),
+        bootloader_name=dict(type='str', default=''),
+        bootloader_description=dict(type='str', default=''),
+        bootloader_path=dict(type='str', default=''),
         # pxe only options
         ip_type=dict(
             type='str',
@@ -395,8 +398,8 @@ def main():
             elif device['device_type'] == 'NVMe':
                 intersight.api_body['BootDevices'].append(
                     {
-                        "ClassId": "boot.NVMe",
-                        "ObjectType": "boot.NVMe",
+                        "ClassId": "boot.Nvme",
+                        "ObjectType": "boot.Nvme",
                         "Enabled": device['enabled'],
                         "Name": device['device_name'],
                         "Bootloader": {
