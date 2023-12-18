@@ -1,10 +1,9 @@
 ---
 # Example Playbook: cisco.intersight.intersight_..._policy
 # Runs on localhost since policies are only configured once
-- hosts: localhost
+- name: Configure Out of Band IMC Access policy
+  hosts: localhost
   connection: local
-  collections:
-    - cisco.intersight
   gather_facts: false
   vars:
     # Create an anchor for api_info that can be used throughout the file
@@ -20,7 +19,7 @@
     org_name: Demo-DevNet
   tasks:
     - name: Configure Out of Band IMC Access policy
-      intersight_imc_access_policy:
+      cisco.intersight.intersight_imc_access_policy:
         <<: *api_info
         organization: "{{ org_name }}"
         name: "{{ imc_access_name | default('sjc07-imc-access') }}"

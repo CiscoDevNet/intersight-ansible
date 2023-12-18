@@ -1,10 +1,9 @@
 ---
 # Example Playbook: cisco.intersight.intersight_..._policy
 # Runs on localhost since policies are only configured once
-- hosts: localhost
+- name: Configure Local User policy
+  hosts: localhost
   connection: local
-  collections:
-    - cisco.intersight
   gather_facts: false
   vars:
     # Create an anchor for api_info that can be used throughout the file
@@ -39,7 +38,7 @@
           3538
   tasks:
     - name: Configure Local User policy
-      intersight_local_user_policy:
+      cisco.intersight.intersight_local_user_policy:
         <<: *api_info
         organization: "{{ org_name }}"
         name: "{{ local_user_policy | default('guest-admin') }}"
