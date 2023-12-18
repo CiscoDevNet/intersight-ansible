@@ -6,7 +6,7 @@ Ansible collection for managing and automating Cisco Intersight environments.  M
 
 ## Requirements
 
-- Ansible v2.9.10 or newer
+- Ansible v2.14.0 or newer
 - Python 3.7 or newer (Older Python versions are no longer supported with this collection)
 
 

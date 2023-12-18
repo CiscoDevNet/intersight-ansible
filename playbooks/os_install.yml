@@ -5,10 +5,9 @@
 #   ansible-playbook ... -e group=<your host group>
 #   e.g., ansible-playbook server_profiles.yml -e group=TME_Demo
 #
-- hosts: "{{ group | default('Intersight_Servers') }}"
+- name: Install OS
+  hosts: "{{ group | default('Intersight_Servers') }}"
   connection: local
-  collections:
-    - cisco.intersight
   gather_facts: false
   vars:
     # Create an anchor for api_info that can be used throughout the file
@@ -45,8 +44,8 @@
           3538
   tasks:
     # Get the Organization Moid
-    - name: "Get {{ org_name }} Organization Moid"
-      intersight_rest_api:
+    - name: "Get Organization Moid"
+      cisco.intersight.intersight_rest_api:
         <<: *api_info
         resource_path: /organization/Organizations
         query_params:
@@ -54,8 +53,8 @@
       register: org_resp
       delegate_to: localhost
     # Get the OS File Moid
-    - name: "Get {{ os_version }} OS File Moid"
-      intersight_rest_api:
+    - name: "Get OS File Moid"
+      cisco.intersight.intersight_rest_api:
         <<: *api_info
         resource_path: /softwarerepository/OperatingSystemFiles
         query_params:
@@ -63,8 +62,8 @@
       register: os_resp
       delegate_to: localhost
     # Get the SCU File Moid
-    - name: "Get {{ scu_version }} SCU File Moid"
-      intersight_rest_api:
+    - name: "Get SCU File Moid"
+      cisco.intersight.intersight_rest_api:
         <<: *api_info
         resource_path: /firmware/ServerConfigurationUtilityDistributables
         query_params:
@@ -72,8 +71,8 @@
       register: scu_resp
       delegate_to: localhost
     # Get the OS Config File Moid
-    - name: "Get {{ os_config }} OS Config File Moid"
-      intersight_rest_api:
+    - name: "Get OS Config File Moid"
+      cisco.intersight.intersight_rest_api:
         <<: *api_info
         resource_path: /os/ConfigurationFiles
         query_params:
@@ -82,7 +81,7 @@
       delegate_to: localhost
     # Install OS
     - name: Install OS
-      intersight_rest_api:
+      cisco.intersight.intersight_rest_api:
         <<: *api_info
         resource_path: /bulk/Requests
         update_method: post

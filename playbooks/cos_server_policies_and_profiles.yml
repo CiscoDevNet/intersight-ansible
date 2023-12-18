@@ -7,10 +7,9 @@
 #   ansible-playbook ... -e group=<your host group>
 #   e.g., ansible-playbook server_profiles.yml -e group=TME_Demo
 #
-- hosts: "{{ group | default('Intersight_Servers') }}"
+- name: "Configure Server Profiles and Policies for Cloud Object Storage Solution"
+  hosts: "{{ group | default('Intersight_Servers') }}"
   connection: local
-  collections:
-    - cisco.intersight
   gather_facts: false
   vars:
     # Create an anchor for api_info that can be used throughout the file
@@ -26,8 +25,8 @@
     org_name: DevNet
   tasks:
     # Get the Organization Moid used by all profiles and policies
-    - name: "Get Organization {{ org_name }} Moid"
-      intersight_rest_api:
+    - name: "Get Organization Moid"
+      cisco.intersight.intersight_rest_api:
         <<: *api_info
         resource_path: /organization/Organizations
         query_params:
@@ -39,8 +38,8 @@
     # Configure profiles specific to server (run for each server in the inventory)
     # Server Profiles role will register a profile_resp and profile_resp list (from all hosts) can be used by policy tasks
     #
-    - name: "Configure {{ profile_name }} Server Profile"
-      intersight_rest_api:
+    - name: "Configure Server Profile"
+      cisco.intersight.intersight_rest_api:
         <<: *api_info
         resource_path: /server/Profiles
         query_params:
@@ -119,7 +118,7 @@
         - block:
             # Ethernet Adapter
             - name: "Configure Ethernet Adapter Policy"
-              intersight_rest_api:
+              cisco.intersight.intersight_rest_api:
                 <<: *api_info
                 resource_path: /vnic/EthAdapterPolicies
                 query_params:
@@ -150,7 +149,7 @@
               register: eth_adapter_resp
             # Ethernet Network
             - name: "Configure Ethernet Network Policy"
-              intersight_rest_api:
+              cisco.intersight.intersight_rest_api:
                 <<: *api_info
                 resource_path: /vnic/EthNetworkPolicies
                 query_params:
@@ -168,7 +167,7 @@
               register: eth_network_resp
             # Ethernet QoS
             - name: "Configure Ethernet QoS Policy"
-              intersight_rest_api:
+              cisco.intersight.intersight_rest_api:
                 <<: *api_info
                 resource_path: /vnic/EthQosPolicies
                 query_params:
@@ -195,7 +194,7 @@
             # vNIC configuration
             # Ideally this would be in a loop, but Uplink is converted to a string (instead of the required int) when in a loop
             - name: "Configure eth0"
-              intersight_rest_api:
+              cisco.intersight.intersight_rest_api:
                 <<: *api_info
                 resource_path: /vnic/EthIfs
                 query_params:
@@ -224,7 +223,7 @@
                   }
                 }
             - name: "Configure eth1"
-              intersight_rest_api:
+              cisco.intersight.intersight_rest_api:
                 <<: *api_info
                 resource_path: /vnic/EthIfs
                 query_params:
@@ -273,7 +272,7 @@
         - block:
             # Disk Group policy
             - name: "Configure Disk Group Policy"
-              intersight_rest_api:
+              cisco.intersight.intersight_rest_api:
                 <<: *api_info
                 resource_path: /storage/DiskGroupPolicies
                 query_params:

@@ -2,10 +2,9 @@
 # Example Playbook: cisco.intersight.intersight_bios_policy
 # Runs on localhost since policies are only configured once
 # Author: Surendra Ramarao (@CRSurendra)
-- hosts: localhost
+- name: Configure BIOS Policy
+  hosts: localhost
   connection: local
-  collections:
-    - cisco.intersight
   gather_facts: false
   vars:
     # Create an anchor for api_info that can be used throughout the file
@@ -21,7 +20,7 @@
     org_name: Cloudera-SZR-Org
   tasks:
     - name: Configure BIOS Policy
-      intersight_bios_policy:
+      cisco.intersight.intersight_bios_policy:
         <<: *api_info
         organization: "{{ org_name }}"
         name: SUR_BIOS
@@ -30,8 +29,3 @@
           - Key: Site
             Value: RCDN
         cpu_energy_performance: performance
-
-
-        
-
-        

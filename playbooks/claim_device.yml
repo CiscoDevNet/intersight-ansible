@@ -5,7 +5,8 @@
 #   ansible-playbook ... -e group=<your host group>
 #   e.g., ansible-playbook server_profiles.yml -e group=TME_Demo
 #
-- hosts: "{{ group | default('Intersight_Servers') }}"
+- name: Claim device
+  hosts: "{{ group | default('Intersight_Servers') }}"
   connection: local
   gather_facts: false
   vars:

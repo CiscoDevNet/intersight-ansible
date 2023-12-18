@@ -1,5 +1,8 @@
 # cisco.intersight Ansible Collection Changelog
 
+## Version 2.0.5
+- Updated Ansible Core requirement to >=2.14.0
+
 ## Version 2.0.4
 - Fix issue #99 to support NVMe boot devices in intersight_boot_order_policy
 
