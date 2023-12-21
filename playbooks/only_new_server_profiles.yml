@@ -7,10 +7,9 @@
 #   ansible-playbook ... -e group=<your host group>
 #   e.g., ansible-playbook server_profiles.yml -e group=TME_Demo
 #
-- hosts: "{{ group | default('Intersight_Servers') }}"
+- name: Configure server profiles without assignment
+  hosts: "{{ group | default('Intersight_Servers') }}"
   connection: local
-  collections:
-    - cisco.intersight
   gather_facts: false
   vars:
     # Create an anchor for api_info that can be used throughout the file
@@ -32,25 +31,29 @@
     #
     # Configure profiles specific to server (run for each server in the inventory)
     #
-    - set_fact:
+    - name: Set Standalone Management Mode
+      ansible.builtin.set_fact:
         mode: Standalone
       when: mode is not defined or mode == 'IntersightStandalone'
-    - set_fact:
+    - name: Set FIAttached Management Mode
+      ansible.builtin.set_fact:
         mode: FIAttached
       when: mode == 'Intersight'
     # Get server moid when not defined in inventory
-    - block:
-        - name: "Get {{ inventory_hostname }} Server Moid"
-          intersight_info:
+    - name: Get server moid
+      when: server_moid is not defined
+      delegate_to: localhost
+      block:
+        - name: "Get Server Moid"
+          cisco.intersight.intersight_info:
             <<: *api_info
             server_names: "{{ inventory_hostname }}"
           register: server
-        - set_fact:
+        - name: Set server moid
+          ansible.builtin.set_fact:
             server_moid: "{{ server.intersight_servers[0].Moid }}"
-      when: server_moid is not defined
-      delegate_to: localhost
     - name: "Get current profile assignment"
-      intersight_rest_api:
+      cisco.intersight.intersight_rest_api:
         <<: *api_info
         resource_path: /server/Profiles
         query_params:
@@ -58,8 +61,8 @@
       when: server_moid is defined
       register: profile
       delegate_to: localhost
-    - name: "Configure {{ profile_name }} Server Profile"
-      intersight_server_profile:
+    - name: "Configure Server Profile"
+      cisco.intersight.intersight_server_profile:
         <<: *api_info
         organization: "{{ organization | default(omit) }}"
         name: "{{ profile_name }}"

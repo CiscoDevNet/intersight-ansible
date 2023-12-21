@@ -1,10 +1,9 @@
 ---
 # Example Playbook: cisco.intersight.intersight_ntp_policy
 # Runs on localhost since policies are only configured once
-- hosts: localhost
+- name: Configure NTP Policy
+  hosts: localhost
   connection: local
-  collections:
-    - cisco.intersight
   gather_facts: false
   vars:
     # Create an anchor for api_info that can be used throughout the file
@@ -19,7 +18,7 @@
     org_name: DCP-X-Sandbox
   tasks:
     - name: Configure NTP Policy
-      intersight_ntp_policy:
+      cisco.intersight.intersight_ntp_policy:
         <<: *api_info
         organization: "{{ org_name }}"
         name: lab-ntp

@@ -1,6 +1,7 @@
 ---
 # Server profile config using policy buckets
-- hosts: localhost
+- name: Server profile config using policy buckets
+  hosts: localhost
   gather_facts: false
   vars:
     profile_name: SP-SJC07-R14-FI-1-1-6
@@ -11,7 +12,8 @@
         query_params:
           $filter: "Name eq '{{ profile_name }}'"
       register: results
-    - debug:
+    - name: Print policy bucket info
+      ansible.builtin.debug:
         msg: "{{ results.api_response.PolicyBucket | selectattr('ObjectType', 'eq', 'access.Policy') }}"
     - name: "Config {{ profile_name }}"
       cisco.intersight.intersight_rest_api:

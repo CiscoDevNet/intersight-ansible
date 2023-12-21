@@ -2,10 +2,9 @@
 #
 # Configure Fabric Port Policies
 #
-- hosts: localhost
+- name: Configure Fabric Port Policies
+  hosts: localhost
   connection: local
-  collections:
-    - cisco.intersight
   gather_facts: false
   vars:
     # Create an anchor for api_info that can be used throughout the file
@@ -21,16 +20,16 @@
     org_name: dsoper-DevNet
   tasks:
     # Get the Organization Moid
-    - name: "Get {{ org_name }} Organization Moid"
-      intersight_rest_api:
+    - name: "Get Organization Moid"
+      cisco.intersight.intersight_rest_api:
         <<: *api_info
         resource_path: /organization/Organizations
         query_params:
           $filter: "Name eq '{{ org_name }}'"
       register: org_resp
     # Config Port Policy
-    - name: "Configure {{ port_name }} Port Policy"
-      intersight_rest_api:
+    - name: "Configure Port Policy"
+      cisco.intersight.intersight_rest_api:
         <<: *api_info
         state: "{{ state | default('present') }}"
         resource_path: /fabric/PortPolicies
@@ -46,7 +45,7 @@
       register: port_resp
     # Config Server Roles
     - name: "Configure Server Roles"
-      intersight_rest_api:
+      cisco.intersight.intersight_rest_api:
         <<: *api_info
         resource_path: /fabric/ServerRoles
         query_params:
@@ -59,11 +58,11 @@
           },
           "SlotId": 1
         }
-      loop: "{{ range(1, 6+1) | list }}"
+      loop: "{{ range(1, 6 + 1) | list }}"
       when: port_resp.api_response is defined and port_resp.api_response
     # Config Uplink Port Channel Roles
     - name: "Configure Uplink Port Channel Roles"
-      intersight_rest_api:
+      cisco.intersight.intersight_rest_api:
         <<: *api_info
         resource_path: /fabric/UplinkPcRoles
         query_params:

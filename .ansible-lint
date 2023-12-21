@@ -8,6 +8,37 @@ profile: min
 # option are parsed relative to the CWD of execution.
 exclude_paths:
   # exclude files that contain include tasks
-  - playbooks/derive_profiles.yml 
-  - playbooks/servers_to_file.yml 
-  - playbooks/vlans_to_file.yml 
+  - playbooks/derive_profiles.yml
+  - playbooks/servers_to_file.yml
+  - playbooks/vlans_to_file.yml
+  # exclude files that would require rework of roles structure
+  - playbooks/cos_server_policies_and_profiles.yml
+  - playbooks/roles/policies/server_policies/tasks/main.yml
+  - playbooks/server_actions.yml
+  - playbooks/roles/servers/actions/tasks/main.yml
+  # exclude files for deprecated Intersight features
+  - playbooks/update_hx_inventory.yml
+  - playbooks/update_hx_edge_inventory.yml
+  - playbooks/roles/policies/hyperflex_policies/vcenter/tasks/main.yml
+  - playbooks/roles/policies/hyperflex_policies/sys_config/tasks/main.yml
+  - playbooks/roles/policies/hyperflex_policies/software_version/tasks/main.yml
+  - playbooks/roles/policies/hyperflex_policies/proxy/tasks/main.yml
+  - playbooks/roles/policies/hyperflex_policies/node_profiles/tasks/main.yml
+  - playbooks/roles/policies/hyperflex_policies/node_config/tasks/main.yml
+  - playbooks/roles/policies/hyperflex_policies/local_credential/tasks/main.yml
+  - playbooks/roles/policies/hyperflex_policies/iscsi/tasks/main.yml
+  - playbooks/roles/policies/hyperflex_policies/intersight_org/tasks/main.yml
+  - playbooks/roles/policies/hyperflex_policies/fc/tasks/main.yml
+  - playbooks/roles/policies/hyperflex_policies/edge_software_version/tasks/main.yml
+  - playbooks/roles/policies/hyperflex_policies/edge_cluster_storage/tasks/main.yml
+  - playbooks/roles/policies/hyperflex_policies/edge_cluster_profile/tasks/main.yml
+  - playbooks/roles/policies/hyperflex_policies/edge_cluster_profile/defaults/main.yml
+  - playbooks/roles/policies/hyperflex_policies/edge_cluster_network/tasks/main.yml
+  - playbooks/roles/policies/hyperflex_policies/deploy/tasks/main.yml
+  - playbooks/roles/policies/hyperflex_policies/cluster_storage/tasks/main.yml
+  - playbooks/roles/policies/hyperflex_policies/cluster_profile/tasks/main.yml
+  - playbooks/roles/policies/hyperflex_policies/cluster_profile/defaults/main.yml
+  - playbooks/roles/policies/hyperflex_policies/cluster_network/tasks/main.yml
+  - playbooks/roles/policies/hyperflex_policies/auto_support/tasks/main.yml
+  - playbooks/hyperflex_edge_cluster_profiles.yml
+  - playbooks/hyperflex_cluster_profiles.yml
