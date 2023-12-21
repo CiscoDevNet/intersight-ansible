@@ -1,8 +1,7 @@
 ---
 # Execute Orchestration Workflow
-- hosts: localhost
-  collections:
-    - cisco.intersight
+- name: Execute orchestration workflow
+  hosts: localhost
   gather_facts: false
   vars:
     # Create an anchor for api_info that can be used throughout the file
@@ -13,14 +12,14 @@
     vm_name: "{{ vm_name | default('ucspe-4-0-4e-orch') }}"
   tasks:
     - name: Get vCenter Moid
-      intersight_rest_api:
+      cisco.intersight.intersight_rest_api:
         <<: *api_info
         resource_path: /asset/DeviceRegistrations
         query_params:
           $filter: DeviceIpAddress eq '172.28.225.220'
       register: vcenter
     - name: Execute OVA deploy workflow
-      intersight_rest_api:
+      cisco.intersight.intersight_rest_api:
         <<: *api_info
         resource_path: /workflow/WorkflowInfos
         update_method: post
@@ -57,7 +56,7 @@
         }
       register: workflow
     - name: Get status of OVA deploy workflow
-      intersight_rest_api:
+      cisco.intersight.intersight_rest_api:
         <<: *api_info
         resource_path: /workflow/WorkflowInfos
         query_params:
@@ -68,5 +67,6 @@
       retries: 10
       delay: 60
       ignore_errors: true
-    - debug:
+    - name: Print final workflow status
+      ansible.builtin.debug:
         msg: "Final workflow status: {{ status.api_response.Status }}"

@@ -2,10 +2,9 @@
 #
 # Configure LAN Connectivity Policy
 #
-- hosts: localhost
+- name: Configure LAN Connectivity Policy
+  hosts: localhost
   connection: local
-  collections:
-    - cisco.intersight
   gather_facts: false
   vars:
     # Create an anchor for api_info that can be used throughout the file
@@ -27,56 +26,56 @@
     org_name: dsoper-DevNet
   tasks:
     # Get the Organization Moid
-    - name: "Get {{ org_name }} Organization Moid"
-      intersight_rest_api:
+    - name: "Get Organization Moid"
+      cisco.intersight.intersight_rest_api:
         <<: *api_info
         resource_path: /organization/Organizations
         query_params:
           $filter: "Name eq '{{ org_name }}'"
       register: org_resp
     # Get the Ethernet Network Group Policy
-    - name: "Get {{ eth_net_group }} Ethernet Network Group Policy Moid"
-      intersight_rest_api:
+    - name: "Get Ethernet Network Group Policy Moid"
+      cisco.intersight.intersight_rest_api:
         <<: *api_info
         resource_path: /fabric/EthNetworkGroupPolicies
         query_params:
           $filter: "Name eq '{{ eth_net_group }}'"
       register: eth_net_group_resp
     # Get the Ethernet Network Control Policy
-    - name: "Get {{ eth_net_control }} Ethernet Network Control Policy Moid"
-      intersight_rest_api:
+    - name: "Get Ethernet Network Control Policy Moid"
+      cisco.intersight.intersight_rest_api:
         <<: *api_info
         resource_path: /fabric/EthNetworkControlPolicies
         query_params:
           $filter: "Name eq '{{ eth_net_control }}'"
       register: eth_net_control_resp
     # Get the Ethernet QoS Policy
-    - name: "Get {{ eth_qos }} Ethernet QoS Policy Moid"
-      intersight_rest_api:
+    - name: "Get Ethernet QoS Policy Moid"
+      cisco.intersight.intersight_rest_api:
         <<: *api_info
         resource_path: /vnic/EthQosPolicies
         query_params:
           $filter: "Name eq '{{ eth_qos }}'"
       register: eth_qos_resp
     # Get the Ethernet Network Group Policy
-    - name: "Get {{ eth_adapter }} Ethernet Adapter Policy Moid"
-      intersight_rest_api:
+    - name: "Get Ethernet Adapter Policy Moid"
+      cisco.intersight.intersight_rest_api:
         <<: *api_info
         resource_path: /vnic/EthAdapterPolicies
         query_params:
           $filter: "Name eq '{{ eth_adapter }}'"
       register: eth_adapter_resp
     # Get MAC Address Pool
-    - name: "Get {{ mac_pool }} MAC Address Pool Moid"
-      intersight_rest_api:
+    - name: "Get MAC Address Pool Moid"
+      cisco.intersight.intersight_rest_api:
         <<: *api_info
         resource_path: /macpool/Pools
         query_params:
           $filter: "Name eq '{{ mac_pool }}'"
       register: mac_resp
     # Config LAN Connectivity Policy
-    - name: "Configure {{ lcp_name }} LAN Connectivity Policy"
-      intersight_rest_api:
+    - name: "Configure LAN Connectivity Policy"
+      cisco.intersight.intersight_rest_api:
         <<: *api_info
         state: "{{ state | default('present') }}"
         resource_path: /vnic/LanConnectivityPolicies
@@ -92,8 +91,8 @@
         }
       register: lcp_resp
     # Config vNIC with LAN Connectivity Policy
-    - name: "Configure {{ vnic_name }} vNIC"
-      intersight_rest_api:
+    - name: "Configure vNIC"
+      cisco.intersight.intersight_rest_api:
         <<: *api_info
         resource_path: /vnic/EthIfs
         query_params:

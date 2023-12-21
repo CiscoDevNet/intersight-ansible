@@ -2,10 +2,9 @@
 #
 # Get VLANs for each Ethernet Network Policy
 #
-- hosts: localhost
+- name: Get VLANs for each Ethernet Network Policy
+  hosts: localhost
   connection: local
-  collections:
-    - cisco.intersight
   gather_facts: false
   vars:
     # Create an anchor for api_info that can be used throughout the file
@@ -20,7 +19,7 @@
   tasks:
     # Get Ethernet Network Policies
     - name: "Get Ethernet Network Policies"
-      intersight_rest_api:
+      cisco.intersight.intersight_rest_api:
         <<: *api_info
         resource_path: /fabric/EthNetworkPolicies
         query_params:
@@ -29,7 +28,7 @@
       register: eth_net_resp
     # Get the VLANs used by each Eth Policy
     - name: "Get VLANs in each EthNetworkPolicy"
-      intersight_rest_api:
+      cisco.intersight.intersight_rest_api:
         <<: *api_info
         resource_path: /fabric/Vlans
         query_params:
@@ -41,15 +40,18 @@
         label: "{{ item.Name }}"
       register: vlan_resp
     # Create file and write results
-    - name: "Create {{ filename }} and write results"
-      file:
+    - name: "Create file and write results"
+      ansible.builtin.file:
         path: "{{ filename }}"
         state: absent
-    - lineinfile:
+    - name: Write headers to file
+      ansible.builtin.lineinfile:
         path: "{{ filename }}"
         line: EthNetworkPolicy,IsNative,VlanName,VlanId
         create: true
-    - include_tasks: vlans_to_file.yml
+        mode: 0644
+    - name: Write results to file
+      ansible.builtin.include_tasks: vlans_to_file.yml
       loop: "{{ vlan_resp.results }}"
       loop_control:
         loop_var: outer_item

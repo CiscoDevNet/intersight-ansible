@@ -88,6 +88,6 @@
         }
       register: template_resp
     # Derive profiles from template (if profiles don't already exist)
-    - name: "Derive Profiles from {{ template_name}}"
-      include_tasks: derive_profiles.yml
-      loop: "{{ range(1, num_profiles+1) | list }}"
+    - name: "Derive Profiles from {{ template_name }}"
+      ansible.builtin.include_tasks: derive_profiles.yml
+      loop: "{{ range(1, num_profiles + 1) | list }}"

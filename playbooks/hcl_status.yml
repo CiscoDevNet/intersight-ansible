@@ -5,23 +5,23 @@
 #   ansible-playbook ... -e group=<your host group>
 #   e.g., ansible-playbook server_profiles.yml -e group=TME_Demo
 #
-- hosts: "{{ group | default('Intersight_Servers') }}"
-  collections:
-    - cisco.intersight
+- name: Get HCL status and write to file
+  hosts: "{{ group | default('Intersight_Servers') }}"
   connection: local
   gather_facts: false
   vars:
     # Create an anchor for api_info that can be used throughout the file
     api_info: &api_info
-      api_private_key: "{{ api_private_key }}"
-      api_key_id: "{{ api_key_id }}"
+      # if api_key vars are omitted, INTERSIGHT_API_KEY_ID, INTERSIGHT_API_PRIVATE_KEY,
+      # and INTERSIGHT_API_URI environment variables used for API key data
+      api_private_key: "{{ api_private_key | default(omit) }}"
+      api_key_id: "{{ api_key_id | default(omit) }}"
       api_uri: "{{ api_uri | default(omit) }}"
       validate_certs: "{{ validate_certs | default(omit) }}"
-      state: "{{ state | default(omit) }}"
   tasks:
     # Get HclStatus
     - name: Get HCL Status for Server
-      intersight_rest_api:
+      cisco.intersight.intersight_rest_api:
         <<: *api_info
         resource_path: /cond/HclStatuses
         query_params:
@@ -31,16 +31,22 @@
       when:
         - server_moid is defined
     # Create .csv file with version and status information
-    - copy:
-        content: |
-          Name, FW version, OS vendor, OS version, HW status, SW status, Overall Status
+    - name: Create .csv file with version and status information
+      ansible.builtin.copy:
+        content: 'Name, FW version, OS vendor, OS version, HW status, SW status, Overall Status
+
           {% for host in hostvars %}
-            {% set vars = hostvars[host|string] %}
+            {% set vars = hostvars[host | string] %}
             {% if vars.hcl_resp.api_response is defined %}
-              {{ vars.inventory_hostname }}, {{ vars.hcl_resp.api_response.HclFirmwareVersion }}, {{ vars.hcl_resp.api_response.HclOsVendor }}, {{ vars.hcl_resp.api_response.HclOsVersion }}, {{ vars.hcl_resp.api_response.HardwareStatus }}, {{ vars.hcl_resp.api_response.SoftwareStatus }}, {{ vars.hcl_resp.api_response.Status }} {{ vars.hcl_resp.api_response.ServerReason }}
+              {{ vars.inventory_hostname }}, {{ vars.hcl_resp.api_response.HclFirmwareVersion }}, {{ vars.hcl_resp.api_response.HclOsVendor }},
+              {{ vars.hcl_resp.api_response.HclOsVersion }}, {{ vars.hcl_resp.api_response.HardwareStatus }},
+              {{ vars.hcl_resp.api_response.SoftwareStatus }}, {{ vars.hcl_resp.api_response.Status }} {{ vars.hcl_resp.api_response.ServerReason }}
+
             {% endif %}
           {% endfor %}
+          '
         dest: /tmp/hcl_status.csv
         backup: false
+        mode: 0644
       run_once: true
       delegate_to: localhost

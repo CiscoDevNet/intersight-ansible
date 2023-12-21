@@ -2,10 +2,9 @@
 #
 # Get VM hosts and write information to a .csv file
 #
-- hosts: localhost
+- name: Get VM hosts and write information to a .csv file
+  hosts: localhost
   connection: local
-  collections:
-    - cisco.intersight
   gather_facts: false
   vars:
     # Create an anchor for api_info that can be used throughout the file
@@ -20,7 +19,7 @@
   tasks:
     # Get the VM hosts
     - name: "Get VM Hosts"
-      intersight_rest_api:
+      cisco.intersight.intersight_rest_api:
         <<: *api_info
         resource_path: /virtualization/VirtualMachines
         query_params:
@@ -30,18 +29,24 @@
         return_list: true
       register: vm_resp
     # Create file and write results
-    - name: "Create {{ filename }} and write results"
-      file:
+    - name: "Create and write results"
+      ansible.builtin.file:
         path: "{{ filename }}"
         state: absent
-    - lineinfile:
+        mode: 0644
+    - name: Write headers to file
+      ansible.builtin.lineinfile:
         path: "{{ filename }}"
         line: VM,Hypervisor,Model,Hostname,Serial
         create: true
+        mode: 0644
     # Only write VMs that have Host information to the .csv file
-    - lineinfile:
+    - name: Write VM info to file
+      ansible.builtin.lineinfile:
         path: "{{ filename }}"
-        line: "{{ item.Name }},{{ item.Inventory.Host.HypervisorType }},{{ item.Inventory.Host.Model }},{{ item.Inventory.Host.Name }},{{ item.Inventory.Host.Serial  }}"
+        line: >-
+          {{ item.Name }},{{ item.Inventory.Host.HypervisorType }},{{ item.Inventory.Host.Model }},{{ item.Inventory.Host.Name }},
+          {{ item.Inventory.Host.Serial }}
       loop: "{{ vm_resp.api_response }}"
       loop_control:
         label: "{{ item.Name }}"
