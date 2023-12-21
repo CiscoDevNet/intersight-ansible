@@ -49,7 +49,7 @@
         path: "{{ filename }}"
         line: EthNetworkPolicy,IsNative,VlanName,VlanId
         create: true
-        mode: 0644
+        mode: '0644'
     - name: Write results to file
       ansible.builtin.include_tasks: vlans_to_file.yml
       loop: "{{ vlan_resp.results }}"

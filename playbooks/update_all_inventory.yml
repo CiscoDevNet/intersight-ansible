@@ -47,7 +47,7 @@
           ansible.builtin.lineinfile:
             path: "{{ filepath }}"
             line: "[{{ host_group }}]"
-            mode: 0644
+            mode: '0644'
             create: true
         # Update servers in the file
         - name: Update servers in the file
@@ -59,7 +59,7 @@
             line: >-
               {{ item.Name }} serial={{ item.Serial }} server_moid={{ item.Moid }} model={{ item.Model }} mode={{ item.ManagementMode }}
               object_type={{ item.SourceObjectType | regex_replace('compute.') }}
-            mode: 0644
+            mode: '0644'
             create: true
           loop: "{{ all_results.intersight_servers }}"
           loop_control:
