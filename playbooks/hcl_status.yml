@@ -47,6 +47,6 @@
           '
         dest: /tmp/hcl_status.csv
         backup: false
-        mode: 0644
+        mode: '0644'
       run_once: true
       delegate_to: localhost

@@ -33,13 +33,13 @@
       ansible.builtin.file:
         path: "{{ filename }}"
         state: absent
-        mode: 0644
+        mode: '0644'
     - name: Write headers to file
       ansible.builtin.lineinfile:
         path: "{{ filename }}"
         line: VM,Hypervisor,Model,Hostname,Serial
         create: true
-        mode: 0644
+        mode: '0644'
     # Only write VMs that have Host information to the .csv file
     - name: Write VM info to file
       ansible.builtin.lineinfile:
