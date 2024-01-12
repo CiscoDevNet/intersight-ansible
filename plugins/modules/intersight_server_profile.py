@@ -51,24 +51,46 @@ options:
       - List of tags in Key:<user-defined key> Value:<user-defined value> format.
     type: list
     elements: dict
+    default: []
   description:
     description:
       - The user-defined description of the Server Profile.
       - Description can contain letters(a-z, A-Z), numbers(0-9), hyphen(-), period(.), colon(:), or an underscore(_).
     type: str
     aliases: [descr]
+    default: ''
   assigned_server:
     description:
       - Managed Obect ID (MOID) of assigned server.
       - Option can be omitted if user wishes to assign server later.
     type: str
+  bios_policy:
+    description:
+      - Name of BIOS Policy to associate with this profile.
+    type: str
   boot_order_policy:
     description:
       - Name of Boot Order Policy to associate with this profile.
     type: str
+  certificate_policy:
+    description:
+      - Name of Certificate Policy to associate with this profile.
+    type: str
+  drive_security_policy:
+    description:
+      - Name of Drive Security Policy to associate with this profile.
+    type: str
+  firmware_policy:
+    description:
+      - Name of Firmware Policy to associate with this profile.
+    type: str
   imc_access_policy:
     description:
       - Name of IMC Access Policy to associate with this profile.
+    type: str
+  ipmi_over_lan_policy:
+    description:
+      - Name of IPMI over LAN Policy to associate with this profile.
     type: str
   lan_connectivity_policy:
     description:
@@ -82,9 +104,33 @@ options:
     description:
       - Name of NTP Policy to associate with this profile.
     type: str
+  san_connectivity_policy:
+    description:
+      - Name of SAN Connectivity Policy to associate with this profile.
+    type: str
+  serial_over_lan_policy:
+    description:
+      - Name of Serial over LAN Policy to associate with this profile.
+    type: str
+  snmp_policy:
+    description:
+      - Name of SNMP Policy to associate with this profile.
+    type: str
   storage_policy:
     description:
       - Name of Storage Policy to associate with this profile.
+    type: str
+  syslog_policy:
+    description:
+      - Name of Syslog Policy to associate with this profile.
+    type: str
+  thermal_policy:
+    description:
+      - Name of Thermal Policy to associate with this profile.
+    type: str
+  virtual_kvm_policy:
+    description:
+      - Name of Virtual KVM Policy to associate with this profile.
     type: str
   virtual_media_policy:
     description:
@@ -213,15 +259,26 @@ def main():
         organization=dict(type='str', default='default'),
         name=dict(type='str', required=True),
         target_platform=dict(type='str', choices=['Standalone', 'FIAttached'], default='Standalone'),
-        tags=dict(type='list', elements='dict'),
-        description=dict(type='str', aliases=['descr']),
+        tags=dict(type='list', elements='dict', default=[]),
+        description=dict(type='str', aliases=['descr'], default=''),
         assigned_server=dict(type='str'),
+        bios_policy=dict(type='str'),
         boot_order_policy=dict(type='str'),
+        certificate_policy=dict(type='str'),
+        drive_security_policy=dict(type='str'),
+        firmware_policy=dict(type='str'),
         imc_access_policy=dict(type='str'),
+        ipmi_over_lan_policy=dict(type='str'),
         lan_connectivity_policy=dict(type='str'),
         local_user_policy=dict(type='str'),
         ntp_policy=dict(type='str'),
+        san_connectivity_policy=dict(type='str'),
+        serial_over_lan_policy=dict(type='str'),
+        snmp_policy=dict(type='str'),
         storage_policy=dict(type='str'),
+        syslog_policy=dict(type='str'),
+        thermal_policy=dict(type='str'),
+        virtual_kvm_policy=dict(type='str'),
         virtual_media_policy=dict(type='str'),
     )
 
@@ -268,24 +325,40 @@ def main():
     # Configure the profile
     moid = intersight.configure_policy_or_profile(resource_path=resource_path)
 
+    if moid and intersight.module.params['bios_policy']:
+        post_profile_to_policy(intersight, moid, resource_path='/bios/Policies', policy_name=intersight.module.params['bios_policy'])
     if moid and intersight.module.params['boot_order_policy']:
         post_profile_to_policy(intersight, moid, resource_path='/boot/PrecisionPolicies', policy_name=intersight.module.params['boot_order_policy'])
-
+    if moid and intersight.module.params['certificate_policy']:
+        post_profile_to_policy(intersight, moid, resource_path='/security/CertificatePolicies', policy_name=intersight.module.params['certificate_policy'])
+    if moid and intersight.module.params['drive_security_policy']:
+        post_profile_to_policy(intersight, moid, resource_path='/security/DriveSecurityPolicies', policy_name=intersight.module.params['drive_security_policy'])
+    if moid and intersight.module.params['firmware_policy']:
+        post_profile_to_policy(intersight, moid, resource_path='/firmware/Policies', policy_name=intersight.module.params['firmware_policy'])
     if moid and intersight.module.params['imc_access_policy']:
         post_profile_to_policy(intersight, moid, resource_path='/access/Policies', policy_name=intersight.module.params['imc_access_policy'])
-
+    if moid and intersight.module.params['ipmi_over_lan_policy']:
+        post_profile_to_policy(intersight, moid, resource_path='/ipmi/Policies', policy_name=intersight.module.params['ipmi_over_lan_policy'])
     if moid and intersight.module.params['lan_connectivity_policy']:
         post_profile_to_policy(intersight, moid, resource_path='/vnic/LanConnectivityPolicies', policy_name=intersight.module.params['lan_connectivity_policy'])
-
     if moid and intersight.module.params['local_user_policy']:
         post_profile_to_policy(intersight, moid, resource_path='/iam/EndPointUserPolicies', policy_name=intersight.module.params['local_user_policy'])
-
     if moid and intersight.module.params['ntp_policy']:
         post_profile_to_policy(intersight, moid, resource_path='/ntp/Policies', policy_name=intersight.module.params['ntp_policy'])
-
+    if moid and intersight.module.params['san_connectivity_policy']:
+        post_profile_to_policy(intersight, moid, resource_path='/vnic/SanConnectivityPolicies', policy_name=intersight.module.params['san_connectivity_policy'])
+    if moid and intersight.module.params['serial_over_lan_policy']:
+        post_profile_to_policy(intersight, moid, resource_path='/serial/Policies', policy_name=intersight.module.params['serial_over_lan_policy'])
+    if moid and intersight.module.params['snmp_policy']:
+        post_profile_to_policy(intersight, moid, resource_path='/snmp/Policies', policy_name=intersight.module.params['snmp_policy'])
     if moid and intersight.module.params['storage_policy']:
         post_profile_to_policy(intersight, moid, resource_path='/storage/StoragePolicies', policy_name=intersight.module.params['storage_policy'])
-
+    if moid and intersight.module.params['syslog_policy']:
+        post_profile_to_policy(intersight, moid, resource_path='/syslog/Policies', policy_name=intersight.module.params['syslog_policy'])
+    if moid and intersight.module.params['thermal_policy']:
+        post_profile_to_policy(intersight, moid, resource_path='/thermal/Policies', policy_name=intersight.module.params['thermal_policy'])
+    if moid and intersight.module.params['virtual_kvm_policy']:
+        post_profile_to_policy(intersight, moid, resource_path='/kvm/Policies', policy_name=intersight.module.params['virtual_kvm_policy'])
     if moid and intersight.module.params['virtual_media_policy']:
         post_profile_to_policy(intersight, moid, resource_path='/vmedia/Policies', policy_name=intersight.module.params['virtual_media_policy'])
 
