@@ -23,11 +23,12 @@
       state: "{{ state | default(omit) }}"
     # Server Profile name default
     profile_name: "SP-{{ inventory_hostname }}"
+    profile_action: Deploy
   tasks:
     # Deploy (or perform other action)
-    # action can be given on the command line if needed, e.g., ansible-playbook ... -e action=Unassign
-    # to delete a profile (profile must 1st be unassigned): ansible-playbook ... -e state=absent -e action=No-op
-    - name: Deploy (or user defined action) Server Profile
+    # action can be given on the command line if needed, e.g., ansible-playbook ... -e profile_action=Unassign
+    # to delete a profile (profile must 1st be unassigned): ansible-playbook ... -e state=absent -e profile_action=No-op
+    - name: Deploy Server Profile
       cisco.intersight.intersight_rest_api:
         <<: *api_info
         resource_path: /server/Profiles
@@ -37,3 +38,24 @@
           "Action": "{{ profile_action | default('Deploy') }}"
         }
       delegate_to: localhost
+      when: profile_action == 'Deploy'
+    - name: Unassign Server Profile
+      cisco.intersight.intersight_rest_api:
+        <<: *api_info
+        resource_path: /server/Profiles
+        query_params:
+          $filter: "Name eq '{{ profile_name }}'"
+        api_body: {
+          "AssignedServer":null,
+          "ServerAssignmentMode":"None"
+        }
+      delegate_to: localhost
+      when: profile_action == 'Unassign'
+    - name: Delete Server Profile
+      cisco.intersight.intersight_rest_api:
+        <<: *api_info
+        resource_path: /server/Profiles
+        query_params:
+          $filter: "Name eq '{{ profile_name }}'"
+      delegate_to: localhost
+      when: profile_action == 'No-op' and state == 'absent'
