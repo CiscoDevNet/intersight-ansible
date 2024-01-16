@@ -330,15 +330,15 @@ def main():
     if moid and intersight.module.params['boot_order_policy']:
         post_profile_to_policy(intersight, moid, resource_path='/boot/PrecisionPolicies', policy_name=intersight.module.params['boot_order_policy'])
     if moid and intersight.module.params['certificate_policy']:
-        post_profile_to_policy(intersight, moid, resource_path='/security/CertificatePolicies', policy_name=intersight.module.params['certificate_policy'])
+        post_profile_to_policy(intersight, moid, resource_path='/certificatemanagement/Policies', policy_name=intersight.module.params['certificate_policy'])
     if moid and intersight.module.params['drive_security_policy']:
-        post_profile_to_policy(intersight, moid, resource_path='/security/DriveSecurityPolicies', policy_name=intersight.module.params['drive_security_policy'])
+        post_profile_to_policy(intersight, moid, resource_path='/storage/DriveSecurityPolicies', policy_name=intersight.module.params['drive_security_policy'])
     if moid and intersight.module.params['firmware_policy']:
         post_profile_to_policy(intersight, moid, resource_path='/firmware/Policies', policy_name=intersight.module.params['firmware_policy'])
     if moid and intersight.module.params['imc_access_policy']:
         post_profile_to_policy(intersight, moid, resource_path='/access/Policies', policy_name=intersight.module.params['imc_access_policy'])
     if moid and intersight.module.params['ipmi_over_lan_policy']:
-        post_profile_to_policy(intersight, moid, resource_path='/ipmi/Policies', policy_name=intersight.module.params['ipmi_over_lan_policy'])
+        post_profile_to_policy(intersight, moid, resource_path='/ipmioverlan/Policies', policy_name=intersight.module.params['ipmi_over_lan_policy'])
     if moid and intersight.module.params['lan_connectivity_policy']:
         post_profile_to_policy(intersight, moid, resource_path='/vnic/LanConnectivityPolicies', policy_name=intersight.module.params['lan_connectivity_policy'])
     if moid and intersight.module.params['local_user_policy']:
@@ -348,7 +348,7 @@ def main():
     if moid and intersight.module.params['san_connectivity_policy']:
         post_profile_to_policy(intersight, moid, resource_path='/vnic/SanConnectivityPolicies', policy_name=intersight.module.params['san_connectivity_policy'])
     if moid and intersight.module.params['serial_over_lan_policy']:
-        post_profile_to_policy(intersight, moid, resource_path='/serial/Policies', policy_name=intersight.module.params['serial_over_lan_policy'])
+        post_profile_to_policy(intersight, moid, resource_path='/sol/Policies', policy_name=intersight.module.params['serial_over_lan_policy'])
     if moid and intersight.module.params['snmp_policy']:
         post_profile_to_policy(intersight, moid, resource_path='/snmp/Policies', policy_name=intersight.module.params['snmp_policy'])
     if moid and intersight.module.params['storage_policy']:
