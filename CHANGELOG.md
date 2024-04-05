@@ -1,5 +1,8 @@
 # cisco.intersight Ansible Collection Changelog
 
+## Version 2.0.8
+- Fix issue #111 to allow User Policy updates
+
 ## Version 2.0.7
 - Fix issue #101 to support IMM Server Policies.
 - Update deploy_server_profiles playbook to support Unassign
