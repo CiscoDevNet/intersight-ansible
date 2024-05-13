@@ -1,5 +1,8 @@
 # cisco.intersight Ansible Collection Changelog
 
+## Version 2.0.9
+- Fix issue #114 to support $count query param
+
 ## Version 2.0.8
 - Fix issue #111 to allow User Policy updates
 
