@@ -360,6 +360,7 @@ class IntersightModule():
             else:
                 # return the 1st list element
                 self.result['api_response'] = response['Results'][0]
+        self.result['count'] = response.get('Count')
         self.result['trace_id'] = response.get('trace_id')
 
     def configure_resource(self, moid, resource_path, body, query_params, update_method=''):
