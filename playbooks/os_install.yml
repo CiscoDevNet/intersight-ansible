@@ -19,9 +19,9 @@
       api_uri: "{{ api_uri | default(omit) }}"
       validate_certs: "{{ validate_certs | default(omit) }}"
     # OS and SCU Versions
-    os_version: ESXi 7.0 U3
-    os_config: ESXi7.0ConfigFile
-    scu_version: 6.2.3b
+    os_image_name: esx-8.0
+    os_config: ESXi8.0ConfigFile
+    scu_image_name: SCU 6.3.2a
     org_name: default
     #
     # Example using vault:
@@ -58,7 +58,7 @@
         <<: *api_info
         resource_path: /softwarerepository/OperatingSystemFiles
         query_params:
-          $filter: "Version eq '{{ os_version }}' and PermissionResources.Moid eq '{{ org_resp.api_response.Moid }}'"
+          $filter: "Name eq '{{ os_image_name }}' and PermissionResources.Moid eq '{{ org_resp.api_response.Moid }}'"
       register: os_resp
       delegate_to: localhost
     # Get the SCU File Moid
@@ -67,7 +67,7 @@
         <<: *api_info
         resource_path: /firmware/ServerConfigurationUtilityDistributables
         query_params:
-          $filter: "Version eq '{{ scu_version }}' and PermissionResources.Moid eq '{{ org_resp.api_response.Moid }}'"
+          $filter: "Name eq '{{ scu_image_name }}' and PermissionResources.Moid eq '{{ org_resp.api_response.Moid }}'"
       register: scu_resp
       delegate_to: localhost
     # Get the OS Config File Moid
@@ -86,32 +86,17 @@
         resource_path: /bulk/Requests
         update_method: post
         api_body: {
-          "Verb": "POST",
-          "Uri": "/v1/os/Installs",
           "Requests": [
             {
-              "ObjectType": "bulk.RestSubRequest",
               "Body": {
-                "InstallMethod": "vMedia",
-                "Image": {
-                  "Moid": "{{ os_resp.api_response.Moid }}",
-                  "ObjectType": "softwarerepository.OperatingSystemFile"
-                },
-                "OsduImage": {
-                  "ObjectType": "firmware.ServerConfigurationUtilityDistributable",
-                  "Moid": "{{ scu_resp.api_response.Moid }}"
-                },
-                "OverrideSecureBoot": true,
-                "Organization": {
-                  "Moid": "{{ org_resp.api_response.Moid }}"
-                },
+                "AdditionalParameters": null,
                 "Answers": {
                   "Hostname": "localhost",
                   "IpConfigType": "static",
                   "IpConfiguration": {
                     "IpV4Config": {
                       "Gateway": "172.22.248.1",
-                      "IpAddress": "172.22.248.230",
+                      "IpAddress": "{{ ip }}",
                       "Netmask": "255.255.252.0"
                     },
                     "ObjectType": "os.Ipv4Configuration"
@@ -125,23 +110,37 @@
                   "Moid": "{{ os_config_resp.api_response.Moid }}",
                   "ObjectType": "os.ConfigurationFile"
                 },
-                "AdditionalParameters": null,
+                "Description": "",
+                "Image": {
+                  "Moid": "{{ os_resp.api_response.Moid }}",
+                  "ObjectType": "softwarerepository.OperatingSystemFile"
+                },
+                "InstallMethod": "vMedia",
                 "InstallTarget": {
                   "Id": "0",
-                  "Name": "DevNet-RAID1",
+                  "Name": "vd0",
                   "ObjectType": "os.VirtualDrive",
-                  "StorageControllerSlotId": "1"
+                  "StorageControllerSlotId": "FMEZZ1-SAS"
                 },
+                "Organization": {
+                  "Moid": "{{ org_resp.api_response.Moid }}",
+                  "ObjectType": "organization.Organization"
+                },
+                "OsduImage": {
+                  "Moid": "{{ scu_resp.api_response.Moid }}",
+                  "ObjectType": "firmware.ServerConfigurationUtilityDistributable"
+                },
+                "OverrideSecureBoot": true,
                 "Server": {
-                  "ObjectType": "compute.{{ object_type }}",
-                  "Moid": "{{ server_moid }}"
+                  "Moid": "{{ server_moid }}",
+                  "ObjectType": "compute.{{ object_type }}"
                 }
-              }
+              },
+              "ObjectType": "bulk.RestSubRequest",
             }
           ],
-          "Organization": {
-            "Moid": "{{ org_resp.api_response.Moid }}"
-          }
+          "Uri": "/v1/os/Installs",
+          "Verb": "POST"
         }
       delegate_to: localhost
       register: install_resp
