@@ -347,6 +347,7 @@ class IntersightModule():
     def get_resource(self, resource_path, query_params, return_list=False):
         '''
         GET a resource and return the 1st element found or the full Results list
+        If return_list is False and more than 1 element is returned, a warning is raised
         '''
         options = {
             'http_method': 'get',
@@ -358,6 +359,8 @@ class IntersightModule():
             if return_list:
                 self.result['api_response'] = response['Results']
             else:
+                if len(response['Results']) > 1:
+                    self.module.warn('More than 1 resource found, returning the 1st one')
                 # return the 1st list element
                 self.result['api_response'] = response['Results'][0]
         self.result['count'] = response.get('Count')
