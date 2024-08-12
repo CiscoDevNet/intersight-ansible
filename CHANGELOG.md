@@ -1,5 +1,8 @@
 # cisco.intersight Ansible Collection Changelog
 
+## Version 2.0.10
+- Fix issue #119 to avoid incorrect resources used on deletes or updates
+
 ## Version 2.0.9
 - Fix issue #114 to support $count query param
 
