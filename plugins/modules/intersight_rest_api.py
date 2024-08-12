@@ -169,23 +169,32 @@ def main():
     if module.params['list_body']:
         module.params['api_body'] = module.params['list_body']
 
-    if module.params['update_method'] != 'post' or module.params['query_params']:
+    # determine requested operation (config, delete, or neither (get resource only))
+    if module.params['state'] == 'present':
+        request_delete = False
+        # api_body implies resource configuration through post/patch
+        # no api_body implies a get operation
+        request_config = bool(module.params['api_body'])
+        if request_config and not module.params['query_params']:
+            # no query_params will try to create the resource without getting the current state
+            get_resource = False
+        else:
+            get_resource = True
+    else:  # state == 'absent'
+        # state == 'absent' with no query_params is not permitted to avoid accidental deletion
+        if not module.params['query_params']:
+            raise ValueError('Please specify query_params when state is absent')
+        request_delete = True
+        request_config = False
+        get_resource = True
+
+    if get_resource:
         # get the current state of the resource
-        # skip if this is a post to /asset/DeviceClaims or similar resource without GET
         intersight.get_resource(
             resource_path=module.params['resource_path'],
             query_params=module.params['query_params'],
             return_list=module.params['return_list'],
         )
-
-    # determine requested operation (config, delete, or neither (get resource only))
-    if module.params['state'] == 'present':
-        request_delete = False
-        # api_body implies resource configuration through post/patch
-        request_config = bool(module.params['api_body'])
-    else:  # state == 'absent'
-        request_delete = True
-        request_config = False
 
     moid = None
     resource_values_match = False
