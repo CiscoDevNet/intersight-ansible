@@ -242,7 +242,7 @@ class IntersightModule():
             if not re.match(r'2..', str(info['status'])):
                 raise RuntimeError(info['status'], info['msg'], info['body'])
         except Exception as e:
-            self.module.fail_json(msg="API error: %s " % str(e))
+            self.module.fail_json(msg="Code exception: %s " % str(e))
 
         response_data = response.read()
         if len(response_data) > 0:
