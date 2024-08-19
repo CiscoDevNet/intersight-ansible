@@ -1,5 +1,8 @@
 # cisco.intersight Ansible Collection Changelog
 
+## Version 2.0.11
+- Fix issue #125 to avoid exceptions when local user policy does not exist
+
 ## Version 2.0.10
 - Fix issue #119 to avoid incorrect resources used on deletes or updates
 

@@ -290,11 +290,12 @@ def main():
 
         if module.params['purge']:
             # update existing resource and purge any existing users
-            for end_point_user_role in intersight.result['api_response']['EndPointUserRoles']:
-                intersight.delete_resource(
-                    moid=end_point_user_role['Moid'],
-                    resource_path='/iam/EndPointUserRoles',
-                )
+            if intersight.result['api_response'].get('EndPointUserRoles'):
+                for end_point_user_role in intersight.result['api_response']['EndPointUserRoles']:
+                    intersight.delete_resource(
+                        moid=end_point_user_role['Moid'],
+                        resource_path='/iam/EndPointUserRoles',
+                    )
         # configure the top-level policy resource
         intersight.result['api_response'] = {}
         intersight.configure_resource(
