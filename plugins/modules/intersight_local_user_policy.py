@@ -312,25 +312,40 @@ def main():
 
         # EndPointUser local_users list config
         for user in intersight.module.params['local_users']:
-            intersight.api_body = {
-                'Name': user['username'],
-            }
-            if organization_moid:
-                intersight.api_body['Organization'] = {
-                    'Moid': organization_moid,
-                }
-            intersight.configure_resource(
-                moid=None,
+            # check for existing user in this organization
+            filter_str = "Name eq '" + user['username'] + "'"
+            filter_str += "and Organization.Moid eq '" + organization_moid + "'"
+            intersight.get_resource(
                 resource_path='/iam/EndPointUsers',
-                body=intersight.api_body,
                 query_params={
-                    '$filter': "Name eq '" + user['username'] + "'",
+                    '$filter': filter_str
                 },
             )
             user_moid = None
             if intersight.result['api_response'].get('Moid'):
                 # resource exists and moid was returned
                 user_moid = intersight.result['api_response']['Moid']
+            else:
+                # create user if it doesn't exist
+                intersight.api_body = {
+                    'Name': user['username'],
+                }
+                if organization_moid:
+                    intersight.api_body['Organization'] = {
+                        'Moid': organization_moid,
+                    }
+                intersight.configure_resource(
+                    moid=None,
+                    resource_path='/iam/EndPointUsers',
+                    body=intersight.api_body,
+                    query_params={
+                        '$filter': "Name eq '" + user['username'] + "'",
+                    },
+                )
+                user_moid = None
+                if intersight.result['api_response'].get('Moid'):
+                    # resource exists and moid was returned
+                    user_moid = intersight.result['api_response']['Moid']
             # GET EndPointRole Moid
             intersight.get_resource(
                 resource_path='/iam/EndPointRoles',
