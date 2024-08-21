@@ -1,5 +1,8 @@
 # cisco.intersight Ansible Collection Changelog
 
+## Version 2.0.12
+- Update README to follow the Ansible Certified Collections template
+
 ## Version 2.0.11
 - Fix issue #125 to avoid exceptions when local user policy does not exist
 
