@@ -1,25 +1,53 @@
 # cisco.intersight Ansible Collection
 
-Ansible collection for managing and automating Cisco Intersight environments.  Modules and roles are provided for common Cisco Intersight tasks.  Detailed installation and usage examples are included in a lab guide in the misc directory of this collection at https://github.com/CiscoDevNet/intersight-ansible/blob/master/misc/CL2020%20EMEAR%20DEVWKS-1542%20Intersight%20Ansible%20Lab%20Guide.pdf 
+## Description
 
-* Note: This collection is not compatible with versions of Ansible before v2.8.
+Ansible collection for managing and automating Cisco Intersight environments.  Modules and roles are provided for common Cisco Intersight tasks.  Detailed installation and usage examples are included in a lab guide in the misc directory of this collection at https://github.com/CiscoDevNet/intersight-ansible/blob/master/misc/CL2020%20EMEAR%20DEVWKS-1542%20Intersight%20Ansible%20Lab%20Guide.pdf 
 
 ## Requirements
 
-- Ansible v2.14.0 or newer
+- Ansible v2.15.0 or newer
 - Python 3.7 or newer (Older Python versions are no longer supported with this collection)
 
 
-## Install
-- ansible must be installed
+## Installation
+
+Ansible must be installed
 ```
 sudo pip install ansible
 ```
 
-## Usage
+Before using this collection, you need to install it with the Ansible Galaxy command-line tool:
+```
+ansible-galaxy collection install cisco.intersight
+```
+
+You can also include it in a requirements.yml file and install it with ansible-galaxy collection install -r requirements.yml, using the format:
+
+```yaml
+collections:
+  - name: cisco.intersight
+```
+
+Note that if you install any collections from Ansible Galaxy, they will not be upgraded automatically when you upgrade the Ansible package.
+To upgrade the collection to the latest available version, run the following command:
+
+```
+ansible-galaxy collection install cisco.intersight --upgrade
+```
+
+You can also install a specific version of the collection, for example, if you need to downgrade when something is broken in the latest version (please report an issue in this repository). Use the following syntax to install version 1.0.0:
+
+```
+ansible-galaxy collection install cisco.intersight:==1.0.0
+```
+
+See [using Ansible collections](https://docs.ansible.com/ansible/devel/user_guide/collections_using.html) for more details.
+
+## Use Cases
 
 Authentication with the Intersight API requires the use of API keys that should be generated within the Intersight UI.  See (https://intersight.com/help) or (https://communities.cisco.com/docs/DOC-76947) for more information on generating and using API keys.
-If you do not have an Intersight account, you can create one and claim devices in Intersight using the DevNet Intersight Sandbox at https://devnetsandbox.cisco.com/RM/Diagram/Index/a63216d2-e891-4856-9f27-309ca61ec862?diagramType=Topology
+If you do not have an Intersight account, Cisco's dCloud provides an Intersight demo that you can use: https://dcloud2-rtp.cisco.com/content/instantdemo/cisco-intersight-infrastructure-services.
 Because Intersight has a single API endpoint, minimal setup is required in playbooks or variables to access the API.  Here's an example playbook:
 ```
 ---
@@ -83,11 +111,28 @@ cp example_inventory inventory
 edit inventory with your api_private_key and api_key_id
 ansible-playbook -i inventory update_all_inventory.yml
 ```
-# Community:
+
+## Testing
+
+This collection is tested using the examples in the playbooks directory.
+
+## Contributing
+
+To contribute to this collection, please see the [Development Guide](./Development.md) for guidelines that describe the process.
+
+## Support
 
 * We are on Slack (https://ciscoucs.slack.com/) - Slack requires registration, but the ucspython team is open invitation to
-  anyone.  Click [here](https://ucspython.herokuapp.com) to register 
+  anyone.  Click [here](https://ucspython.herokuapp.com) to register.
 
-# License
+## Release Notes
+
+See the [Changelog](./CHANGELOG.md) for information on what's changed in each release of this collection.
+
+## Related Information
+
+Cisco's DevNet includes a Learning Lab on using this collection at https://developer.cisco.com/learning/labs/cisco-intersight-rest-api-ansible/.
+
+## License Information
 
 Licensed under the [MIT License](https://github.com/CiscoDevNet/intersight-ansible/blob/main/LICENSE.txt).
