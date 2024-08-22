@@ -106,7 +106,7 @@ from ansible.module_utils.basic import AnsibleModule
 
 
 def main():
-    argument_spec = intersight_argument_spec
+    argument_spec = intersight_argument_spec.copy()
     argument_spec.update(
         claim_code=dict(type='str'),
         device_id=dict(type='str', required=True),

@@ -176,7 +176,7 @@ def main():
         role=dict(type='str', choices=['admin', 'readonly', 'user'], required=True),
         password=dict(type='str', required=True, no_log=True),
     )
-    argument_spec = intersight_argument_spec
+    argument_spec = intersight_argument_spec.copy()
     argument_spec.update(
         state=dict(type='str', choices=['present', 'absent'], default='present'),
         organization=dict(type='str', default='default'),

@@ -94,7 +94,7 @@ def get_servers(module, intersight):
 
 
 def main():
-    argument_spec = intersight_argument_spec
+    argument_spec = intersight_argument_spec.copy()
     argument_spec.update(
         server_names=dict(type='list', elements='str'),
     )

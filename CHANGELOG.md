@@ -1,5 +1,8 @@
 # cisco.intersight Ansible Collection Changelog
 
+## Version 2.0.15
+- Add CI workflow and workaround for ansible-test sanity failures
+
 ## Version 2.0.14
 - Fixes #127 to avoid changes to existing users in local user policies
 
