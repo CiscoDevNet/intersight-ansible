@@ -141,7 +141,7 @@ from ansible.module_utils.basic import AnsibleModule
 
 
 def main():
-    argument_spec = intersight_argument_spec
+    argument_spec = intersight_argument_spec.copy()
     argument_spec.update(
         resource_path=dict(type='str', required=True),
         query_params=dict(type='dict'),

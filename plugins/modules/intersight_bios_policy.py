@@ -4313,7 +4313,7 @@ def check_and_add_prop(prop, propKey, params, api_body):
 
 
 def main():
-    argument_spec = intersight_argument_spec
+    argument_spec = intersight_argument_spec.copy()
     argument_spec.update(
         state={"type": "str", "choices": ['present', 'absent'], "default": "present"},
         organization={"type": "str", "default": "default"},
