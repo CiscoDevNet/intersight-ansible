@@ -56,6 +56,7 @@
         lan_connectivity_policy: "{{ lan_connectivity_policy | default(omit) }}"
         local_user_policy: "{{ local_user_policy | default(omit) }}"
         ntp_policy: "{{ ntp_policy | default(omit) }}"
+        power_policy: "{{ power_policy | default(omit) }}"
         san_connectivity_policy: "{{ san_connectivity_policy | default(omit) }}"
         serial_over_lan_policy: "{{ serial_over_lan_policy | default(omit) }}"
         snmp_policy: "{{ snmp_policy | default(omit) }}"
