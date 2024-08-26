@@ -1,5 +1,8 @@
 # cisco.intersight Ansible Collection Changelog
 
+## Version 2.0.16
+- Fixes #133 to add support for Power Policies in Server Profiles
+
 ## Version 2.0.15
 - Add CI workflow and workaround for ansible-test sanity failures
 

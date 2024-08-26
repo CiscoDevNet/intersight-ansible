@@ -104,6 +104,10 @@ options:
     description:
       - Name of NTP Policy to associate with this profile.
     type: str
+  power_policy:
+    description:
+      - Name of Power Policy to associated with this profile.
+    type: str
   san_connectivity_policy:
     description:
       - Name of SAN Connectivity Policy to associate with this profile.
@@ -272,6 +276,7 @@ def main():
         lan_connectivity_policy=dict(type='str'),
         local_user_policy=dict(type='str'),
         ntp_policy=dict(type='str'),
+        power_policy=dict(type='str'),
         san_connectivity_policy=dict(type='str'),
         serial_over_lan_policy=dict(type='str'),
         snmp_policy=dict(type='str'),
@@ -345,6 +350,8 @@ def main():
         post_profile_to_policy(intersight, moid, resource_path='/iam/EndPointUserPolicies', policy_name=intersight.module.params['local_user_policy'])
     if moid and intersight.module.params['ntp_policy']:
         post_profile_to_policy(intersight, moid, resource_path='/ntp/Policies', policy_name=intersight.module.params['ntp_policy'])
+    if moid and intersight.module.params['power_policy']:
+        post_profile_to_policy(intersight, moid, resource_path='/power/Policies', policy_name=intersight.module.params['power_policy'])
     if moid and intersight.module.params['san_connectivity_policy']:
         post_profile_to_policy(intersight, moid, resource_path='/vnic/SanConnectivityPolicies', policy_name=intersight.module.params['san_connectivity_policy'])
     if moid and intersight.module.params['serial_over_lan_policy']:
