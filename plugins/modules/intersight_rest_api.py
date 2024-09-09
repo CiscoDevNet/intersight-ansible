@@ -33,8 +33,9 @@ options:
     description:
     - The HTTP method used for update operations.
     - Some Intersight resources require POST operations for modifications.
-    - json-patch is used for partial updates.  See L(https://intersight.com/apidocs/introduction/methods/) for details on JSON Patch.
+    - json-patch is used for partial updates.
     - json-patch is only supported for patch operations on existing resources and requires the list_body to be a list of dictionaries.
+    - See L(The Intersight API Docs, https://intersight.com/apidocs/introduction/methods/) for details on JSON Patch.
     type: str
     choices: [ patch, post, json-patch ]
     default: patch
