@@ -33,8 +33,11 @@ options:
     description:
     - The HTTP method used for update operations.
     - Some Intersight resources require POST operations for modifications.
+    - json-patch is used for partial updates.
+    - json-patch is only supported for patch operations on existing resources and requires the list_body to be a list of dictionaries.
+    - See L(The Intersight API Docs, https://intersight.com/apidocs/introduction/methods/) for details on JSON Patch.
     type: str
-    choices: [ patch, post ]
+    choices: [ patch, post, json-patch ]
     default: patch
   api_body:
     description:
@@ -145,7 +148,7 @@ def main():
     argument_spec.update(
         resource_path=dict(type='str', required=True),
         query_params=dict(type='dict'),
-        update_method=dict(type='str', choices=['patch', 'post'], default='patch'),
+        update_method=dict(type='str', choices=['patch', 'post', 'json-patch'], default='patch'),
         api_body=dict(type='dict'),
         list_body=dict(type='list', elements='dict'),
         return_list=dict(type='bool', default=False),
