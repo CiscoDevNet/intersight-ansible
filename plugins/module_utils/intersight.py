@@ -154,6 +154,7 @@ class IntersightModule():
             self.private_key = self.module.params['api_private_key']
         self.digest_algorithm = ''
         self.response_list = []
+        self.update_method = ''
 
     def get_sig_b64encode(self, data):
         """
@@ -285,6 +286,9 @@ class IntersightModule():
         if (moid is not None and len(moid.encode('utf-8')) != 24):
             raise ValueError('Invalid *moid* value!')
 
+        if (method != 'PATCH' and self.update_method == 'json-patch'):
+            raise ValueError('json-patch is only supported with PATCH on existing resource')
+
         # Check for query_params, encode, and concatenate onto URL
         if query_params:
             query_path = "?" + urlencode(query_params)
@@ -331,9 +335,13 @@ class IntersightModule():
         auth_header = self.get_auth_header(auth_header, b64_signed_msg)
 
         # Generate the HTTP requests header
+        if self.update_method == 'json-patch':
+            content_type = 'application/json-patch+json'
+        else:
+            content_type = 'application/json'
         request_header = {
             'Accept': 'application/json',
-            'Content-Type': 'application/json',
+            'Content-Type': content_type,
             'Host': '{0}'.format(target_host),
             'Date': '{0}'.format(cdate),
             'Digest': 'SHA-256={0}'.format(b64_body_digest.decode('ascii')),
@@ -367,6 +375,7 @@ class IntersightModule():
         self.result['trace_id'] = response.get('trace_id')
 
     def configure_resource(self, moid, resource_path, body, query_params, update_method=''):
+        self.update_method = update_method
         if not self.module.check_mode:
             if moid and update_method != 'post':
                 # update the resource - user has to specify all the props they want updated

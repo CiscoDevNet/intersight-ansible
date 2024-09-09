@@ -1,5 +1,8 @@
 # cisco.intersight Ansible Collection Changelog
 
+## Version 2.0.17
+- Fixes #135 to support JSON Patch of existing resources with example port_policy_json_patch.yml playbook
+
 ## Version 2.0.16
 - Fixes #133 to add support for Power Policies in Server Profiles
 
