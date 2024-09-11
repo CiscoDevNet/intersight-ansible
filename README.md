@@ -48,7 +48,7 @@ See [using Ansible collections](https://docs.ansible.com/ansible/devel/user_guid
 
 Authentication with the Intersight API requires the use of API keys that should be generated within the Intersight UI.  See (https://intersight.com/help) or (https://communities.cisco.com/docs/DOC-76947) for more information on generating and using API keys.
 If you do not have an Intersight account, Cisco's dCloud provides an Intersight demo that you can use: https://dcloud2-rtp.cisco.com/content/instantdemo/cisco-intersight-infrastructure-services.
-Because Intersight has a single API endpoint, minimal setup is required in playbooks or variables to access the API.  Here's an example playbook:
+Minimal setup is required in playbooks or variables to access the API.  By default modules use an api_uri for Intersight's US instance `https://intersight.com/api/v1`.  If you need to use Intersight's EU instance you'll need to set `api_uri: https://eu-central-1.intersight.com/api/v1`.  Here's an example playbook with other required API parameters:
 ```
 ---
 - hosts: localhost
