@@ -96,9 +96,17 @@ options:
     description:
       - Name of LAN Connectivity Policy to associate with this profile.
     type: str
+  ldap_policy:
+    description:
+      - Name of LDAP Policy to associate with this profile.
+    type: str
   local_user_policy:
     description:
       - Name of Local User Policy to associate with this profile.
+    type: str
+  network_connectivity_policy:
+    description:
+      - Name of Network Connectivity Policy to associate with this profile.
     type: str
   ntp_policy:
     description:
@@ -112,13 +120,25 @@ options:
     description:
       - Name of SAN Connectivity Policy to associate with this profile.
     type: str
+  sd_card_policy:
+    description:
+      - Name of SD Card Policy to associate with this profile.
+    type: str
   serial_over_lan_policy:
     description:
       - Name of Serial over LAN Policy to associate with this profile.
     type: str
+  smtp_policy:
+    description:
+      - Name of SMTP Policy to associate with this profile.
+    type: str
   snmp_policy:
     description:
       - Name of SNMP Policy to associate with this profile.
+    type: str
+  ssh_policy:
+    description:
+      - Name of SSH Policy to associate with this profile.
     type: str
   storage_policy:
     description:
@@ -204,6 +224,35 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible_collections.cisco.intersight.plugins.module_utils.intersight import IntersightModule, intersight_argument_spec
 
 
+# When adding new policy parameters, update this dict with their respective resource path
+policy_resource_path = {
+    'bios_policy': '/bios/Policies',
+    'boot_order_policy': '/boot/PrecisionPolicies',
+    'certificate_policy': '/certificatemanagement/Policies',
+    'drive_security_policy': '/storage/DriveSecurityPolicies',
+    'firmware_policy': '/firmware/Policies',
+    'imc_access_policy': '/access/Policies',
+    'ipmi_over_lan_policy': '/ipmioverlan/Policies',
+    'lan_connectivity_policy': '/vnic/LanConnectivityPolicies',
+    'local_user_policy': '/iam/EndPointUserPolicies',
+    'ldap_policy': '/iam/LdapPolicies',
+    'network_connectivity_policy': '/networkconfig/Policies',
+    'ntp_policy': '/ntp/Policies',
+    'power_policy': '/power/Policies',
+    'san_connectivity_policy': '/vnic/SanConnectivityPolicies',
+    'sd_card_policy': '/sdcard/Policies',
+    'serial_over_lan_policy': '/sol/Policies',
+    'smtp_policy': '/smtp/Policies',
+    'snmp_policy': '/snmp/Policies',
+    'ssh_policy': '/ssh/Policies',
+    'storage_policy': '/storage/StoragePolicies',
+    'syslog_policy': '/syslog/Policies',
+    'thermal_policy': '/thermal/Policies',
+    'virtual_kvm_policy': '/kvm/Policies',
+    'virtual_media_policy': '/vmedia/Policies',
+}
+
+
 def post_profile_to_policy(intersight, moid, resource_path, policy_name):
     options = {
         'http_method': 'get',
@@ -274,12 +323,17 @@ def main():
         imc_access_policy=dict(type='str'),
         ipmi_over_lan_policy=dict(type='str'),
         lan_connectivity_policy=dict(type='str'),
+        ldap_policy=dict(type='str'),
         local_user_policy=dict(type='str'),
+        network_connectivity_policy=dict(type='str'),
         ntp_policy=dict(type='str'),
         power_policy=dict(type='str'),
         san_connectivity_policy=dict(type='str'),
+        sd_card_policy=dict(type='str'),
         serial_over_lan_policy=dict(type='str'),
+        smtp_policy=dict(type='str'),
         snmp_policy=dict(type='str'),
+        ssh_policy=dict(type='str'),
         storage_policy=dict(type='str'),
         syslog_policy=dict(type='str'),
         thermal_policy=dict(type='str'),
@@ -330,44 +384,10 @@ def main():
     # Configure the profile
     moid = intersight.configure_policy_or_profile(resource_path=resource_path)
 
-    if moid and intersight.module.params['bios_policy']:
-        post_profile_to_policy(intersight, moid, resource_path='/bios/Policies', policy_name=intersight.module.params['bios_policy'])
-    if moid and intersight.module.params['boot_order_policy']:
-        post_profile_to_policy(intersight, moid, resource_path='/boot/PrecisionPolicies', policy_name=intersight.module.params['boot_order_policy'])
-    if moid and intersight.module.params['certificate_policy']:
-        post_profile_to_policy(intersight, moid, resource_path='/certificatemanagement/Policies', policy_name=intersight.module.params['certificate_policy'])
-    if moid and intersight.module.params['drive_security_policy']:
-        post_profile_to_policy(intersight, moid, resource_path='/storage/DriveSecurityPolicies', policy_name=intersight.module.params['drive_security_policy'])
-    if moid and intersight.module.params['firmware_policy']:
-        post_profile_to_policy(intersight, moid, resource_path='/firmware/Policies', policy_name=intersight.module.params['firmware_policy'])
-    if moid and intersight.module.params['imc_access_policy']:
-        post_profile_to_policy(intersight, moid, resource_path='/access/Policies', policy_name=intersight.module.params['imc_access_policy'])
-    if moid and intersight.module.params['ipmi_over_lan_policy']:
-        post_profile_to_policy(intersight, moid, resource_path='/ipmioverlan/Policies', policy_name=intersight.module.params['ipmi_over_lan_policy'])
-    if moid and intersight.module.params['lan_connectivity_policy']:
-        post_profile_to_policy(intersight, moid, resource_path='/vnic/LanConnectivityPolicies', policy_name=intersight.module.params['lan_connectivity_policy'])
-    if moid and intersight.module.params['local_user_policy']:
-        post_profile_to_policy(intersight, moid, resource_path='/iam/EndPointUserPolicies', policy_name=intersight.module.params['local_user_policy'])
-    if moid and intersight.module.params['ntp_policy']:
-        post_profile_to_policy(intersight, moid, resource_path='/ntp/Policies', policy_name=intersight.module.params['ntp_policy'])
-    if moid and intersight.module.params['power_policy']:
-        post_profile_to_policy(intersight, moid, resource_path='/power/Policies', policy_name=intersight.module.params['power_policy'])
-    if moid and intersight.module.params['san_connectivity_policy']:
-        post_profile_to_policy(intersight, moid, resource_path='/vnic/SanConnectivityPolicies', policy_name=intersight.module.params['san_connectivity_policy'])
-    if moid and intersight.module.params['serial_over_lan_policy']:
-        post_profile_to_policy(intersight, moid, resource_path='/sol/Policies', policy_name=intersight.module.params['serial_over_lan_policy'])
-    if moid and intersight.module.params['snmp_policy']:
-        post_profile_to_policy(intersight, moid, resource_path='/snmp/Policies', policy_name=intersight.module.params['snmp_policy'])
-    if moid and intersight.module.params['storage_policy']:
-        post_profile_to_policy(intersight, moid, resource_path='/storage/StoragePolicies', policy_name=intersight.module.params['storage_policy'])
-    if moid and intersight.module.params['syslog_policy']:
-        post_profile_to_policy(intersight, moid, resource_path='/syslog/Policies', policy_name=intersight.module.params['syslog_policy'])
-    if moid and intersight.module.params['thermal_policy']:
-        post_profile_to_policy(intersight, moid, resource_path='/thermal/Policies', policy_name=intersight.module.params['thermal_policy'])
-    if moid and intersight.module.params['virtual_kvm_policy']:
-        post_profile_to_policy(intersight, moid, resource_path='/kvm/Policies', policy_name=intersight.module.params['virtual_kvm_policy'])
-    if moid and intersight.module.params['virtual_media_policy']:
-        post_profile_to_policy(intersight, moid, resource_path='/vmedia/Policies', policy_name=intersight.module.params['virtual_media_policy'])
+    if moid:
+        for k, v in policy_resource_path.items():
+            if intersight.module.params[k]:
+                post_profile_to_policy(intersight, moid, resource_path=v, policy_name=intersight.module.params[k])
 
     module.exit_json(**intersight.result)
 
