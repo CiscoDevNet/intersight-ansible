@@ -1,5 +1,8 @@
 # cisco.intersight Ansible Collection Changelog
 
+## Version 2.0.18
+- Add support for LDAP, Network Connectivity, SD Card, SMTP, SSH Policies to intersight_server_profile
+
 ## Version 2.0.17
 - Fixes #135 to support JSON Patch of existing resources with example port_policy_json_patch.yml playbook
 
