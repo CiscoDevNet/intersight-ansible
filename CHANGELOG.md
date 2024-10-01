@@ -1,5 +1,8 @@
 # cisco.intersight Ansible Collection Changelog
 
+## Version 2.0.20
+- Replace 2.0.19 release and remove unneeded directory
+
 ## Version 2.0.19
 - New collection to add support for LDAP, Network Connectivity, SD Card, SMTP, SSH Policies to intersight_server_profile
 
