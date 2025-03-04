@@ -1,0 +1,173 @@
+---
+#
+# Configure vNIC Templates
+#
+- name: "Configure vNIC Template"
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  vars:
+    # Create an anchor for api_info that can be used throughout the file
+    api_info: &api_info
+      # if api_key vars are omitted, INTERSIGHT_API_KEY_ID, INTERSIGHT_API_PRIVATE_KEY,
+      # and INTERSIGHT_API_URI environment variables used for API key data
+      api_private_key: "{{ api_private_key | default(omit) }}"
+      api_key_id: "{{ api_key_id | default(omit) }}"
+      api_uri: "{{ api_uri | default(omit) }}"
+      validate_certs: "{{ validate_certs | default(omit) }}"
+      state: "{{ state | default(omit) }}"
+    # vNIC Template name
+    template_name: vnic-devnet
+    org_name: Demo-DevNet
+    mac_pool: DevNet-MACPool
+    network_group: DevNet-Eth-Net-Group
+    network_control_policy: DevNet-Eth-Net-Control
+    qos_policy: DevNet-Eth-QoS
+    ethernet_adapter: DevNet-EthAdapter-Windows
+    lan_connectivity_policy: DevNet-LAN_CLONE
+    vnic_name: vnic0-mgmt
+  tasks:
+    # Get the Organization Moid
+    - name: "Get Organization Moid"
+      cisco.intersight.intersight_rest_api:
+        <<: *api_info
+        resource_path: /organization/Organizations
+        query_params:
+          $filter: "Name eq '{{ org_name }}'"
+      register: org_resp
+    - name: "Get MAC Pool Moid"
+      cisco.intersight.intersight_rest_api:
+        <<: *api_info
+        resource_path: /macpool/Pools
+        query_params:
+          $filter: "Name eq '{{ mac_pool }}'"
+      register: mac_resp
+    - name: "Get Network Group Moid"
+      cisco.intersight.intersight_rest_api:
+        <<: *api_info
+        resource_path: /fabric/EthNetworkGroupPolicies
+        query_params:
+          $filter: "Name eq '{{ network_group }}'"
+      register: network_resp
+    - name: "Get Network Control Policy Moid"
+      cisco.intersight.intersight_rest_api:
+        <<: *api_info
+        resource_path: /fabric/EthNetworkControlPolicies
+        query_params:
+          $filter: "Name eq '{{ network_control_policy }}'"
+      register: control_resp
+    - name: "Get QoS Policy Moid"
+      cisco.intersight.intersight_rest_api:
+        <<: *api_info
+        resource_path: /vnic/EthQosPolicies
+        query_params:
+          $filter: "Name eq '{{ qos_policy }}'"
+      register: qos_resp
+    - name: "Get Ethernet Adapter Moid"
+      cisco.intersight.intersight_rest_api:
+        <<: *api_info
+        resource_path: /vnic/EthAdapterPolicies
+        query_params:
+          $filter: "Name eq '{{ ethernet_adapter }}'"
+      register: adapter_resp
+    # Config vNIC Template
+    - name: "Configure vNIC Template"
+      cisco.intersight.intersight_rest_api:
+        <<: *api_info
+        resource_path: /vnic/VnicTemplates
+        # method: POST
+        query_params:
+          $filter: "Name eq '{{ template_name }}'"
+        api_body: {
+          "Name": "{{ template_name }}",
+          "Organization": {
+            "Moid": "{{ org_resp.api_response.Moid }}"
+          },
+          "Cdn": {
+            "Source": "vnic"
+          },
+          "EnableOverride": false,
+          "EthAdapterPolicy": {
+            "Moid": "{{ adapter_resp.api_response.Moid }}"
+          },
+          "EthQosPolicy": {
+            "Moid": "{{ qos_resp.api_response.Moid }}"
+          },
+          "FabricEthNetworkControlPolicy": {
+            "Moid": "{{ control_resp.api_response.Moid }}"
+          },
+          "FabricEthNetworkGroupPolicy": [
+            {
+              "Moid": "{{ network_resp.api_response.Moid }}"
+            }
+          ],
+          "FailoverEnabled": false,
+          "MacPool": {
+            "Moid": "{{ mac_resp.api_response.Moid }}"
+          },
+          "SwitchId": "A"
+        }
+      register: template_resp
+    # Check if vNIC exists
+    - name: "Get {{ vnic_name }} Moid"
+      intersight_rest_api:
+        resource_path: /vnic/EthIfs
+        query_params:
+          $filter: "Name eq '{{ vnic_name }}'"
+      register: vnic_resp
+    # Get LAN Connectivity Policy Moid
+    - name: "Get LAN Connectivity Policy Moid"
+      intersight_rest_api:
+        resource_path: /vnic/LanConnectivityPolicies
+        query_params:
+          $filter: "Name eq '{{ lan_connectivity_policy }}'"
+      register: lan_resp
+    # Derive profiles from template (if profiles don't already exist)
+    - name: "POST to derive {{ vnic_name }}"
+      intersight_rest_api:
+        resource_path: /bulk/MoCloners
+        update_method: post
+        api_body: {
+          "Organization": {
+            "Moid": "{{ org_resp.api_response.Moid }}"
+          },
+          "Sources": [
+            {
+              "ClassId": "mo.MoRef",
+              "ObjectType": "vnic.VnicTemplate",
+              "Moid": "{{ template_resp.api_response.Moid }}"
+            }
+          ],
+          "Targets": [
+            {
+              "Name": "{{ vnic_name }}",
+              "LanConnectivityPolicy": "{{ lan_resp.api_response.Moid }}",
+              "MacAddressType": "POOL",
+              "ObjectType": "vnic.EthIf",
+              "Placement": {},
+              "ClassId": "vnic.EthIf"
+            }
+          ]
+        }
+      when: vnic_resp.api_response is not defined or not vnic_resp.api_response
+    # POST updates to derived profiles if template was changed
+    - name: "POST to update {{ vnic_name }}"
+      intersight_rest_api:
+        resource_path: /bulk/MoMergers
+        update_method: post
+        api_body: {
+          "Sources": [
+            {
+              "ObjectType": "vnic.VnicTemplate",
+              "Moid": "{{ template_resp.api_response.Moid }}"
+            }
+          ],
+          "Targets": [
+            {
+              "ObjectType": "vnic.EthIf",
+              "Moid": "{{ vnic_resp.api_response.Moid }}"
+            }
+          ],
+          "MergeAction":"Replace"
+        }
+      when: vnic_resp.api_response and vnic_resp.changed
