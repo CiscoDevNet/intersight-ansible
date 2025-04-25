@@ -25,7 +25,9 @@
     qos_policy: DevNet-Eth-QoS
     ethernet_adapter: DevNet-EthAdapter-Windows
     lan_connectivity_policy: DevNet-LAN_CLONE
-    vnic_name: vnic0-mgmt
+    vnic_names:
+      - vnic0-mgmt
+      - vnic1-mgmt
   tasks:
     # Get the Organization Moid
     - name: "Get Organization Moid"
@@ -108,13 +110,6 @@
           "SwitchId": "A"
         }
       register: template_resp
-    # Check if vNIC exists
-    - name: "Get {{ vnic_name }} Moid"
-      intersight_rest_api:
-        resource_path: /vnic/EthIfs
-        query_params:
-          $filter: "Name eq '{{ vnic_name }}'"
-      register: vnic_resp
     # Get LAN Connectivity Policy Moid
     - name: "Get LAN Connectivity Policy Moid"
       intersight_rest_api:
@@ -122,8 +117,18 @@
         query_params:
           $filter: "Name eq '{{ lan_connectivity_policy }}'"
       register: lan_resp
+    # Check if vNIC exists
+    - name: "Get {{ vnic_name }} Moid"
+      intersight_rest_api:
+        resource_path: /vnic/EthIfs
+        query_params:
+          $filter: "Name eq '{{ vnic_name }}' and LanConnectivityPolicy.Moid eq '{{ lan_resp.api_response.Moid }}'"
+      register: vnic_resp
+      loop: "{{ vnic_names }}"
+      loop_control:
+        loop_var: vnic_name
     # Derive profiles from template (if profiles don't already exist)
-    - name: "POST to derive {{ vnic_name }}"
+    - name: "POST to derive vNICs"
       intersight_rest_api:
         resource_path: /bulk/MoCloners
         update_method: post
@@ -140,7 +145,7 @@
           ],
           "Targets": [
             {
-              "Name": "{{ vnic_name }}",
+              "Name": "{{ item.vnic_name }}",
               "LanConnectivityPolicy": "{{ lan_resp.api_response.Moid }}",
               "MacAddressType": "POOL",
               "ObjectType": "vnic.EthIf",
@@ -149,9 +154,12 @@
             }
           ]
         }
-      when: vnic_resp.api_response is not defined or not vnic_resp.api_response
+      when: item.api_response.Name is not defined
+      loop: "{{ vnic_resp.results }}"
+      loop_control:
+        label: "{{ item.vnic_name }}"
     # POST updates to derived profiles if template was changed
-    - name: "POST to update {{ vnic_name }}"
+    - name: "POST to update vNICs"
       intersight_rest_api:
         resource_path: /bulk/MoMergers
         update_method: post
@@ -165,9 +173,12 @@
           "Targets": [
             {
               "ObjectType": "vnic.EthIf",
-              "Moid": "{{ vnic_resp.api_response.Moid }}"
+              "Moid": "{{ item.api_response.Moid }}"
             }
           ],
           "MergeAction":"Replace"
         }
-      when: vnic_resp.api_response and vnic_resp.changed
+      when: item.api_response.Name is defined and template_resp.changed
+      loop: "{{ vnic_resp.results }}"
+      loop_control:
+        label: "{{ item.vnic_name }}"
