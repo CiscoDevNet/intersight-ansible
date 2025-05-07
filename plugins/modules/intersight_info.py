@@ -103,8 +103,6 @@ def main():
         argument_spec,
         supports_check_mode=True,
     )
-    if module._name == 'intersight_facts':
-        module.deprecate("The 'intersight_facts' module has been renamed to 'intersight_info'", date='2024-07-10', collection_name='cisco.intersight')
 
     intersight = IntersightModule(module)
 
