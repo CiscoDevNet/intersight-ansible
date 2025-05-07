@@ -1,0 +1,93 @@
+---
+#
+# Attach vNIC to template
+#
+- name: "Attach vNIC to template"
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  vars:
+    # Create an anchor for api_info that can be used throughout the file
+    api_info: &api_info
+      # if api_key vars are omitted, INTERSIGHT_API_KEY_ID, INTERSIGHT_API_PRIVATE_KEY,
+      # and INTERSIGHT_API_URI environment variables used for API key data
+      api_private_key: "{{ api_private_key | default(omit) }}"
+      api_key_id: "{{ api_key_id | default(omit) }}"
+      api_uri: "{{ api_uri | default(omit) }}"
+      validate_certs: "{{ validate_certs | default(omit) }}"
+      state: "{{ state | default(omit) }}"
+    # vNIC Template name
+    template_name: vnic-devnet
+    lan_connectivity_policy: DevNet-LAN_CLONE
+    vnic_names:
+      - eth0
+  tasks:
+    # Get vNIC Template
+    - name: "Get vNIC Template"
+      cisco.intersight.intersight_rest_api:
+        <<: *api_info
+        resource_path: /vnic/VnicTemplates
+        # method: POST
+        query_params:
+          $filter: "Name eq '{{ template_name }}'"
+      register: template_resp
+    # Get LAN Connectivity Policy Moid
+    - name: "Get LAN Connectivity Policy Moid"
+      intersight_rest_api:
+        resource_path: /vnic/LanConnectivityPolicies
+        query_params:
+          $filter: "Name eq '{{ lan_connectivity_policy }}'"
+      register: lan_resp
+    # Get vNIC
+    - name: "Get {{ vnic_name }}"
+      intersight_rest_api:
+        resource_path: /vnic/EthIfs
+        query_params:
+          $filter: "Name eq '{{ vnic_name }}' and LanConnectivityPolicy.Moid eq '{{ lan_resp.api_response.Moid }}'"
+      register: vnic_resp
+      loop: "{{ vnic_names }}"
+      loop_control:
+        loop_var: vnic_name
+    # Attach vNIC to template
+    - name: "POST to attach vNIC to template"
+      intersight_rest_api:
+        resource_path: /bulk/Requests
+        update_method: post
+        api_body: {
+          "Verb": "PATCH",
+          "Uri": "/v1/vnic/EthIfs",
+          "Requests": [
+            {
+              "ObjectType": "bulk.RestSubRequest",
+              "Body": {
+                "Moid": "{{ item.api_response.Moid }}",
+                "Name": "{{ item.vnic_name }}",
+                "Placement": {
+                  "AutoPciLink": false,
+                  "AutoSlotId": false,
+                  "ClassId": "vnic.PlacementSettings",
+                  "Id": "",
+                  "ObjectType": "vnic.PlacementSettings",
+                  "PciLink": 0,
+                  "PciLinkAssignmentMode": "Custom",
+                  "Uplink": 0
+                },
+                "Order": 0,
+                "MacAddressType": "POOL",
+                "StaticMacAddress": "",
+                "SrcTemplate": "{{ template_resp.api_response.Moid }}",
+                "TemplateActions": [
+                  {
+                    "Params": [],
+                    "Type": "Attach",
+                  }
+                ]
+              },
+              "TargetMoid": "{{ item.api_response.Moid }}"
+            }
+          ]
+        }
+      when: item.api_response.Name is defined
+      loop: "{{ vnic_resp.results }}"
+      loop_control:
+        label: "{{ item.vnic_name }}"
