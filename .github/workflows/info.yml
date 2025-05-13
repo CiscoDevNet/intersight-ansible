@@ -21,4 +21,5 @@ jobs:
 
       - name: Run Ansible Playbook
         run: |
-          ansible-playbook -i 'localhost,' --connection=local --extra-vars "ansible_api_key=${{ secrets.ANSIBLE_API_KEY }}" playbook.yml
+          cd playbooks
+          ansible-playbook -i 'localhost,' --connection=local --extra-vars "ansible_api_key=${{ secrets.ANSIBLE_API_KEY }}" count_vms.yml
