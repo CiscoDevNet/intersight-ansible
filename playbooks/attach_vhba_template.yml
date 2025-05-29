@@ -1,0 +1,80 @@
+---
+#
+# Attach vHBA to template
+#
+- name: "Attach vHBA to template"
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  vars:
+    # Create an anchor for api_info that can be used throughout the file
+    api_info: &api_info
+      # if api_key vars are omitted, INTERSIGHT_API_KEY_ID, INTERSIGHT_API_PRIVATE_KEY,
+      # and INTERSIGHT_API_URI environment variables used for API key data
+      api_private_key: "{{ api_private_key | default(omit) }}"
+      api_key_id: "{{ api_key_id | default(omit) }}"
+      api_uri: "{{ api_uri | default(omit) }}"
+      validate_certs: "{{ validate_certs | default(omit) }}"
+      state: "{{ state | default(omit) }}"
+    # vHBA Template name
+    template_name: Demo-vHBA
+    san_connectivity_policy: Demo-SAN
+    vhba_name: vhba0
+  tasks:
+    # Get vHBA Template
+    - name: "Get vHBA Template"
+      cisco.intersight.intersight_rest_api:
+        <<: *api_info
+        resource_path: /vnic/VhbaTemplates
+        query_params:
+          $filter: "Name eq '{{ template_name }}'"
+      register: template_resp
+    # Get SAN Connectivity Policy Moid
+    - name: "Get SAN Connectivity Policy Moid"
+      cisco.intersight.intersight_rest_api:
+        <<: *api_info
+        resource_path: /vnic/SanConnectivityPolicies
+        query_params:
+          $filter: "Name eq '{{ san_connectivity_policy }}'"
+      register: san_resp
+    # Get vHBA
+    - name: "Get vHBA"
+      cisco.intersight.intersight_rest_api:
+        <<: *api_info
+        resource_path: /vnic/FcIfs
+        query_params:
+          $filter: "Name eq '{{ vhba_name }}' and SanConnectivityPolicy.Moid eq '{{ san_resp.api_response.Moid }}'"
+      register: vhba_resp
+    # Attach vHBA to template
+    - name: "Attach vHBA to template"
+      cisco.intersight.intersight_rest_api:
+        <<: *api_info
+        resource_path: /bulk/Requests
+        update_method: post
+        api_body: |
+          {
+            "Verb": "PATCH",
+            "Uri": "/v1/vnic/FcIfs",
+            "Requests": [
+              {
+                "ObjectType": "bulk.RestSubRequest",
+                "Body": {
+                  "Moid": "{{ vhba_resp.api_response.Moid }}",
+                  "Placement": {},
+                  "Order": 0,
+                  "StaticWwpnAddress": "",
+                  "WwpnAddressType": "POOL",
+                  "SrcTemplate": "{{ template_resp.api_response.Moid }}",
+                  "TemplateActions": [
+                    {
+                      "Params": [],
+                      "Type": "Attach"
+                    }
+                  ]
+                },
+                "TargetMoid": "{{ vhba_resp.api_response.Moid }}"
+              }
+            ]
+          }
+      when:
+        vhba_resp.api_response.Moid is defined
