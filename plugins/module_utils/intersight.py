@@ -31,6 +31,7 @@
 # Contributors: David Soper, Chris Gascoigne, John McDonough
 
 from __future__ import (absolute_import, division, print_function)
+
 __metaclass__ = type
 
 from base64 import b64encode
@@ -38,6 +39,8 @@ from email.utils import formatdate
 import re
 import json
 import hashlib
+from typing import Optional
+
 from ansible.module_utils.six import iteritems
 from ansible.module_utils.six.moves.urllib.parse import urlparse, urlencode
 from ansible.module_utils.urls import fetch_url
@@ -47,12 +50,14 @@ try:
     from cryptography.hazmat.primitives import serialization, hashes
     from cryptography.hazmat.primitives.asymmetric import padding, ec
     from cryptography.hazmat.backends import default_backend
+
     HAS_CRYPTOGRAPHY = True
 except ImportError:
     HAS_CRYPTOGRAPHY = False
 
 intersight_argument_spec = dict(
-    api_private_key=dict(fallback=(env_fallback, ['INTERSIGHT_API_PRIVATE_KEY']), type='path', required=True, no_log=True),
+    api_private_key=dict(fallback=(env_fallback, ['INTERSIGHT_API_PRIVATE_KEY']), type='path', required=True,
+                         no_log=True),
     api_uri=dict(fallback=(env_fallback, ['INTERSIGHT_API_URI']), type='str', default='https://intersight.com/api/v1'),
     api_key_id=dict(fallback=(env_fallback, ['INTERSIGHT_API_KEY_ID']), type='str', required=True),
     validate_certs=dict(type='bool', default=True),
@@ -348,7 +353,8 @@ class IntersightModule():
             'Authorization': '{0}'.format(auth_header),
         }
 
-        response, info = fetch_url(self.module, target_url, data=bodyString, headers=request_header, method=method, use_proxy=self.module.params['use_proxy'])
+        response, info = fetch_url(self.module, target_url, data=bodyString, headers=request_header, method=method,
+                                   use_proxy=self.module.params['use_proxy'])
 
         return response, info
 
@@ -425,18 +431,7 @@ class IntersightModule():
 
     def configure_policy_or_profile(self, resource_path):
         # Configure (create, update, or delete) the policy or profile
-        organization_moid = None
-        # GET Organization Moid
-        self.get_resource(
-            resource_path='/organization/Organizations',
-            query_params={
-                '$filter': "Name eq '" + self.module.params['organization'] + "'",
-                '$select': 'Moid',
-            },
-        )
-        if self.result['api_response'].get('Moid'):
-            # resource exists and moid was returned
-            organization_moid = self.result['api_response']['Moid']
+        organization_moid = self.get_org_moid()
 
         self.result['api_response'] = {}
         # Get the current state of the resource
@@ -485,3 +480,36 @@ class IntersightModule():
                 moid = self.result['api_response']['Moid']
 
         return moid
+
+    def get_org_moid(self) -> Optional[str]:
+        organization_moid = None
+        # GET Organization Moid
+        self.get_resource(
+            resource_path='/organization/Organizations',
+            query_params={
+                '$filter': "Name eq '" + self.module.params['organization'] + "'",
+                '$select': 'Moid',
+            },
+        )
+        if self.result['api_response'].get('Moid'):
+            # resource exists and moid was returned
+            return self.result['api_response']['Moid']
+        return None
+
+    def set_query_params(self) -> dict:
+        filter_conditions = []
+
+        name_to_filter = self.module.params.get('name')
+        org_to_filter = self.module.params.get('organization')
+
+        if name_to_filter:
+            filter_conditions.append(f"Name eq '{name_to_filter}'")
+
+        if org_to_filter:
+            org_moid = self.get_org_moid()
+            filter_conditions.append(f"Organization.Moid eq '{org_moid}'")
+
+        query_params = {}
+        if filter_conditions:
+            query_params["$filter"] = " and ".join(filter_conditions)
+        return query_params
