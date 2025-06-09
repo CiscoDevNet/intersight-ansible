@@ -1,0 +1,5 @@
+---
+- name: Import integration_config.yml
+  ansible.builtin.include_vars:
+    file: "{{ role_path }}/integration_config.yml"
+  ignore_errors: true

@@ -32,6 +32,7 @@
 #    https://docs.ansible.com/ansible/latest/community/collection_contributors/collection_requirements.html.
 
 name: CI
+
 on:
   # Run CI against all pushes (direct commits, also merged PRs), Pull Requests
   push:
@@ -51,6 +52,9 @@ concurrency:
       github.event.pull_request.number || github.sha
     }}
   cancel-in-progress: true
+
+permissions:
+  contents: read
 
 jobs:
 
