@@ -1,0 +1,80 @@
+---
+name: Ansible-test CI
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: >-
+    ${{ github.workflow }}-${{
+      github.event.pull_request.number || github.sha
+    }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  integration:
+    name: >-
+      Integration (Ⓐ${{ matrix.ansible }})
+    runs-on: >-
+      ${{ contains(fromJson(
+          '["stable-2.9", "stable-2.10", "stable-2.11"]'
+      ), matrix.ansible) && 'ubuntu-20.04' || 'ubuntu-latest' }}
+    strategy:
+      matrix:
+        ansible:
+          - stable-2.16
+          - stable-2.17
+          - stable-2.18
+          - stable-2.19
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: Verify file existence and location
+        run: echo "${{ secrets.INTERSIGHT_API_KEY_ID_DUMMY }}"
+
+      - name: Debug secrets (REMOVE AFTER TESTING)
+        run: |
+          echo "Secret 1 length: ${#INTERSIGHT_API_PRIVATE_KEY_CI}"
+          echo "Secret 2 length: ${#INTERSIGHT_API_KEY_ID_CI}" 
+          echo "Secret 1 is set: ${{ secrets.INTERSIGHT_API_PRIVATE_KEY_CI != '' }}"
+          echo "Secret 2 is set: ${{ secrets.INTERSIGHT_API_KEY_ID_CI != '' }}"
+          # This will show length and if they exist without exposing values
+        env:
+          INTERSIGHT_API_PRIVATE_KEY: ${{ secrets.INTERSIGHT_API_PRIVATE_KEY_CI }}
+          INTERSIGHT_API_KEY_ID: ${{ secrets.INTERSIGHT_API_KEY_ID_CI }}
+
+      # Run integration tests inside a Docker container.
+      # The docker container has all the pinned dependencies that are
+      # required and all Python versions Ansible supports.
+      - name: Perform integration testing
+        # See the documentation for the following GitHub action on
+        # https://github.com/ansible-community/ansible-test-gh-action/blob/main/README.md
+        uses: ansible-community/ansible-test-gh-action@release/v1
+        with:
+          ansible-core-version: ${{ matrix.ansible }}
+          testing-type: integration
+          pre-test-cmd: chmod +x ./tests/integration/targets/prepare_test_run/generate_integration_config.sh && ./tests/integration/targets/prepare_test_run/generate_integration_config.sh
+        env:
+          API_PRIVATE_KEY: ${{ secrets.INTERSIGHT_API_PRIVATE_KEY_CI }}
+          API_KEY_ID: ${{ secrets.INTERSIGHT_API_KEY_ID_CI }}
+
+  check: # This job does nothing and is only used for the branch protection
+    # or multi-stage CI jobs, like making sure that all tests pass before
+    # a publishing job is started.
+    if: always()
+
+    needs:
+      - integration
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Decide whether the needed jobs succeeded or failed
+        uses: re-actors/alls-green@release/v1
+        with:
+          jobs: ${{ toJSON(needs) }}
