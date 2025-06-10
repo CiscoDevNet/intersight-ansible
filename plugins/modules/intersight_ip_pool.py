@@ -351,47 +351,79 @@ def main():
         'Description': intersight.module.params['description'],
         'EnableBlockLevelSubnetConfig': intersight.module.params['enable_block_level_subnet_config'],
     }
-    IpV4Blocks = []
-    for v4_block in intersight.module.params['ipv4_blocks']:
-        block = {}
-        block['From'] = v4_block['from']
-        block['Size'] = v4_block['size']
-        if 'ipv4_config' in v4_block:
-            block['IpV4Config'] = {
-                'Netmask': v4_block['ipv4_config']['netmask'],
-                'Gateway': v4_block['ipv4_config']['gateway'],
-                'PrimaryDns': v4_block['ipv4_config']['primary_dns'],
-                'SecondaryDns': v4_block['ipv4_config']['secondary_dns']
-            }
-        IpV4Blocks.append(block)
-    IpV6Blocks = []
-    for v6_block in intersight.module.params['ipv6_blocks'] :
-        block = {}
-        block['From'] = v6_block['from']
-        block['Size'] = v6_block['size']
-        if 'ipv6_config' in v6_block:
-            block['IpV6Config'] = {
-                'Prefix': v6_block['ipv6_config']['prefix'],
-                'Gateway': v6_block['ipv6_config']['gateway'],
-                'PrimaryDns': v6_block['ipv6_config']['primary_dns'],
-                'SecondaryDns': v6_block['ipv6_config']['secondary_dns']
-            }
-        IpV6Blocks.append(block)
-    intersight.api_body['IpV4Blocks'] = IpV4Blocks
-    intersight.api_body['IpV6Blocks'] = IpV6Blocks
-    if not intersight.module.params['enable_block_level_subnet_config']:
-        intersight.api_body['IpV4Config'] = {
-            'Netmask': intersight.module.params['ipv4_config']['netmask'],
-            'Gateway': intersight.module.params['ipv4_config']['gateway'],
-            'PrimaryDns': intersight.module.params['ipv4_config']['primary_dns'],
-            'SecondaryDns': intersight.module.params['ipv4_config']['secondary_dns'],
-        }
-        intersight.api_body['IpV6Config'] = {
-            'Prefix': intersight.module.params['ipv6_config']['prefix'],
-            'Gateway': intersight.module.params['ipv6_config']['gateway'],
-            'PrimaryDns': intersight.module.params['ipv6_config']['primary_dns'],
-            'SecondaryDns': intersight.module.params['ipv6_config']['secondary_dns'],
-        }
+    if module.params['state'] == 'present':
+        # Validate that at least one of ipv4_blocks/ipv6_blocks was passed. We don't mark it as required in order to support absent.
+        if not intersight.module.params['ipv4_blocks'] and not intersight.module.params['ipv6_blocks']:
+            module.fail_json(msg="at least one of ipv4_blocks/ipv6_blocks parameters must be provided and contain at least one block when state is present")
+        # Validate that when enable_block_level_subnet_config is true, ipv4_blocks/ipv6_blocks contains ipv4_config/ipv6_config.
+        if intersight.module.params['enable_block_level_subnet_config']:
+            if intersight.module.params['ipv4_blocks']:
+                for block in intersight.module.params['ipv4_blocks']:
+                    if "ipv4_config" not in block:
+                        module.fail_json(msg="a block in ipv4_blocks is missing ipv4_config")
+            if intersight.module.params['ipv6_blocks']:
+                for block in intersight.module.params['ipv6_blocks']:
+                    if "ipv6_config" not in block:
+                        module.fail_json(msg="a block in ipv6_blocks is missing ipv6_config")
+        # Validate that when enable_block_level_subnet_config is false, ipv4_blocks/ipv6_blocks has a global ipv4_config/ipv6_config.
+        else:
+            if (intersight.module.params['ipv4_blocks'] is None) != (intersight.module.params['ipv4_config'] is None):
+                module.fail_json(msg="when enable_block_level_subnet_config is false, ipv4_blocks should be configured with global ipv4_config")
+            if (intersight.module.params['ipv6_blocks'] is None) != (intersight.module.params['ipv6_config'] is None):
+                module.fail_json(msg="when enable_block_level_subnet_config is false, ipv6_blocks should be configured with global ipv6_config")
+
+        IpV4Blocks = []
+        if intersight.module.params['ipv4_blocks']:
+            for v4_block in intersight.module.params['ipv4_blocks']:
+                block = {}
+                block['From'] = v4_block['from']
+                block['Size'] = v4_block['size']
+                if 'ipv4_config' in v4_block:
+                    block['IpV4Config'] = {
+                        'Netmask': v4_block['ipv4_config']['netmask'],
+                        'Gateway': v4_block['ipv4_config']['gateway'],
+                        'PrimaryDns': v4_block['ipv4_config']['primary_dns'],
+                        'SecondaryDns': v4_block['ipv4_config']['secondary_dns']
+                    }
+                IpV4Blocks.append(block)
+        intersight.api_body['IpV4Blocks'] = IpV4Blocks
+
+        IpV6Blocks = []
+        if intersight.module.params['ipv6_blocks']:
+            for v6_block in intersight.module.params['ipv6_blocks'] :
+                block = {}
+                block['From'] = v6_block['from']
+                block['Size'] = v6_block['size']
+                if 'ipv6_config' in v6_block:
+                    block['IpV6Config'] = {
+                        'Prefix': v6_block['ipv6_config']['prefix'],
+                        'Gateway': v6_block['ipv6_config']['gateway'],
+                        'PrimaryDns': v6_block['ipv6_config']['primary_dns'],
+                        'SecondaryDns': v6_block['ipv6_config']['secondary_dns']
+                    }
+                IpV6Blocks.append(block)
+        intersight.api_body['IpV6Blocks'] = IpV6Blocks
+
+        if not intersight.module.params['enable_block_level_subnet_config']:
+            if intersight.module.params['ipv4_config']:
+                intersight.api_body['IpV4Config'] = {
+                    'Netmask': intersight.module.params['ipv4_config']['netmask'],
+                    'Gateway': intersight.module.params['ipv4_config']['gateway'],
+                    'PrimaryDns': intersight.module.params['ipv4_config']['primary_dns'],
+                    'SecondaryDns': intersight.module.params['ipv4_config']['secondary_dns'],
+                }
+            else:
+                intersight.api_body['IpV4Config'] = None
+
+            if intersight.module.params['ipv6_config']:
+                intersight.api_body['IpV6Config'] = {
+                    'Prefix': intersight.module.params['ipv6_config']['prefix'],
+                    'Gateway': intersight.module.params['ipv6_config']['gateway'],
+                    'PrimaryDns': intersight.module.params['ipv6_config']['primary_dns'],
+                    'SecondaryDns': intersight.module.params['ipv6_config']['secondary_dns'],
+                }
+            else:
+                intersight.api_body['IpV6Config'] = None
 
     #
     # Code below should be common across all policy modules
