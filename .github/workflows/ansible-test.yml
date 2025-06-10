@@ -5,10 +5,10 @@ on:
   push:
     branches:
       - stable-ci
-  pull_request_target:
+  pull_request:
     branches:
-      - main
       - 'stable-*'
+      - main
 concurrency:
   group: >-
     ${{ github.workflow }}-${{
