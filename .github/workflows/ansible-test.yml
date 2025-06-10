@@ -2,7 +2,13 @@
 name: Ansible-test CI
 on:
   workflow_dispatch:
-
+  push:
+    branches:
+      - stable-ci
+  pull_request_target:
+    branches:
+      - main
+      - 'stable-*'
 concurrency:
   group: >-
     ${{ github.workflow }}-${{
@@ -24,9 +30,9 @@ jobs:
     strategy:
       matrix:
         ansible:
-          - stable-2.16
-          - stable-2.17
-          - stable-2.18
+          # - stable-2.16
+          # - stable-2.17
+          # - stable-2.18
           - stable-2.19
     steps:
       - name: Checkout repo

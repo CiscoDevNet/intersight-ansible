@@ -12,12 +12,14 @@
     cisco.intersight.intersight_mac_pool:
       <<: *api_info
       name: test_mac_pool
+      organization: "{{ organization }}"
       state: absent
 
   - name: Create mac pool - check-mode
     cisco.intersight.intersight_mac_pool:
       <<: *api_info
       name: test_mac_pool
+      organization: "{{ organization }}"
       description: "Test mac pool description"
       tags: [
         {
@@ -46,6 +48,7 @@
     cisco.intersight.intersight_mac_pool:
       <<: *api_info
       name: test_mac_pool
+      organization: "{{ organization }}"
       description: "Test mac pool description"
       tags: [
         {
@@ -67,6 +70,7 @@
     cisco.intersight.intersight_mac_pool_info:
       <<: *api_info
       name: test_mac_pool
+      organization: "{{ organization }}"
     register: creation_info_res
 
   - name: Verify mac pool creation by info
@@ -88,6 +92,7 @@
     cisco.intersight.intersight_mac_pool:
       <<: *api_info
       name: test_mac_pool
+      organization: "{{ organization }}"
       description: "Test mac pool description"
       tags: [
         {
@@ -132,6 +137,7 @@
     cisco.intersight.intersight_mac_pool:
       <<: *api_info
       name: test_mac_pool_2
+      organization: "{{ organization }}"
       description: "Test mac pool description"
       tags: [
         {
@@ -152,7 +158,8 @@
   - name: Fetch all mac pools under default organization
     cisco.intersight.intersight_mac_pool_info:
       <<: *api_info
-      organization: default
+      # organization: default
+      organization: "{{ organization }}"
     register: creation_info_res_b
 
   - name: Check that there are at least 2 mac pools under this organization
@@ -165,10 +172,12 @@
     cisco.intersight.intersight_mac_pool:
       <<: *api_info
       name: test_mac_pool
+      organization: "{{ organization }}"
       state: absent
 
   - name: Remove mac pool 2
     cisco.intersight.intersight_mac_pool:
       <<: *api_info
       name: test_mac_pool_2
+      organization: "{{ organization }}"
       state: absent
