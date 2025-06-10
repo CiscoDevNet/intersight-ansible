@@ -7,8 +7,8 @@ on:
       - stable-ci
   pull_request_target:
     branches:
-      - main
       - 'stable-*'
+      - main
 concurrency:
   group: >-
     ${{ github.workflow }}-${{
@@ -49,6 +49,7 @@ jobs:
         uses: ansible-community/ansible-test-gh-action@release/v1
         with:
           ansible-core-version: ${{ matrix.ansible }}
+          collection-src-directory: ${{ github.workspace }}
           testing-type: integration
           pre-test-cmd: chmod +x ./tests/integration/targets/prepare_test_run/generate_integration_config.sh && ./tests/integration/targets/prepare_test_run/generate_integration_config.sh
         env:

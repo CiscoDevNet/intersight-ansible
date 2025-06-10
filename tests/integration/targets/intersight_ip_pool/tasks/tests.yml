@@ -1,0 +1,284 @@
+---
+- block:
+  - name: Define anchor for Intersight API login info
+    ansible.builtin.set_fact:
+      api_info: &api_info
+        api_private_key: "{{ api_private_key }}"
+        api_key_id: "{{ api_key_id }}"
+        api_uri: "{{ api_uri | default(omit) }}"
+        validate_certs: "{{ validate_certs | default(omit) }}"
+
+  - name: Make sure Env is clean
+    cisco.intersight.intersight_ip_pool:
+      <<: *api_info
+      name: test_ip_pool
+      organization: "{{ organization }}"
+      state: absent
+
+  - name: Create ip pool with global config - check-mode
+    cisco.intersight.intersight_ip_pool:
+      <<: *api_info
+      name: test_ip_pool
+      organization: "{{ organization }}"
+      description: IP Pool for lab use
+      ipv4_config:
+        netmask: "255.255.255.0"
+        gateway: "172.17.116.1"
+        primary_dns: "172.17.116.2"
+        secondary_dns: "172.17.116.3"
+      ipv4_blocks:
+        - from: "172.17.116.32"
+          size: 16
+        - from: "172.17.116.64"
+          size: 16
+      ipv6_config:
+        prefix: 64
+        gateway: "2001:db8::1"
+        primary_dns: "2001:4860:4860::8888"
+        secondary_dns: "2001:4860:4860::8844"
+      ipv6_blocks:
+        - from: "2001:db8::2"
+          size: 64
+        - from: "2001:db8::42"
+          size: 64
+      tags:
+        - Key: Site
+          Value: RCDN
+    check_mode: true
+    register: creation_res_check_mode
+
+  - name: Verify ip pool was not created - check-mode
+    ansible.builtin.assert:
+      that:
+        - creation_res_check_mode is changed
+        - creation_res_check_mode.api_response == {}
+
+  - name: Create ip pool with global config
+    cisco.intersight.intersight_ip_pool:
+      <<: *api_info
+      name: test_ip_pool
+      organization: "{{ organization }}"
+      description: IP Pool for lab use
+      ipv4_config:
+        netmask: "255.255.255.0"
+        gateway: "172.17.116.1"
+        primary_dns: "172.17.116.2"
+        secondary_dns: "172.17.116.3"
+      ipv4_blocks:
+        - from: "172.17.116.32"
+          size: 16
+        - from: "172.17.116.64"
+          size: 16
+      ipv6_config:
+        prefix: 64
+        gateway: "2001:db8::1"
+        primary_dns: "2001:4860:4860::8888"
+        secondary_dns: "2001:4860:4860::8844"
+      ipv6_blocks:
+        - from: "2001:db8::2"
+          size: 64
+        - from: "2001:db8::42"
+          size: 64
+      tags:
+        - Key: Site
+          Value: RCDN
+    register: creation_res
+
+  - name: Fetch info for test_ip_pool after creation
+    cisco.intersight.intersight_ip_pool_info:
+      <<: *api_info
+      name: test_ip_pool
+      organization: "{{ organization }}"
+    register: creation_info_res
+
+  - name: Verify ip pool creation by info
+    ansible.builtin.assert:
+      that:
+        - creation_res.changed
+        - creation_info_res.api_response[0].Name == 'test_ip_pool'
+        - creation_info_res.api_response[0].IpV4Blocks[0]["Size"] == 16
+        - creation_info_res.api_response[0].IpV4Blocks[0]["From"] == '172.17.116.32'
+        - creation_info_res.api_response[0].IpV4Blocks[1]["Size"] == 16
+        - creation_info_res.api_response[0].IpV4Blocks[1]["From"] == '172.17.116.64'
+        - creation_info_res.api_response[0].IpV6Blocks[0]["Size"] == 64
+        - creation_info_res.api_response[0].IpV6Blocks[0]["From"] == '2001:db8::2'
+        - creation_info_res.api_response[0].IpV6Blocks[1]["Size"] == 64
+        - creation_info_res.api_response[0].IpV6Blocks[1]["From"] == '2001:db8::42'
+        - creation_info_res.api_response[0].IpV4Config["Gateway"] == '172.17.116.1'
+        - creation_info_res.api_response[0].IpV4Config["Netmask"] == '255.255.255.0'
+        - creation_info_res.api_response[0].IpV4Config["PrimaryDns"] == '172.17.116.2'
+        - creation_info_res.api_response[0].IpV6Config["Gateway"] == '2001:db8::1'
+        - creation_info_res.api_response[0].IpV6Config["Prefix"] == 64
+        - creation_info_res.api_response[0].IpV6Config["PrimaryDns"] == '2001:4860:4860::8888'
+
+
+  - name: Verify ip pool creation response aligns with info response
+    ansible.builtin.assert:
+      that:
+        - creation_res.api_response.Name == creation_info_res.api_response[0].Name
+        - creation_res.api_response.IpV4Blocks[0]["Size"] == creation_info_res.api_response[0].IpV4Blocks[0]["Size"]
+        - creation_res.api_response.IpV4Blocks[0]["From"] == creation_info_res.api_response[0].IpV4Blocks[0]["From"]
+        - creation_res.api_response.IpV6Blocks[0]["Size"] == creation_info_res.api_response[0].IpV6Blocks[0]["Size"]
+        - creation_res.api_response.IpV6Blocks[0]["From"] == creation_info_res.api_response[0].IpV6Blocks[0]["From"]
+        - creation_res.api_response.IpV4Config["Gateway"] == creation_info_res.api_response[0].IpV4Config["Gateway"]
+        - creation_res.api_response.IpV6Config["Gateway"] == creation_info_res.api_response[0].IpV6Config["Gateway"]
+
+  - name: Create ip pool (idempotency check)
+    cisco.intersight.intersight_ip_pool:
+      <<: *api_info
+      name: test_ip_pool
+      organization: "{{ organization }}"
+      description: IP Pool for lab use
+      ipv4_config:
+        netmask: "255.255.255.0"
+        gateway: "172.17.116.1"
+        primary_dns: "172.17.116.2"
+        secondary_dns: "172.17.116.3"
+      ipv4_blocks:
+        - from: "172.17.116.32"
+          size: 16
+        - from: "172.17.116.64"
+          size: 16
+      ipv6_config:
+        prefix: 64
+        gateway: "2001:db8::1"
+        primary_dns: "2001:4860:4860::8888"
+        secondary_dns: "2001:4860:4860::8844"
+      ipv6_blocks:
+        - from: "2001:db8::2"
+          size: 64
+        - from: "2001:db8::42"
+          size: 64
+      tags:
+        - Key: Site
+          Value: RCDN
+    register: creation_res_ide
+
+  - name: Verify ip pool creation (idempotency check)
+    ansible.builtin.assert:
+      that:
+        - not creation_res_ide.changed
+
+  - name: Validate failure due to missing ipv4_blocks
+    cisco.intersight.intersight_ip_pool:
+      <<: *api_info
+      name: test_ip_pool_validate
+      organization: "{{ organization }}"
+      description: "Test ip pool description"
+      tags: [
+        {
+          "Key": "Site", "Value": "Test"
+        },
+        {
+          "Key": "Site2", "Value": "Test3"
+        }
+      ]
+      state: present
+    register: failure_res
+    failed_when:
+      - "'at least one of ipv4_blocks/ipv6_blocks parameters must be provided and contain at least one block when state is present' not in failure_res.msg"
+
+  - name: Create ip pool with block level config
+    cisco.intersight.intersight_ip_pool:
+      <<: *api_info
+      name: test_ip_pool_2
+      organization: "{{ organization }}"
+      description: IP Pool for lab use 2
+      enable_block_level_subnet_config: true
+      ipv4_blocks:
+        - from: "172.17.116.32"
+          size: 16
+          ipv4_config:
+            netmask: "255.255.255.0"
+            gateway: "172.17.116.1"
+            primary_dns: "172.17.116.2"
+            secondary_dns: "172.17.116.3"
+        - from: "172.17.117.32"
+          size: 16
+          ipv4_config:
+            netmask: "255.255.255.0"
+            gateway: "172.17.117.1"
+            primary_dns: "172.17.117.2"
+            secondary_dns: "172.17.117.3"
+      ipv6_blocks:
+        - from: "2001:db8::2"
+          size: 64
+          ipv6_config:
+            prefix: 64
+            gateway: "2001:db8::1"
+            primary_dns: "2001:4860:4860::8888"
+            secondary_dns: "2001:4860:4860::8844"
+        - from: "fd12:3456:789a::1"
+          size: 64
+          ipv6_config:
+            prefix: 64
+            gateway: "fd12:3456:789a::1"
+            primary_dns: "2606:4700:4700::1111"
+            secondary_dns: "2606:4700:4700::1001"
+      tags:
+        - Key: Site
+          Value: RCDN
+    register: creation_res_b
+
+
+  - name: Fetch info for test_ip_pool_2 after creation
+    cisco.intersight.intersight_ip_pool_info:
+      <<: *api_info
+      name: test_ip_pool_2
+      organization: "{{ organization }}"
+    register: creation_info_res_b
+
+  - name: Verify ip pool 2 creation by info
+    ansible.builtin.assert:
+      that:
+        - creation_res_b.changed
+        - creation_info_res_b.api_response[0].Name == 'test_ip_pool_2'
+        - creation_info_res_b.api_response[0].IpV4Blocks[0]["Size"] == 16
+        - creation_info_res_b.api_response[0].IpV4Blocks[0]["From"] == '172.17.116.32'
+        - creation_info_res_b.api_response[0].IpV4Blocks[0]["IpV4Config"]["Gateway"] == '172.17.116.1'
+        - creation_info_res_b.api_response[0].IpV4Blocks[1]["Size"] == 16
+        - creation_info_res_b.api_response[0].IpV4Blocks[1]["From"] == '172.17.117.32'
+        - creation_info_res_b.api_response[0].IpV4Blocks[1]["IpV4Config"]["Gateway"] == '172.17.117.1'
+        - creation_info_res_b.api_response[0].IpV6Blocks[0]["Size"] == 64
+        - creation_info_res_b.api_response[0].IpV6Blocks[0]["From"] == '2001:db8::2'
+        - creation_info_res_b.api_response[0].IpV6Blocks[0]["IpV6Config"]["Gateway"] == '2001:db8::1'
+        - creation_info_res_b.api_response[0].IpV6Blocks[1]["Size"] == 64
+        - creation_info_res_b.api_response[0].IpV6Blocks[1]["From"] == 'fd12:3456:789a::1'
+        - creation_info_res_b.api_response[0].IpV6Blocks[1]["IpV6Config"]["Gateway"] == 'fd12:3456:789a::1'
+
+  - name: Verify ip pool 2 creation response aligns with info response
+    ansible.builtin.assert:
+      that:
+        - creation_res_b.api_response.Name == creation_info_res_b.api_response[0].Name
+        - creation_res_b.api_response.IpV4Blocks[0]["Size"] == creation_info_res_b.api_response[0].IpV4Blocks[0]["Size"]
+        - creation_res_b.api_response.IpV4Blocks[0]["From"] == creation_info_res_b.api_response[0].IpV4Blocks[0]["From"]
+        - creation_res_b.api_response.IpV6Blocks[0]["Size"] == creation_info_res_b.api_response[0].IpV6Blocks[0]["Size"]
+        - creation_res_b.api_response.IpV6Blocks[0]["From"] == creation_info_res_b.api_response[0].IpV6Blocks[0]["From"]
+        - creation_res_b.api_response.IpV4Blocks[0]["IpV4Config"]["Gateway"] == creation_info_res_b.api_response[0].IpV4Blocks[0]["IpV4Config"]["Gateway"]
+        - creation_res_b.api_response.IpV6Blocks[0]["IpV6Config"]["Gateway"] == creation_info_res_b.api_response[0].IpV6Blocks[0]["IpV6Config"]["Gateway"]
+
+  - name: Fetch all ip pools under default organization
+    cisco.intersight.intersight_ip_pool_info:
+      <<: *api_info
+      organization: "{{ organization }}"
+    register: creation_info_res_all
+
+  - name: Check that there are at least 2 ip pools under this organization
+    ansible.builtin.assert:
+      that:
+        - creation_info_res_all.api_response | length > 1
+
+  always:
+  - name: Remove ip pool
+    cisco.intersight.intersight_ip_pool:
+      <<: *api_info
+      name: test_ip_pool
+      organization: "{{ organization }}"
+      state: absent
+
+  - name: Remove ip pool 2
+    cisco.intersight.intersight_ip_pool:
+      <<: *api_info
+      name: test_ip_pool_2
+      organization: "{{ organization }}"
+      state: absent
