@@ -34,20 +34,6 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.sha }}
 
-      - name: Verify file existence and location
-        run: echo "${{ secrets.INTERSIGHT_API_KEY_ID_DUMMY }}"
-
-      - name: Debug secrets (REMOVE AFTER TESTING)
-        run: |
-          echo "Secret 1 length: ${#INTERSIGHT_API_PRIVATE_KEY_CI}"
-          echo "Secret 2 length: ${#INTERSIGHT_API_KEY_ID_CI}" 
-          echo "Secret 1 is set: ${{ secrets.INTERSIGHT_API_PRIVATE_KEY_CI != '' }}"
-          echo "Secret 2 is set: ${{ secrets.INTERSIGHT_API_KEY_ID_CI != '' }}"
-          # This will show length and if they exist without exposing values
-        env:
-          INTERSIGHT_API_PRIVATE_KEY: ${{ secrets.INTERSIGHT_API_PRIVATE_KEY_CI }}
-          INTERSIGHT_API_KEY_ID: ${{ secrets.INTERSIGHT_API_KEY_ID_CI }}
-
       # Run integration tests inside a Docker container.
       # The docker container has all the pinned dependencies that are
       # required and all Python versions Ansible supports.
