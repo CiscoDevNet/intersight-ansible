@@ -79,20 +79,14 @@ EXAMPLES = r'''
     api_key_id: "{{ api_key_id }}"
     name: mac_pool_1
     description: "Test mac pool description"
-    tags: [
-      {
-        "Key": "Site", "Value": "tag1"
-      },
-      {
-        "Key": "Site2", "Value": "tag2"
-      }
-    ]
-    mac_blocks: [
-      {
-        "address_from": "00:25:B5:00:00:00",
+    tags:
+      - "Key": "Site"
+        "Value": "tag1"
+      - "Key": "Site2"
+        "Value": "tag2"
+    mac_blocks:
+      - "address_from": "00:25:B5:00:00:00"
         "size": 20
-      }
-    ]
 - name: Delete mac pool
   cisco.intersight.intersight_mac_pool:
     api_private_key: "{{ api_private_key }}"

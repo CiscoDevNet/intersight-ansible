@@ -21,20 +21,14 @@
       name: test_mac_pool
       organization: "{{ organization }}"
       description: "Test mac pool description"
-      tags: [
-        {
-          "Key": "Site", "Value": "Test"
-        },
-        {
-          "Key": "Site2", "Value": "Test3"
-        }
-      ]
-      mac_blocks: [
-        {
-          "address_from": "00:25:B5:00:00:00",
+      tags:
+        - "Key": "Site"
+          "Value": "Test"
+        - "Key": "Site2"
+          "Value": "Test3"
+      mac_blocks:
+        - "address_from": "00:25:B5:00:00:00"
           "size": 20
-        }
-      ]
     check_mode: true
     register: creation_res_check_mode
 
@@ -50,20 +44,14 @@
       name: test_mac_pool
       organization: "{{ organization }}"
       description: "Test mac pool description"
-      tags: [
-        {
-          "Key": "Site", "Value": "Test"
-        },
-        {
-          "Key": "Site2", "Value": "Test3"
-        }
-      ]
-      mac_blocks: [
-        {
-          "address_from": "00:25:B5:00:00:00",
+      tags:
+        - "Key": "Site"
+          "Value": "Test"
+        - "Key": "Site2"
+          "Value": "Test3"
+      mac_blocks:
+        - "address_from": "00:25:B5:00:00:00"
           "size": 20
-        }
-      ]
     register: creation_res
 
   - name: Fetch info after creation
@@ -94,20 +82,14 @@
       name: test_mac_pool
       organization: "{{ organization }}"
       description: "Test mac pool description"
-      tags: [
-        {
-          "Key": "Site", "Value": "Test"
-        },
-        {
-          "Key": "Site2", "Value": "Test3"
-        }
-      ]
-      mac_blocks: [
-        {
-          "address_from": "00:25:B5:00:00:00",
+      tags:
+        - "Key": "Site"
+          "Value": "Test"
+        - "Key": "Site2"
+          "Value": "Test3"
+      mac_blocks:
+        - "address_from": "00:25:B5:00:00:00"
           "size": 20
-        }
-      ]
     register: creation_res_ide
 
   - name: Verify mac pool creation (idempotency check)
@@ -120,14 +102,11 @@
       <<: *api_info
       name: test_mac_pool_validate
       description: "Test mac pool description"
-      tags: [
-        {
-          "Key": "Site", "Value": "Test"
-        },
-        {
-          "Key": "Site2", "Value": "Test3"
-        }
-      ]
+      tags:
+        - "Key": "Site"
+          "Value": "Test"
+        - "Key": "Site2"
+          "Value": "Test3"
       state: present
     register: failure_res
     failed_when:
@@ -139,20 +118,14 @@
       name: test_mac_pool_2
       organization: "{{ organization }}"
       description: "Test mac pool description"
-      tags: [
-        {
-          "Key": "Site", "Value": "Test"
-        },
-        {
-          "Key": "Site2", "Value": "Test3"
-        }
-      ]
-      mac_blocks: [
-        {
-          "address_from": "00:25:B5:BB:00:00",
+      tags:
+        - "Key": "Site"
+          "Value": "Test"
+        - "Key": "Site2"
+          "Value": "Test3"
+      mac_blocks:
+        - "address_from": "00:25:B5:00:00:00"
           "size": 20
-        }
-      ]
     register: creation_res_b
 
   - name: Fetch all mac pools under default organization
