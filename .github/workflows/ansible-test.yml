@@ -5,10 +5,10 @@ on:
   push:
     branches:
       - stable-ci
-  pull_request:
+  pull_request_target:
     branches:
-      - 'stable-*'
       - main
+      - 'stable-*'
 concurrency:
   group: >-
     ${{ github.workflow }}-${{
@@ -35,11 +35,6 @@ jobs:
           # - stable-2.18
           - stable-2.19
     steps:
-      - name: Checkout repo
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.pull_request.head.sha }}
-
       # Run integration tests inside a Docker container.
       # The docker container has all the pinned dependencies that are
       # required and all Python versions Ansible supports.
@@ -51,6 +46,7 @@ jobs:
           ansible-core-version: ${{ matrix.ansible }}
           testing-type: integration
           pre-test-cmd: chmod +x ./tests/integration/targets/prepare_test_run/generate_integration_config.sh && ./tests/integration/targets/prepare_test_run/generate_integration_config.sh
+          git-checkout-ref: ${{ github.event.pull_request.head.sha }}
         env:
           API_PRIVATE_KEY: ${{ secrets.INTERSIGHT_API_PRIVATE_KEY_CI }}
           API_KEY_ID: ${{ secrets.INTERSIGHT_API_KEY_ID_CI }}
