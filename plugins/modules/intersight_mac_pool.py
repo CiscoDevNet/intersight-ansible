@@ -131,7 +131,7 @@ from ansible_collections.cisco.intersight.plugins.module_utils.intersight import
 def main():
     argument_spec = intersight_argument_spec.copy()
     argument_spec.update(
-        state=dict(type='str', choices=['present', 'absent'], default='present'),
+        state=dict(type='str', choices=['present', 'absent'], default='present',required=True),
         organization=dict(type='str', default='default'),
         name=dict(type='str', required=True),
         description=dict(type='str', aliases=['descr']),

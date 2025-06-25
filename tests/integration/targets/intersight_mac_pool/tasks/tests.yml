@@ -1,6 +1,6 @@
 ---
 - block:
-  - name: Define anchor for Intersight API login info
+  - name: Define anchor for Intersight API login info temp3
     ansible.builtin.set_fact:
       api_info: &api_info
         api_private_key: "{{ api_private_key }}"
