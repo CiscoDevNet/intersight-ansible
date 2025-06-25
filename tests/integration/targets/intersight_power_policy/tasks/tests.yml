@@ -1,0 +1,148 @@
+---
+- block:
+  - name: Define anchor for Intersight API login info
+    ansible.builtin.set_fact:
+      api_info: &api_info
+        api_private_key: "{{ api_private_key }}"
+        api_key_id: "{{ api_key_id }}"
+        api_uri: "{{ api_uri | default(omit) }}"
+        validate_certs: "{{ validate_certs | default(omit) }}"
+        organization: "{{ organization }}"
+
+  - name: Make sure Env is clean
+    cisco.intersight.intersight_power_policy:
+      <<: *api_info
+      name: test_power_policy
+      state: absent
+
+  - name: Create power policy - check-mode
+    cisco.intersight.intersight_power_policy:
+      <<: *api_info
+      name: test_power_policy
+      description: "Test power policy description"
+      target_platform: "standalone-server"
+      power_restore: "LastState"
+      processor_package_power_limit: "Minimum"
+      tags:
+        - Key: "Site"
+          Value: "Test"
+    check_mode: true
+    register: creation_res_check_mode
+
+  - name: Verify power policy was not created - check-mode
+    ansible.builtin.assert:
+      that:
+        - creation_res_check_mode is changed
+        - creation_res_check_mode.api_response == {}
+
+  - name: Create power policy
+    cisco.intersight.intersight_power_policy:
+      <<: *api_info
+      name: test_power_policy
+      description: "Test power policy description"
+      target_platform: "standalone-server"
+      power_restore: "LastState"
+      processor_package_power_limit: "Minimum"
+      tags:
+        - Key: "Site"
+          Value: "Test"
+    register: creation_res
+
+  - name: Fetch info after creation
+    cisco.intersight.intersight_power_policy_info:
+      <<: *api_info
+      name: test_power_policy
+    register: creation_info_res
+
+  - name: Verify power policy creation by info
+    ansible.builtin.assert:
+      that:
+        - creation_res.changed
+        - creation_info_res.api_response[0].Name == 'test_power_policy'
+        - creation_info_res.api_response[0].PowerRestoreState == "LastState"
+        - creation_info_res.api_response[0].ProcessorPackagePowerLimit == "Minimum"
+
+  - name: Verify power policy creation response aligns with info response
+    ansible.builtin.assert:
+      that:
+        - creation_res.api_response.Name == creation_info_res.api_response[0].Name
+        - creation_res.api_response.PowerRestoreState == creation_info_res.api_response[0].PowerRestoreState
+        - creation_res.api_response.ProcessorPackagePowerLimit == creation_info_res.api_response[0].ProcessorPackagePowerLimit
+
+  - name: Create power policy (idempotency check)
+    cisco.intersight.intersight_power_policy:
+      <<: *api_info
+      name: test_power_policy
+      description: "Test power policy description"
+      target_platform: "standalone-server"
+      power_restore: "LastState"
+      processor_package_power_limit: "Minimum"
+      tags:
+        - Key: "Site"
+          Value: "Test"
+    register: creation_res_ide
+
+  - name: Verify power policy creation (idempotency check)
+    ansible.builtin.assert:
+      that:
+        - not creation_res_ide.changed
+
+  - name: Validate failure due to missing target_platform
+    cisco.intersight.intersight_power_policy:
+      <<: *api_info
+      name: test_power_policy_validate
+      description: "Test policy description"
+      state: present
+    register: failure_res
+    failed_when:
+      - "'state is present but all of the following are missing: target_platform' not in failure_res.msg"
+
+  - name: Validate failure due to incorrect power allocation
+    cisco.intersight.intersight_power_policy:
+      <<: *api_info
+      name: test_power_policy_validate
+      description: "Test policy description"
+      state: present
+      target_platform: "all"
+      power_allocation: 100000000
+    register: failure_res_alloc
+    failed_when:
+      - "'power_allocation has to be between 0 and 65535' not in failure_res_alloc.msg"
+
+  - name: Create another power policy
+    cisco.intersight.intersight_power_policy:
+      <<: *api_info
+      name: test_power_policy_2
+      description: "Test power policy for chassis"
+      target_platform: "chassis"
+      power_redundancy: "N+1"
+    register: creation_res_b
+
+  - name: Fetch all power policies under the organization
+    cisco.intersight.intersight_power_policy_info:
+      <<: *api_info
+    register: creation_info_res_b
+
+  - name: Check that there are at least 2 power policies under this organization
+    ansible.builtin.assert:
+      that:
+        - creation_info_res_b.api_response | length > 1
+
+  always:
+  - name: Remove power policy
+    cisco.intersight.intersight_power_policy:
+      <<: *api_info
+      name: test_power_policy
+      state: absent
+
+  - name: Remove power policy 2
+    cisco.intersight.intersight_power_policy:
+      <<: *api_info
+      name: test_power_policy_2
+      state: absent
+
+  - name: Remove validation failure policy if it exists
+    cisco.intersight.intersight_power_policy:
+      <<: *api_info
+      name: test_power_policy_validate
+      state: absent
