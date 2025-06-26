@@ -35,10 +35,19 @@ jobs:
           # - stable-2.18
           - stable-2.19
     steps:
+      - name: Get User Permission
+        id: checkAccess
+        uses: actions-cool/check-user-permission@v2
+        with:
+          require: write
+          username: ${{ github.triggering_actor }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       # Run integration tests inside a Docker container.
       # The docker container has all the pinned dependencies that are
       # required and all Python versions Ansible supports.
       - name: Perform integration testing
+        if: steps.checkAccess.outputs.require-result == 'true'
         # See the documentation for the following GitHub action on
         # https://github.com/ansible-community/ansible-test-gh-action/blob/main/README.md
         uses: ansible-community/ansible-test-gh-action@release/v1
