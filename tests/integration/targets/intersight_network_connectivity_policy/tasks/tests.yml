@@ -1,0 +1,253 @@
+---
+- block:
+  - name: Define anchor for Intersight API login info
+    ansible.builtin.set_fact:
+      api_info: &api_info
+        api_private_key: "{{ api_private_key }}"
+        api_key_id: "{{ api_key_id }}"
+        api_uri: "{{ api_uri | default(omit) }}"
+        validate_certs: "{{ validate_certs | default(omit) }}"
+        organization: "{{ organization }}"
+
+  - name: Make sure Env is clean
+    cisco.intersight.intersight_network_connectivity_policy:
+      <<: *api_info
+      name: test_network_connectivity_policy
+      state: absent
+
+  - name: Make sure Env is clean 2
+    cisco.intersight.intersight_network_connectivity_policy:
+      <<: *api_info
+      name: test_network_connectivity_policy_2
+      state: absent
+
+  - name: Make sure Env is clean 3
+    cisco.intersight.intersight_network_connectivity_policy:
+      <<: *api_info
+      name: test_network_connectivity_policy_3
+      state: absent
+
+  - name: Create network connectivity policy - check-mode
+    cisco.intersight.intersight_network_connectivity_policy:
+      <<: *api_info
+      name: test_network_connectivity_policy
+      description: "Test network connectivity policy description"
+      tags:
+        - Key: Site
+          Value: Test
+        - Key: Site2
+          Value: Test2
+      enable_dynamic_dns: true
+      dynamic_dns_domain: "test.com"
+      enable_ipv4_dns_from_dhcp: true
+      enable_ipv6: true
+      enable_ipv6_dns_from_dhcp: true
+    check_mode: true
+    register: creation_res_check_mode
+
+  - name: Verify network connectivity policy was not created - check-mode
+    ansible.builtin.assert:
+      that:
+        - creation_res_check_mode is changed
+        - creation_res_check_mode.api_response == {}
+
+  - name: Create network connectivity policy
+    cisco.intersight.intersight_network_connectivity_policy:
+      <<: *api_info
+      name: test_network_connectivity_policy
+      description: "Test network connectivity policy description"
+      tags:
+        - Key: Site
+          Value: Test
+        - Key: Site2
+          Value: Test2
+      enable_dynamic_dns: true
+      dynamic_dns_domain: "test.com"
+      enable_ipv4_dns_from_dhcp: true
+      enable_ipv6: true
+      enable_ipv6_dns_from_dhcp: true
+    register: creation_res
+
+  - name: Fetch info after creation
+    cisco.intersight.intersight_network_connectivity_policy_info:
+      <<: *api_info
+      name: test_network_connectivity_policy
+    register: creation_info_res
+
+  - name: Verify network connectivity policy creation by info
+    ansible.builtin.assert:
+      that:
+        - creation_res.changed
+        - creation_info_res.api_response[0].Name == 'test_network_connectivity_policy'
+        - creation_info_res.api_response[0].EnableDynamicDns == true
+        - creation_info_res.api_response[0].DynamicDnsDomain == 'test.com'
+        - creation_info_res.api_response[0].EnableIpv4dnsFromDhcp == true
+        - creation_info_res.api_response[0].EnableIpv6 == true
+        - creation_info_res.api_response[0].EnableIpv6dnsFromDhcp == true
+
+  - name: Verify network connectivity policy creation response aligns with info response
+    ansible.builtin.assert:
+      that:
+        - creation_res.api_response.Name == creation_info_res.api_response[0].Name
+        - creation_res.api_response.EnableDynamicDns == creation_info_res.api_response[0].EnableDynamicDns
+        - creation_res.api_response.DynamicDnsDomain == creation_info_res.api_response[0].DynamicDnsDomain
+
+  - name: Create network connectivity policy (idempotency check)
+    cisco.intersight.intersight_network_connectivity_policy:
+      <<: *api_info
+      name: test_network_connectivity_policy
+      description: "Test network connectivity policy description"
+      tags:
+        - Key: Site
+          Value: Test
+        - Key: Site2
+          Value: Test2
+      enable_dynamic_dns: true
+      dynamic_dns_domain: "test.com"
+      enable_ipv4_dns_from_dhcp: true
+      enable_ipv6: true
+      enable_ipv6_dns_from_dhcp: true
+    register: creation_res_ide
+
+  - name: Verify network connectivity policy creation (idempotency check)
+    ansible.builtin.assert:
+      that:
+        - not creation_res_ide.changed
+
+  - name: Change settings on existing network connectivity policy
+    cisco.intersight.intersight_network_connectivity_policy:
+      <<: *api_info
+      name: test_network_connectivity_policy
+      enable_dynamic_dns: false
+      enable_ipv4_dns_from_dhcp: false
+      preferred_ipv4_dns_server: "8.8.8.8"
+      alternate_ipv4_dns_server: "8.8.4.4"
+      enable_ipv6: false
+    register: changed_res
+
+  - name: Fetch info after change
+    cisco.intersight.intersight_network_connectivity_policy_info:
+      <<: *api_info
+      name: test_network_connectivity_policy
+    register: change_info_res
+
+  - name: Verify network connectivity policy change by info
+    ansible.builtin.assert:
+      that:
+        - changed_res.changed
+        - change_info_res.api_response[0].Name == 'test_network_connectivity_policy'
+        - change_info_res.api_response[0].EnableDynamicDns == false
+        - change_info_res.api_response[0].EnableIpv4dnsFromDhcp == false
+        - change_info_res.api_response[0].PreferredIpv4dnsServer == '8.8.8.8'
+        - change_info_res.api_response[0].AlternateIpv4dnsServer == '8.8.4.4'
+        - change_info_res.api_response[0].EnableIpv6 == false
+
+  - name: Create another network connectivity policy with IPv6 and static DNS
+    cisco.intersight.intersight_network_connectivity_policy:
+      <<: *api_info
+      name: test_network_connectivity_policy_2
+      description: "Test another network connectivity policy description"
+      enable_dynamic_dns: false
+      enable_ipv4_dns_from_dhcp: false
+      preferred_ipv4_dns_server: "1.1.1.1"
+      alternate_ipv4_dns_server: "1.0.0.1"
+      enable_ipv6: true
+      enable_ipv6_dns_from_dhcp: false
+      preferred_ipv6_dns_server: "2606:4700:4700::1111"
+      alternate_ipv6_dns_server: "2606:4700:4700::1001"
+    register: creation_res_b
+
+  - name: Verify second policy creation with IPv6 and static DNS
+    cisco.intersight.intersight_network_connectivity_policy_info:
+      <<: *api_info
+      name: test_network_connectivity_policy_2
+    register: creation_info_res_b_verify
+
+  - name: Verify second policy has correct IPv6 and static DNS settings
+    ansible.builtin.assert:
+      that:
+        - creation_info_res_b_verify.api_response[0].EnableIpv6 == true
+        - creation_info_res_b_verify.api_response[0].EnableIpv6dnsFromDhcp == false
+        - creation_info_res_b_verify.api_response[0].PreferredIpv6dnsServer == '2606:4700:4700::1111'
+        - creation_info_res_b_verify.api_response[0].AlternateIpv6dnsServer == '2606:4700:4700::1001'
+        - creation_info_res_b_verify.api_response[0].PreferredIpv4dnsServer == '1.1.1.1'
+        - creation_info_res_b_verify.api_response[0].AlternateIpv4dnsServer == '1.0.0.1'
+
+  - name: Create a minimal network connectivity policy without description
+    cisco.intersight.intersight_network_connectivity_policy:
+      <<: *api_info
+      name: test_network_connectivity_policy_3
+      # No description provided to test conditional logic
+      enable_dynamic_dns: false
+      enable_ipv4_dns_from_dhcp: true
+      enable_ipv6: false
+    register: creation_res_c
+
+  - name: Fetch info for verification of minimal policy creation
+    cisco.intersight.intersight_network_connectivity_policy_info:
+      <<: *api_info
+      name: test_network_connectivity_policy_3
+    register: creation_info_res_c
+
+  - name: Verify minimal policy has correct default settings
+    ansible.builtin.assert:
+      that:
+        - creation_info_res_c.api_response[0].EnableDynamicDns == false
+        - creation_info_res_c.api_response[0].EnableIpv4dnsFromDhcp == true
+        - creation_info_res_c.api_response[0].EnableIpv6 == false
+
+  - name: Test enabling IPv6 on minimal policy (conditional field logic)
+    cisco.intersight.intersight_network_connectivity_policy:
+      <<: *api_info
+      name: test_network_connectivity_policy_3
+      enable_dynamic_dns: false
+      enable_ipv4_dns_from_dhcp: true
+      enable_ipv6: true
+      enable_ipv6_dns_from_dhcp: false
+      preferred_ipv6_dns_server: "2001:4860:4860::8888"
+      alternate_ipv6_dns_server: "2001:4860:4860::8844"
+    register: ipv6_enable_res
+
+  - name: Verify IPv6 was enabled correctly
+    cisco.intersight.intersight_network_connectivity_policy_info:
+      <<: *api_info
+      name: test_network_connectivity_policy_3
+    register: ipv6_enable_info
+
+  - name: Assert IPv6 conditional fields are present after enabling IPv6
+    ansible.builtin.assert:
+      that:
+        - ipv6_enable_res.changed
+        - ipv6_enable_info.api_response[0].EnableIpv6 == true
+        - ipv6_enable_info.api_response[0].EnableIpv6dnsFromDhcp == false
+        - ipv6_enable_info.api_response[0].PreferredIpv6dnsServer == '2001:4860:4860::8888'
+        - ipv6_enable_info.api_response[0].AlternateIpv6dnsServer == '2001:4860:4860::8844'
+
+  - name: Fetch all network connectivity policies under selected organization
+    cisco.intersight.intersight_network_connectivity_policy_info:
+      <<: *api_info
+    register: creation_info_res_final
+
+  - name: Check that there are at least three network connectivity policies under this organization
+    ansible.builtin.assert:
+      that:
+        - creation_info_res_final.api_response | length >= 3
+
+  always:
+  - name: Remove network connectivity policy 1
+    cisco.intersight.intersight_network_connectivity_policy:
+      <<: *api_info
+      name: test_network_connectivity_policy
+      state: absent
+
+  - name: Remove network connectivity policy 2
+    cisco.intersight.intersight_network_connectivity_policy:
+      <<: *api_info
+      name: test_network_connectivity_policy_2
+      state: absent
+
+  - name: Remove network connectivity policy 3
+    cisco.intersight.intersight_network_connectivity_policy:
+      <<: *api_info
+      name: test_network_connectivity_policy_3
+      state: absent 
