@@ -52,8 +52,8 @@ options:
     elements: dict
   fan_control_mode:
     description:
-      - Sets the fan control mode for the policy.
-      - This determines how fan speed is managed to balance cooling, power consumption, and acoustics.
+      - Sets the Fan Control Mode.
+      - High Power, Maximum Power and Acoustic modes are supported only on the Cisco UCS C-Series servers and on the X-Series Chassis.
     type: str
     choices: ['Balanced', 'LowPower', 'HighPower', 'MaximumPower', 'Acoustic']
     default: 'Balanced'
@@ -152,9 +152,12 @@ def main():
             'Name': intersight.module.params['organization'],
         },
         'Name': intersight.module.params['name'],
-        'Tags': intersight.module.params['tags'],
         'FanControlMode': intersight.module.params['fan_control_mode']
     }
+
+    if intersight.module.params['tags']:
+        intersight.api_body['Tags'] = intersight.module.params['tags']
+
     # Passing an empty description to this API will result with 400 HTTP error.
     if intersight.module.params['description']:
         intersight.api_body['Description'] = intersight.module.params['description']
