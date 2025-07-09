@@ -7,19 +7,18 @@
         api_key_id: "{{ api_key_id }}"
         api_uri: "{{ api_uri | default(omit) }}"
         validate_certs: "{{ validate_certs | default(omit) }}"
+        organization: "{{ organization }}"
 
   - name: Make sure Env is clean
     cisco.intersight.intersight_thermal_policy:
       <<: *api_info
       name: test_thermal_policy
-      organization: "{{ organization }}"
       state: absent
 
   - name: Create thermal policy - check-mode
     cisco.intersight.intersight_thermal_policy:
       <<: *api_info
       name: test_thermal_policy
-      organization: "{{ organization }}"
       description: "Test thermal policy description"
       tags:
         - Key: Site
@@ -40,7 +39,6 @@
     cisco.intersight.intersight_thermal_policy:
       <<: *api_info
       name: test_thermal_policy
-      organization: "{{ organization }}"
       description: "Test thermal policy description"
       tags:
         - Key: Site
@@ -54,7 +52,6 @@
     cisco.intersight.intersight_thermal_policy_info:
       <<: *api_info
       name: test_thermal_policy
-      organization: "{{ organization }}"
     register: creation_info_res
 
   - name: Verify thermal policy creation by info
@@ -74,7 +71,6 @@
     cisco.intersight.intersight_thermal_policy:
       <<: *api_info
       name: test_thermal_policy
-      organization: "{{ organization }}"
       description: "Test thermal policy description"
       tags:
         - Key: Site
@@ -93,7 +89,6 @@
     cisco.intersight.intersight_thermal_policy:
       <<: *api_info
       name: test_thermal_policy
-      organization: "{{ organization }}"
       fan_control_mode: "HighPower"
     register: changed_res
 
@@ -101,7 +96,6 @@
     cisco.intersight.intersight_thermal_policy_info:
       <<: *api_info
       name: test_thermal_policy
-      organization: "{{ organization }}"
     register: change_info_res
 
   - name: Verify thermal policy change by info
@@ -115,7 +109,6 @@
     cisco.intersight.intersight_thermal_policy:
       <<: *api_info
       name: test_thermal_policy_2
-      organization: "{{ organization }}"
       description: "Test another thermal policy description"
       fan_control_mode: "Balanced"
     register: creation_res_b
@@ -123,7 +116,6 @@
   - name: Fetch all thermal policies under selected organization
     cisco.intersight.intersight_thermal_policy_info:
       <<: *api_info
-      organization: "{{ organization }}"
     register: creation_info_res_b
 
   - name: Check that there are at least thermal policies under this organization
@@ -136,12 +128,10 @@
     cisco.intersight.intersight_thermal_policy:
       <<: *api_info
       name: test_thermal_policy
-      organization: "{{ organization }}"
       state: absent
 
   - name: Remove thermal policy 2
     cisco.intersight.intersight_thermal_policy:
       <<: *api_info
       name: test_thermal_policy_2
-      organization: "{{ organization }}"
       state: absent

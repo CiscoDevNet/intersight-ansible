@@ -64,19 +64,23 @@ options:
     suboptions:
       netmask:
         description:
-          - The Global Netmask used for all IPv4 blocks.
+          - A subnet mask is a 32-bit number that masks an IP address and divides the IP address into network address and host address.
+          - Netmask used for all IPv4 blocks.
         type: str
       gateway:
         description:
-          - The Global Gateway IP used for all IPv4 blocks.
+          - IP address of the default IPv4 gateway.
+          - Gateway IP used for all IPv4 blocks.
         type: str
       primary_dns:
         description:
-          - The Global PrimaryDns IP used for all IPv4 blocks.
+          - IP Address of the primary Domain Name System (DNS) server.
+          - PrimaryDns IP used for all IPv4 blocks.
         type: str
       secondary_dns:
         description:
-          - The Global SecondaryDns IP used for all IPv4 blocks.
+          - IP Address of the secondary Domain Name System (DNS) server.
+          - SecondaryDns IP used for all IPv4 blocks.
         type: str
   ipv4_blocks:
     description:
@@ -87,11 +91,11 @@ options:
     suboptions:
       from:
         description:
-          - The initial IP address for the IPv4 block.
+          - First IPv4 address of the block.
         type: str
       size:
         description:
-          - The number of IPs in the block.
+          - Number of identifiers this block can hold.
         type: int
       ipv4_config:
         description:
@@ -123,19 +127,23 @@ options:
     suboptions:
       prefix:
         description:
-          - The Global Prefix used for all IPv6 blocks.
+          - A prefix length which masks the IP address and divides the IP address into network address and host address.
+          - Prefix used for all IPv6 blocks.
         type: str
       gateway:
         description:
-          - The Global Gateway IP used for all IPv6 blocks.
+          - IP address of the default IPv6 gateway.
+          - Gateway IP used for all IPv6 blocks.
         type: str
       primary_dns:
         description:
-          - The Global PrimaryDns used for all IPv6 blocks.
+          - IP Address of the primary Domain Name System (DNS) server.
+          - PrimaryDns IP used for all IPv6 blocks.
         type: str
       secondary_dns:
         description:
-          - The Global SecondaryDns used for all IPv6 blocks.
+          - IP Address of the secondary Domain Name System (DNS) server.
+          - SecondaryDns IP used for all IPv6 blocks.
         type: str
   ipv6_blocks:
     description:
@@ -347,11 +355,16 @@ def main():
             'Name': intersight.module.params['organization'],
         },
         'Name': intersight.module.params['name'],
-        'Tags': intersight.module.params['tags'],
-        'Description': intersight.module.params['description'],
         'EnableBlockLevelSubnetConfig': intersight.module.params['enable_block_level_subnet_config'],
     }
+
     if module.params['state'] == 'present':
+        if intersight.module.params['tags']:
+            intersight.api_body['Tags'] = intersight.module.params['tags']
+
+        if intersight.module.params['description']:
+            intersight.api_body['Description'] = intersight.module.params['description']
+
         # Validate that at least one of ipv4_blocks/ipv6_blocks was passed. We don't mark it as required in order to support absent.
         if not intersight.module.params['ipv4_blocks'] and not intersight.module.params['ipv6_blocks']:
             module.fail_json(msg="at least one of ipv4_blocks/ipv6_blocks parameters must be provided and contain at least one block when state is present")

@@ -255,7 +255,6 @@ def main():
             'Name': intersight.module.params['organization'],
         },
         'Name': intersight.module.params['name'],
-        'Tags': intersight.module.params['tags'],
         'LocalClients': [
             {
                 'ObjectType': 'syslog.LocalFileLoggingClient',
@@ -283,6 +282,12 @@ def main():
             }
         ],
     }
+
+    if intersight.module.params['tags']:
+        intersight.api_body['Tags'] = intersight.module.params['tags']
+
+    if intersight.module.params['description']:
+        intersight.api_body['Description'] = intersight.module.params['description']
 
     #
     # Code below should be common across all policy modules
