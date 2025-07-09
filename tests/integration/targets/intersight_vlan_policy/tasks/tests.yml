@@ -1,0 +1,335 @@
+---
+- block:
+  - name: Define anchor for Intersight API login info
+    ansible.builtin.set_fact:
+      api_info: &api_info
+        api_private_key: "{{ api_private_key }}"
+        api_key_id: "{{ api_key_id }}"
+        api_uri: "{{ api_uri | default(omit) }}"
+        validate_certs: "{{ validate_certs | default(omit) }}"
+        organization: "{{ organization }}"
+
+  - name: Make sure Env is clean
+    cisco.intersight.intersight_vlan_policy:
+      <<: *api_info
+      name: test_vlan_policy
+      state: absent 
+
+  - name: Create vlan policy - check-mode
+    cisco.intersight.intersight_vlan_policy:
+      <<: *api_info
+      name: test_vlan_policy
+      description: "Test VLAN policy description"
+      tags:
+        - Key: Site
+          Value: Test
+        - Key: Site2
+          Value: Test2
+    check_mode: true
+    register: creation_res_check_mode
+
+  - name: Verify vlan policy was not created - check-mode
+    ansible.builtin.assert:
+      that:
+        - creation_res_check_mode is changed
+        - creation_res_check_mode.api_response.vlan_policy == {}
+        - creation_res_check_mode.api_response.vlans == []
+
+  - name: Create vlan policy
+    cisco.intersight.intersight_vlan_policy:
+      <<: *api_info
+      name: test_vlan_policy
+      description: "Test VLAN policy description"
+      tags:
+        - Key: Site
+          Value: Test
+        - Key: Site2
+          Value: Test2
+    register: creation_res
+
+  - name: Fetch info after creation
+    cisco.intersight.intersight_vlan_policy_info:
+      <<: *api_info
+      name: test_vlan_policy
+    register: creation_info_res
+
+  - name: Verify vlan policy creation by info
+    ansible.builtin.assert:
+      that:
+        - creation_res.changed
+        - creation_info_res.api_response.vlan_policy.Name == 'test_vlan_policy'
+
+  - name: Verify vlan policy creation response aligns with info response
+    ansible.builtin.assert:
+      that:
+        - creation_res.api_response.vlan_policy.Name == creation_info_res.api_response.vlan_policy.Name
+
+  - name: Create vlan policy (idempotency check)
+    cisco.intersight.intersight_vlan_policy:
+      <<: *api_info
+      name: test_vlan_policy
+      description: "Test VLAN policy description"
+      tags:
+        - Key: Site
+          Value: Test
+        - Key: Site2
+          Value: Test2
+    register: creation_res_ide
+
+  - name: Verify vlan policy creation (idempotency check)
+    ansible.builtin.assert:
+      that:
+        - not creation_res_ide.changed
+
+  - name: Update description of an existing vlan policy
+    cisco.intersight.intersight_vlan_policy:
+      <<: *api_info
+      name: test_vlan_policy
+      description: "Updated VLAN policy description"
+      tags:
+        - Key: Site
+          Value: Test
+        - Key: Site2
+          Value: Test2
+    register: changed_res
+
+  - name: Fetch info after change
+    cisco.intersight.intersight_vlan_policy_info:
+      <<: *api_info
+      name: test_vlan_policy
+    register: change_info_res
+
+  - name: Verify vlan policy change by info
+    ansible.builtin.assert:
+      that:
+        - changed_res.changed
+        - change_info_res.api_response.vlan_policy.Name == 'test_vlan_policy'
+        - change_info_res.api_response.vlan_policy.Description == 'Updated VLAN policy description'
+
+  - name: Create another vlan policy
+    cisco.intersight.intersight_vlan_policy:
+      <<: *api_info
+      name: test_vlan_policy_2
+      description: "Test another VLAN policy description"
+    register: creation_res_b
+
+  - name: Fetch all vlan policies under selected organization
+    cisco.intersight.intersight_vlan_policy_info:
+      <<: *api_info
+    register: creation_info_res_b
+
+  - name: Check that there are at least 2 vlan policies under this organization
+    ansible.builtin.assert:
+      that:
+        - creation_info_res_b.api_response | length > 1
+
+  - name: Test creation without optional parameters
+    cisco.intersight.intersight_vlan_policy:
+      <<: *api_info
+      name: test_vlan_policy_minimal
+    register: creation_res_minimal
+
+  - name: Verify minimal vlan policy creation
+    ansible.builtin.assert:
+      that:
+        - creation_res_minimal.changed
+        - creation_res_minimal.api_response.vlan_policy.Name == 'test_vlan_policy_minimal'
+
+  - name: Create Multicast policy
+    cisco.intersight.intersight_multicast_policy:
+      <<: *api_info
+      name: multicast_policy_for_vlan_policy
+      description: "Test multicast policy description"
+    register: multicast_policy_res
+  
+  # Test VLAN Policy with VLANs
+  - name: Create VLAN policy with standard VLANs
+    cisco.intersight.intersight_vlan_policy:
+      <<: *api_info
+      name: test_vlan_policy_with_vlans
+      description: "Policy with standard VLANs"
+      vlans:
+        - prefix: "prod"
+          vlan_id: 100
+          auto_allow_on_uplinks: true
+          enable_sharing: false
+          multicast_policy_name: "multicast_policy_for_vlan_policy"
+          is_native: false
+          state: present
+        - prefix: "dev"
+          vlan_id: 200
+          auto_allow_on_uplinks: false
+          enable_sharing: false
+          multicast_policy_name: "multicast_policy_for_vlan_policy"
+          is_native: false
+          state: present
+        - prefix: "mgmt"
+          vlan_id: 300
+          auto_allow_on_uplinks: true
+          enable_sharing: false
+          multicast_policy_name: "multicast_policy_for_vlan_policy"
+          is_native: true
+    register: vlan_policy_with_vlans
+
+  - name: Verify VLAN policy with VLANs creation
+    ansible.builtin.assert:
+      that:
+        - vlan_policy_with_vlans.changed
+        - vlan_policy_with_vlans.api_response.vlan_policy.Name == 'test_vlan_policy_with_vlans'
+        - vlan_policy_with_vlans.api_response.vlans | length == 3
+        - vlan_policy_with_vlans.api_response.vlans[0].Name == 'prod_100'
+        - vlan_policy_with_vlans.api_response.vlans[1].Name == 'dev_200'
+        - vlan_policy_with_vlans.api_response.vlans[2].Name == 'mgmt_300'
+        - vlan_policy_with_vlans.api_response.vlans[0].IsNative == false
+        - vlan_policy_with_vlans.api_response.vlans[2].IsNative == true
+        - vlan_policy_with_vlans.api_response.vlans[0].VlanId == 100
+        - vlan_policy_with_vlans.api_response.vlans[1].VlanId == 200
+        - vlan_policy_with_vlans.api_response.vlans[2].VlanId == 300
+
+
+  - name: Create VLAN policy with Private VLANs
+    cisco.intersight.intersight_vlan_policy:
+      <<: *api_info
+      name: test_private_vlan_policy
+      description: "Policy with Private VLANs"
+      vlans:
+        - prefix: "primary"
+          vlan_id: 79
+          enable_sharing: true
+          sharing_type: "Primary"
+          auto_allow_on_uplinks: true
+        - prefix: "isolated"
+          vlan_id: 80
+          enable_sharing: true
+          sharing_type: "Isolated"
+          primary_vlan_id: 79
+          auto_allow_on_uplinks: true
+        - prefix: "community"
+          vlan_id: 81
+          enable_sharing: true
+          sharing_type: "Community"
+          primary_vlan_id: 79
+          auto_allow_on_uplinks: true
+    register: private_vlan_policy
+
+  - name: Verify Private VLAN policy creation
+    ansible.builtin.assert:
+      that:
+        - private_vlan_policy.changed
+        - private_vlan_policy.api_response.vlan_policy.Name == 'test_private_vlan_policy'
+        - private_vlan_policy.api_response.vlans | length == 3
+        - private_vlan_policy.api_response.vlans[0].Name == 'primary_79'
+        - private_vlan_policy.api_response.vlans[1].Name == 'isolated_80'
+        - private_vlan_policy.api_response.vlans[2].Name == 'community_81'
+        - private_vlan_policy.api_response.vlans[0].VlanId == 79
+        - private_vlan_policy.api_response.vlans[1].VlanId == 80
+        - private_vlan_policy.api_response.vlans[2].VlanId == 81
+        - private_vlan_policy.api_response.vlans[0].SharingType == 'Primary'
+        - private_vlan_policy.api_response.vlans[1].SharingType == 'Isolated'
+        - private_vlan_policy.api_response.vlans[2].SharingType == 'Community'
+        - private_vlan_policy.api_response.vlans[1].PrimaryVlanId == 79
+        - private_vlan_policy.api_response.vlans[2].PrimaryVlanId == 79
+
+  # Test info module with various filters
+  - name: Test info module - fetch specific policy with VLANs
+    cisco.intersight.intersight_vlan_policy_info:
+      <<: *api_info
+      name: test_vlan_policy_with_vlans
+    register: specific_policy_info
+
+  - name: Verify specific policy info
+    ansible.builtin.assert:
+      that:
+        - specific_policy_info.api_response.vlan_policy.Name == 'test_vlan_policy_with_vlans'
+        - specific_policy_info.api_response.vlans | length == 4
+
+  - name: Test info module - fetch all policies
+    cisco.intersight.intersight_vlan_policy_info:
+      <<: *api_info
+    register: all_policies_info
+
+  - name: Verify all policies info
+    ansible.builtin.assert:
+      that:
+        - all_policies_info.api_response | length >= 4
+
+  - name: Test info module - filter by VLAN name
+    cisco.intersight.intersight_vlan_policy_info:
+      <<: *api_info
+      vlan_name: "prod_100"
+      name: test_vlan_policy_with_vlans
+    register: vlan_filtered_info
+
+  - name: Verify VLAN filtered info
+    ansible.builtin.assert:
+      that:
+        - vlan_filtered_info.api_response.vlans | length == 1
+        - vlan_filtered_info.api_response.vlan_policy.Name == 'test_vlan_policy_with_vlans'
+        - vlan_filtered_info.api_response.vlans[0].Name == 'prod_100'
+        - vlan_filtered_info.api_response.vlans[0].VlanId == 100
+        - vlan_filtered_info.api_response.vlans[0].IsNative == false
+        - vlan_filtered_info.api_response.vlans[0].AutoAllowOnUplinks == true
+
+  # Test VLAN removal
+  - name: Update VLAN policy - remove one VLAN
+    cisco.intersight.intersight_vlan_policy:
+      <<: *api_info
+      name: test_vlan_policy_with_vlans
+      description: "Policy with reduced VLANs"
+      vlans:
+        - prefix: "prod"
+          vlan_id: 100
+          auto_allow_on_uplinks: true
+          enable_sharing: false
+          multicast_policy_name: "multicast_policy_for_vlan_policy"
+        - prefix: "dev"
+          vlan_id: 200
+          auto_allow_on_uplinks: false
+          enable_sharing: false
+          multicast_policy_name: "multicast_policy_for_vlan_policy"
+          state: absent
+        - prefix: "mgmt"
+          vlan_id: 300
+          auto_allow_on_uplinks: true
+          enable_sharing: false
+          multicast_policy_name: "multicast_policy_for_vlan_policy"
+          is_native: true
+    register: vlan_removal_result
+
+  - name: Verify VLAN removal
+    ansible.builtin.assert:
+      that:
+        - vlan_removal_result.changed
+        - vlan_removal_result.api_response.vlan_policy.Name == 'test_vlan_policy_with_vlans'
+        - vlan_removal_result.api_response.vlans | length == 3
+
+  always:
+  - name: Remove vlan policy 1
+    cisco.intersight.intersight_vlan_policy:
+      <<: *api_info
+      name: test_vlan_policy
+      state: absent
+
+  - name: Remove vlan policy 2
+    cisco.intersight.intersight_vlan_policy:
+      <<: *api_info
+      name: test_vlan_policy_2
+      state: absent
+
+  - name: Remove vlan policy minimal
+    cisco.intersight.intersight_vlan_policy:
+      <<: *api_info
+      name: test_vlan_policy_minimal
+      state: absent
+
+  - name: Remove vlan policy with vlans
+    cisco.intersight.intersight_vlan_policy:
+      <<: *api_info
+      name: test_vlan_policy_with_vlans
+      state: absent
+
+  - name: Remove private vlan policy
+    cisco.intersight.intersight_vlan_policy:
+      <<: *api_info
+      name: test_private_vlan_policy
+      state: absent
