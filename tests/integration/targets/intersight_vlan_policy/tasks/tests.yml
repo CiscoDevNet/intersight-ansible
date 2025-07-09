@@ -1,0 +1,154 @@
+---
+- block:
+  - name: Define anchor for Intersight API login info
+    ansible.builtin.set_fact:
+      api_info: &api_info
+        api_private_key: "{{ api_private_key }}"
+        api_key_id: "{{ api_key_id }}"
+        api_uri: "{{ api_uri | default(omit) }}"
+        validate_certs: "{{ validate_certs | default(omit) }}"
+        organization: "{{ organization }}"
+
+  - name: Make sure Env is clean
+    cisco.intersight.intersight_vlan_policy:
+      <<: *api_info
+      name: test_vlan_policy
+      state: absent
+
+  - name: Create vlan policy - check-mode
+    cisco.intersight.intersight_vlan_policy:
+      <<: *api_info
+      name: test_vlan_policy
+      description: "Test VLAN policy description"
+      tags:
+        - Key: Site
+          Value: Test
+        - Key: Site2
+          Value: Test2
+    check_mode: true
+    register: creation_res_check_mode
+
+  - name: Verify vlan policy was not created - check-mode
+    ansible.builtin.assert:
+      that:
+        - creation_res_check_mode is changed
+        - creation_res_check_mode.api_response == {}
+
+  - name: Create vlan policy
+    cisco.intersight.intersight_vlan_policy:
+      <<: *api_info
+      name: test_vlan_policy
+      description: "Test VLAN policy description"
+      tags:
+        - Key: Site
+          Value: Test
+        - Key: Site2
+          Value: Test2
+    register: creation_res
+
+  - name: Fetch info after creation
+    cisco.intersight.intersight_vlan_policy_info:
+      <<: *api_info
+      name: test_vlan_policy
+    register: creation_info_res
+
+  - name: Verify vlan policy creation by info
+    ansible.builtin.assert:
+      that:
+        - creation_res.changed
+        - creation_info_res.api_response[0].Name == 'test_vlan_policy'
+
+  - name: Verify vlan policy creation response aligns with info response
+    ansible.builtin.assert:
+      that:
+        - creation_res.api_response.Name == creation_info_res.api_response[0].Name
+
+  - name: Create vlan policy (idempotency check)
+    cisco.intersight.intersight_vlan_policy:
+      <<: *api_info
+      name: test_vlan_policy
+      description: "Test VLAN policy description"
+      tags:
+        - Key: Site
+          Value: Test
+        - Key: Site2
+          Value: Test2
+    register: creation_res_ide
+
+  - name: Verify vlan policy creation (idempotency check)
+    ansible.builtin.assert:
+      that:
+        - not creation_res_ide.changed
+
+  - name: Update description of an existing vlan policy
+    cisco.intersight.intersight_vlan_policy:
+      <<: *api_info
+      name: test_vlan_policy
+      description: "Updated VLAN policy description"
+      tags:
+        - Key: Site
+          Value: Test
+        - Key: Site2
+          Value: Test2
+    register: changed_res
+
+  - name: Fetch info after change
+    cisco.intersight.intersight_vlan_policy_info:
+      <<: *api_info
+      name: test_vlan_policy
+    register: change_info_res
+
+  - name: Verify vlan policy change by info
+    ansible.builtin.assert:
+      that:
+        - changed_res.changed
+        - change_info_res.api_response[0].Name == 'test_vlan_policy'
+        - change_info_res.api_response[0].Description == 'Updated VLAN policy description'
+
+  - name: Create another vlan policy
+    cisco.intersight.intersight_vlan_policy:
+      <<: *api_info
+      name: test_vlan_policy_2
+      description: "Test another VLAN policy description"
+    register: creation_res_b
+
+  - name: Fetch all vlan policies under selected organization
+    cisco.intersight.intersight_vlan_policy_info:
+      <<: *api_info
+    register: creation_info_res_b
+
+  - name: Check that there are at least 2 vlan policies under this organization
+    ansible.builtin.assert:
+      that:
+        - creation_info_res_b.api_response | length > 1
+
+  - name: Test creation without optional parameters
+    cisco.intersight.intersight_vlan_policy:
+      <<: *api_info
+      name: test_vlan_policy_minimal
+    register: creation_res_minimal
+
+  - name: Verify minimal vlan policy creation
+    ansible.builtin.assert:
+      that:
+        - creation_res_minimal.changed
+        - creation_res_minimal.api_response.Name == 'test_vlan_policy_minimal'
+
+  always:
+  - name: Remove vlan policy 1
+    cisco.intersight.intersight_vlan_policy:
+      <<: *api_info
+      name: test_vlan_policy
+      state: absent
+
+  - name: Remove vlan policy 2
+    cisco.intersight.intersight_vlan_policy:
+      <<: *api_info
+      name: test_vlan_policy_2
+      state: absent
+
+  - name: Remove vlan policy minimal
+    cisco.intersight.intersight_vlan_policy:
+      <<: *api_info
+      name: test_vlan_policy_minimal
+      state: absent 

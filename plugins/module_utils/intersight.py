@@ -228,7 +228,7 @@ class IntersightModule():
         }
 
         get_moid = self.intersight_call(**options)
-
+        print(f"ron get_moid: {get_moid}")
         if get_moid.json()['Results'] is not None:
             located_moid = get_moid.json()['Results'][0]['Moid']
         else:
@@ -431,7 +431,7 @@ class IntersightModule():
 
     def configure_policy_or_profile(self, resource_path):
         # Configure (create, update, or delete) the policy or profile
-        organization_moid = self.get_org_moid()
+        organization_moid = self.get_moid_by_value(resource_path='/organization/Organizations', resource_value=self.module.params['organization'])
 
         self.result['api_response'] = {}
         # Get the current state of the resource
@@ -481,13 +481,56 @@ class IntersightModule():
 
         return moid
 
-    def get_org_moid(self) -> Optional[str]:
-        organization_moid = None
-        # GET Organization Moid
+
+    def configure_vlans(self, resource_path, vlan_name):
+        # Configure (create, update, or delete) VLANs
+
+        self.result['api_response'] = {}
+        # Get the current state of the resource
+        filter_str = "Name eq '" + vlan_name + "'"
         self.get_resource(
-            resource_path='/organization/Organizations',
+            resource_path=resource_path,
             query_params={
-                '$filter': "Name eq '" + self.module.params['organization'] + "'",
+                '$filter': filter_str
+            }
+        )
+
+        moid = None
+        resource_values_match = False
+        if self.result['api_response'].get('Moid'):
+            # resource exists and moid was returned
+            moid = self.result['api_response']['Moid']
+            if self.module.params['state'] == 'present':
+                resource_values_match = compare_values(self.api_body, self.result['api_response'])
+            else:  # state == 'absent'
+                self.delete_resource(
+                    moid=moid,
+                    resource_path=resource_path,
+                )
+                moid = None
+
+        if self.module.params['state'] == 'present' and not resource_values_match:
+            self.configure_resource(
+                moid=moid,
+                resource_path=resource_path,
+                body=self.api_body,
+                query_params={
+                    '$filter': filter_str
+                }
+            )
+            if self.result['api_response'].get('Moid'):
+                # resource exists and moid was returned
+                moid = self.result['api_response']['Moid']
+
+        return moid
+
+    def get_moid_by_value(self, resource_path, resource_value) -> Optional[str]:
+        organization_moid = None
+        # GET Moid of the resource
+        self.get_resource(
+            resource_path=resource_path,
+            query_params={
+                '$filter': "Name eq '" + resource_value + "'",
                 '$select': 'Moid',
             },
         )
@@ -506,7 +549,7 @@ class IntersightModule():
             filter_conditions.append(f"Name eq '{name_to_filter}'")
 
         if org_to_filter:
-            org_moid = self.get_org_moid()
+            org_moid = self.get_moid_by_value(resource_path='/organization/Organizations', resource_value=org_to_filter)
             filter_conditions.append(f"Organization.Moid eq '{org_moid}'")
 
         query_params = {}
