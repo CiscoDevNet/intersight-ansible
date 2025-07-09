@@ -289,11 +289,16 @@ def main():
         'Organization': {
             'Name': intersight.module.params['organization'],
         },
-        'Name': intersight.module.params['name'],
-        'Tags': intersight.module.params['tags'],
+        'Name': intersight.module.params['name']
     }
 
     if module.params['state'] == 'present':
+        if intersight.module.params['tags']:
+            intersight.api_body['Tags'] = intersight.module.params['tags']
+
+        if intersight.module.params['description']:
+            intersight.api_body['Description'] = intersight.module.params['description']
+
         platform = module.params['target_platform']
 
         # Chassis-specific parameters

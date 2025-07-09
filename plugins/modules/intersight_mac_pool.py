@@ -59,12 +59,13 @@ options:
     suboptions:
       address_from:
         description:
-          - The starting MAC address for this block.
+          - Starting address of the block must be in hexadecimal format xx:xx:xx:xx:xx:xx.
+          - To ensure uniqueness of MACs in the LAN fabric, you are strongly encouraged to use the following MAC prefix 00:25:B5:xx:xx:xx.
         type: str
         required: true
       size:
         description:
-          - The number of MAC addresses in this block.
+          - Number of identifiers this block can hold.
           - This value must be an integer between 1 and 1024, inclusive.
         type: int
         required: true
@@ -158,11 +159,15 @@ def main():
             'Name': intersight.module.params['organization'],
         },
         'Name': intersight.module.params['name'],
-        'Tags': intersight.module.params['tags'],
-        'Description': intersight.module.params['description']
     }
     mac_blocks_dict = []
     if module.params['state'] == 'present':
+        if intersight.module.params['tags']:
+            intersight.api_body['Tags'] = intersight.module.params['tags']
+
+        if intersight.module.params['description']:
+            intersight.api_body['Description'] = intersight.module.params['description']
+
         # Validate that mac_blocks was passed. We don't mark it as required in order to support absent.
         if not intersight.module.params['mac_blocks']:
             module.fail_json(msg="mac_blocks parameter must be provided and contain at least one block when state is 'present'.")

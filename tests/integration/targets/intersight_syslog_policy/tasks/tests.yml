@@ -138,6 +138,84 @@
     failed_when:
       - "'has to be between 0 and 65535' not in invalid_port_res.msg"
 
+  - name: Test for missing hostname when first remote logging is enabled
+    cisco.intersight.intersight_syslog_policy:
+      <<: *api_info
+      name: "test_syslog_policy_missing_hostname"
+      first_remote_logging_enabled: true
+    register: missing_hostname_res
+    failed_when:
+      - missing_hostname_res is not failed
+      - "'missing required arguments' not in missing_hostname_res.msg"
+
+  - name: Create syslog policy with both first and second remote logging enabled
+    cisco.intersight.intersight_syslog_policy:
+      <<: *api_info
+      name: "test_syslog_policy_dual_remote"
+      description: "Policy with both remote loggers enabled"
+      tags:
+        - Key: "test"
+          Value: "dual_remote"
+      local_logging_minimum_severity: "error"
+      first_remote_logging_enabled: true
+      first_remote_logging_hostname: "10.10.30.30"
+      first_remote_logging_port: 514
+      first_remote_logging_protocol: "udp"
+      first_remote_logging_minimum_severity: "warning"
+      second_remote_logging_enabled: true
+      second_remote_logging_hostname: "10.10.40.40"
+      second_remote_logging_port: 1514
+      second_remote_logging_protocol: "tcp"
+      second_remote_logging_minimum_severity: "informational"
+    register: dual_remote_res
+
+  - name: Fetch info after creating policy with dual remote logging
+    cisco.intersight.intersight_syslog_policy_info:
+      <<: *api_info
+      name: "test_syslog_policy_dual_remote"
+    register: dual_remote_info_res
+
+  - name: Verify policy with dual remote logging configuration
+    ansible.builtin.assert:
+      that:
+        - dual_remote_res.changed
+        - dual_remote_info_res.api_response[0].Name == 'test_syslog_policy_dual_remote'
+        - dual_remote_info_res.api_response[0].LocalClients[0].MinSeverity == 'error'
+        # First remote client validation
+        - dual_remote_info_res.api_response[0].RemoteClients[0].Enabled
+        - dual_remote_info_res.api_response[0].RemoteClients[0].Hostname == '10.10.30.30'
+        - dual_remote_info_res.api_response[0].RemoteClients[0].Port == 514
+        - dual_remote_info_res.api_response[0].RemoteClients[0].Protocol == 'udp'
+        - dual_remote_info_res.api_response[0].RemoteClients[0].MinSeverity == 'warning'
+        # Second remote client validation
+        - dual_remote_info_res.api_response[0].RemoteClients[1].Enabled
+        - dual_remote_info_res.api_response[0].RemoteClients[1].Hostname == '10.10.40.40'
+        - dual_remote_info_res.api_response[0].RemoteClients[1].Port == 1514
+        - dual_remote_info_res.api_response[0].RemoteClients[1].Protocol == 'tcp'
+        - dual_remote_info_res.api_response[0].RemoteClients[1].MinSeverity == 'informational'
+
+  - name: Modify dual remote policy to disable second remote logging
+    cisco.intersight.intersight_syslog_policy:
+      <<: *api_info
+      name: "test_syslog_policy_dual_remote"
+      first_remote_logging_enabled: true
+      first_remote_logging_hostname: "10.10.30.30"
+      second_remote_logging_enabled: false
+    register: disable_second_remote_res
+
+  - name: Fetch info after disabling second remote logging
+    cisco.intersight.intersight_syslog_policy_info:
+      <<: *api_info
+      name: "test_syslog_policy_dual_remote"
+    register: disable_second_remote_info_res
+
+  - name: Verify second remote logging is disabled
+    ansible.builtin.assert:
+      that:
+        - disable_second_remote_res.changed
+        - disable_second_remote_info_res.api_response[0].RemoteClients[0].Enabled
+        - not disable_second_remote_info_res.api_response[0].RemoteClients[1].Enabled
+
   always:
     - name: Cleanup - Remove syslog policy 1
       cisco.intersight.intersight_syslog_policy:
@@ -149,4 +227,10 @@
       cisco.intersight.intersight_syslog_policy:
         <<: *api_info
         name: "test_syslog_policy_2"
+        state: absent
+
+    - name: Cleanup - Remove dual remote syslog policy
+      cisco.intersight.intersight_syslog_policy:
+        <<: *api_info
+        name: "test_syslog_policy_dual_remote"
         state: absent
