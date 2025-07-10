@@ -310,77 +310,77 @@ def main():
             # resource exists and moid was returned
             user_policy_moid = intersight.result['api_response']['Moid']
 
-        # EndPointUser local_users list config
-        for user in intersight.module.params['local_users']:
-            # check for existing user in this organization
-            filter_str = "Name eq '" + user['username'] + "'"
-            filter_str += "and Organization.Moid eq '" + organization_moid + "'"
-            intersight.get_resource(
-                resource_path='/iam/EndPointUsers',
-                query_params={
-                    '$filter': filter_str
-                },
-            )
-            user_moid = None
-            if intersight.result['api_response'].get('Moid'):
-                # resource exists and moid was returned
-                user_moid = intersight.result['api_response']['Moid']
-            else:
-                # create user if it doesn't exist
-                intersight.api_body = {
-                    'Name': user['username'],
-                }
-                if organization_moid:
-                    intersight.api_body['Organization'] = {
-                        'Moid': organization_moid,
-                    }
-                intersight.configure_resource(
-                    moid=None,
+            # EndPointUser local_users list config
+            for user in intersight.module.params['local_users']:
+                # check for existing user in this organization
+                filter_str = "Name eq '" + user['username'] + "'"
+                filter_str += "and Organization.Moid eq '" + organization_moid + "'"
+                intersight.get_resource(
                     resource_path='/iam/EndPointUsers',
-                    body=intersight.api_body,
                     query_params={
-                        '$filter': "Name eq '" + user['username'] + "'",
+                        '$filter': filter_str
                     },
                 )
                 user_moid = None
                 if intersight.result['api_response'].get('Moid'):
                     # resource exists and moid was returned
                     user_moid = intersight.result['api_response']['Moid']
-            # GET EndPointRole Moid
-            intersight.get_resource(
-                resource_path='/iam/EndPointRoles',
-                query_params={
-                    '$filter': "Name eq '" + user['role'] + "' and Type eq 'IMC'",
-                },
-            )
-            end_point_role_moid = None
-            if intersight.result['api_response'].get('Moid'):
-                # resource exists and moid was returned
-                end_point_role_moid = intersight.result['api_response']['Moid']
-            # EndPointUserRole config
-            intersight.api_body = {
-                'EndPointUser': {
-                    'Moid': user_moid,
-                },
-                'EndPointRole': [
-                    {
-                        'Moid': end_point_role_moid,
+                else:
+                    # create user if it doesn't exist
+                    intersight.api_body = {
+                        'Name': user['username'],
                     }
-                ],
-                'Password': user['password'],
-                'Enabled': user['enable'],
-                'EndPointUserPolicy': {
-                    'Moid': user_policy_moid,
-                },
-            }
-            intersight.configure_resource(
-                moid=None,
-                resource_path='/iam/EndPointUserRoles',
-                body=intersight.api_body,
-                query_params={
-                    '$filter': "EndPointUserPolicy.Moid eq '" + user_policy_moid + "'",
-                },
-            )
+                    if organization_moid:
+                        intersight.api_body['Organization'] = {
+                            'Moid': organization_moid,
+                        }
+                    intersight.configure_resource(
+                        moid=None,
+                        resource_path='/iam/EndPointUsers',
+                        body=intersight.api_body,
+                        query_params={
+                            '$filter': "Name eq '" + user['username'] + "'",
+                        },
+                    )
+                    user_moid = None
+                    if intersight.result['api_response'].get('Moid'):
+                        # resource exists and moid was returned
+                        user_moid = intersight.result['api_response']['Moid']
+                # GET EndPointRole Moid
+                intersight.get_resource(
+                    resource_path='/iam/EndPointRoles',
+                    query_params={
+                        '$filter': "Name eq '" + user['role'] + "' and Type eq 'IMC'",
+                    },
+                )
+                end_point_role_moid = None
+                if intersight.result['api_response'].get('Moid'):
+                    # resource exists and moid was returned
+                    end_point_role_moid = intersight.result['api_response']['Moid']
+                # EndPointUserRole config
+                intersight.api_body = {
+                    'EndPointUser': {
+                        'Moid': user_moid,
+                    },
+                    'EndPointRole': [
+                        {
+                            'Moid': end_point_role_moid,
+                        }
+                    ],
+                    'Password': user['password'],
+                    'Enabled': user['enable'],
+                    'EndPointUserPolicy': {
+                        'Moid': user_policy_moid,
+                    },
+                }
+                intersight.configure_resource(
+                    moid=None,
+                    resource_path='/iam/EndPointUserRoles',
+                    body=intersight.api_body,
+                    query_params={
+                        '$filter': "EndPointUserPolicy.Moid eq '" + user_policy_moid + "'",
+                    },
+                )
 
     module.exit_json(**intersight.result)
 
