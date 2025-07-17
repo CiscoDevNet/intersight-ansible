@@ -12,8 +12,15 @@
   - name: Make sure Env is clean
     cisco.intersight.intersight_vlan_policy:
       <<: *api_info
-      name: test_vlan_policy
-      state: absent 
+      name: "{{ item }}"
+      state: absent
+    loop:
+      - test_vlan_policy
+      - test_vlan_policy_2
+      - test_vlan_policy_minimal
+      - test_vlan_policy_with_vlans
+      - test_private_vlan_policy
+   
 
   - name: Create vlan policy - check-mode
     cisco.intersight.intersight_vlan_policy:
@@ -304,32 +311,14 @@
         - vlan_removal_result.api_response.vlans | length == 3
 
   always:
-  - name: Remove vlan policy 1
+  - name: Remove vlan policies
     cisco.intersight.intersight_vlan_policy:
       <<: *api_info
-      name: test_vlan_policy
+      name: "{{ item }}"
       state: absent
-
-  - name: Remove vlan policy 2
-    cisco.intersight.intersight_vlan_policy:
-      <<: *api_info
-      name: test_vlan_policy_2
-      state: absent
-
-  - name: Remove vlan policy minimal
-    cisco.intersight.intersight_vlan_policy:
-      <<: *api_info
-      name: test_vlan_policy_minimal
-      state: absent
-
-  - name: Remove vlan policy with vlans
-    cisco.intersight.intersight_vlan_policy:
-      <<: *api_info
-      name: test_vlan_policy_with_vlans
-      state: absent
-
-  - name: Remove private vlan policy
-    cisco.intersight.intersight_vlan_policy:
-      <<: *api_info
-      name: test_private_vlan_policy
-      state: absent
+    loop:
+      - test_vlan_policy
+      - test_vlan_policy_2
+      - test_vlan_policy_minimal
+      - test_vlan_policy_with_vlans
+      - test_private_vlan_policy

@@ -12,20 +12,12 @@
   - name: Make sure Env is clean
     cisco.intersight.intersight_network_connectivity_policy:
       <<: *api_info
-      name: test_network_connectivity_policy
+      name: "{{ item }}"
       state: absent
-
-  - name: Make sure Env is clean 2
-    cisco.intersight.intersight_network_connectivity_policy:
-      <<: *api_info
-      name: test_network_connectivity_policy_2
-      state: absent
-
-  - name: Make sure Env is clean 3
-    cisco.intersight.intersight_network_connectivity_policy:
-      <<: *api_info
-      name: test_network_connectivity_policy_3
-      state: absent
+    loop:
+      - test_network_connectivity_policy
+      - test_network_connectivity_policy_2
+      - test_network_connectivity_policy_3
 
   - name: Create network connectivity policy - check-mode
     cisco.intersight.intersight_network_connectivity_policy:
@@ -234,20 +226,12 @@
         - creation_info_res_final.api_response | length >= 3
 
   always:
-  - name: Remove network connectivity policy 1
+  - name: Remove network connectivity policies
     cisco.intersight.intersight_network_connectivity_policy:
       <<: *api_info
-      name: test_network_connectivity_policy
+      name: "{{ item }}"
       state: absent
-
-  - name: Remove network connectivity policy 2
-    cisco.intersight.intersight_network_connectivity_policy:
-      <<: *api_info
-      name: test_network_connectivity_policy_2
-      state: absent
-
-  - name: Remove network connectivity policy 3
-    cisco.intersight.intersight_network_connectivity_policy:
-      <<: *api_info
-      name: test_network_connectivity_policy_3
-      state: absent 
+    loop:
+      - test_network_connectivity_policy
+      - test_network_connectivity_policy_2
+      - test_network_connectivity_policy_3 

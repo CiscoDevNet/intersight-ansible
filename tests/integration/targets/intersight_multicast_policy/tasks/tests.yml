@@ -12,20 +12,12 @@
   - name: Make sure Env is clean
     cisco.intersight.intersight_multicast_policy:
       <<: *api_info
-      name: test_multicast_policy
+      name: "{{ item }}"
       state: absent
-
-  - name: Make sure Env is clean 2
-    cisco.intersight.intersight_multicast_policy:
-      <<: *api_info
-      name: test_multicast_policy_2
-      state: absent
-
-  - name: Make sure Env is clean 3
-    cisco.intersight.intersight_multicast_policy:
-      <<: *api_info
-      name: test_multicast_policy_3
-      state: absent
+    loop:
+      - test_multicast_policy
+      - test_multicast_policy_2
+      - test_multicast_policy_3
 
   - name: Create multicast policy - check-mode
     cisco.intersight.intersight_multicast_policy:
@@ -191,20 +183,12 @@
         - creation_info_res_final.api_response | length >= 2
 
   always:
-  - name: Remove multicast policy 1
+  - name: Remove multicast policies
     cisco.intersight.intersight_multicast_policy:
       <<: *api_info
-      name: test_multicast_policy
+      name: "{{ item }}"
       state: absent
-
-  - name: Remove multicast policy 2
-    cisco.intersight.intersight_multicast_policy:
-      <<: *api_info
-      name: test_multicast_policy_2
-      state: absent
-
-  - name: Remove multicast policy 3 (if it was created)
-    cisco.intersight.intersight_multicast_policy:
-      <<: *api_info
-      name: test_multicast_policy_3
-      state: absent
+    loop:
+      - test_multicast_policy
+      - test_multicast_policy_2
+      - test_multicast_policy_3

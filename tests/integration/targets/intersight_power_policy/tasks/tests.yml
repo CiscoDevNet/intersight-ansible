@@ -12,8 +12,12 @@
   - name: Make sure Env is clean
     cisco.intersight.intersight_power_policy:
       <<: *api_info
-      name: test_power_policy
+      name: "{{ item }}"
       state: absent
+    loop:
+      - test_power_policy
+      - test_power_policy_2
+      - test_power_policy_validate
 
   - name: Create power policy - check-mode
     cisco.intersight.intersight_power_policy:
@@ -129,20 +133,12 @@
         - creation_info_res_b.api_response | length > 1
 
   always:
-  - name: Remove power policy
+  - name: Remove power policies
     cisco.intersight.intersight_power_policy:
       <<: *api_info
-      name: test_power_policy
+      name: "{{ item }}"
       state: absent
-
-  - name: Remove power policy 2
-    cisco.intersight.intersight_power_policy:
-      <<: *api_info
-      name: test_power_policy_2
-      state: absent
-
-  - name: Remove validation failure policy if it exists
-    cisco.intersight.intersight_power_policy:
-      <<: *api_info
-      name: test_power_policy_validate
-      state: absent
+    loop:
+      - test_power_policy
+      - test_power_policy_2
+      - test_power_policy_validate
