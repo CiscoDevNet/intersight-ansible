@@ -12,8 +12,11 @@
   - name: Make sure Env is clean
     cisco.intersight.intersight_mac_pool:
       <<: *api_info
-      name: test_mac_pool
+      name: "{{ item }}"
       state: absent
+    loop:
+      - test_mac_pool
+      - test_mac_pool_2
 
   - name: Create mac pool - check-mode
     cisco.intersight.intersight_mac_pool:
@@ -134,14 +137,11 @@
         - creation_info_res_b.api_response | length > 1
 
   always:
-  - name: Remove mac pool
+  - name: Remove mac pools
     cisco.intersight.intersight_mac_pool:
       <<: *api_info
-      name: test_mac_pool
+      name: "{{ item }}"
       state: absent
-
-  - name: Remove mac pool 2
-    cisco.intersight.intersight_mac_pool:
-      <<: *api_info
-      name: test_mac_pool_2
-      state: absent
+    loop:
+      - test_mac_pool
+      - test_mac_pool_2

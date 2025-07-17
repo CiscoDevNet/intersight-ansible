@@ -12,14 +12,12 @@
   - name: Make sure the environment is clean before starting
     cisco.intersight.intersight_syslog_policy:
       <<: *api_info
-      name: "test_syslog_policy"
+      name: "{{ item }}"
       state: absent
-
-  - name: Make sure the environment is clean before starting (policy 2)
-    cisco.intersight.intersight_syslog_policy:
-      <<: *api_info
-      name: "test_syslog_policy_2"
-      state: absent
+    loop:
+      - test_syslog_policy
+      - test_syslog_policy_2
+      - test_syslog_policy_dual_remote
 
   - name: Create syslog policy with local logging only (check mode)
     cisco.intersight.intersight_syslog_policy:
@@ -217,20 +215,12 @@
         - not disable_second_remote_info_res.api_response[0].RemoteClients[1].Enabled
 
   always:
-    - name: Cleanup - Remove syslog policy 1
+    - name: Cleanup - Remove syslog policies
       cisco.intersight.intersight_syslog_policy:
         <<: *api_info
-        name: "test_syslog_policy"
+        name: "{{ item }}"
         state: absent
-
-    - name: Cleanup - Remove syslog policy 2
-      cisco.intersight.intersight_syslog_policy:
-        <<: *api_info
-        name: "test_syslog_policy_2"
-        state: absent
-
-    - name: Cleanup - Remove dual remote syslog policy
-      cisco.intersight.intersight_syslog_policy:
-        <<: *api_info
-        name: "test_syslog_policy_dual_remote"
-        state: absent
+      loop:
+        - test_syslog_policy
+        - test_syslog_policy_2
+        - test_syslog_policy_dual_remote

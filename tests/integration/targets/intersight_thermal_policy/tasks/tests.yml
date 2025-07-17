@@ -12,8 +12,11 @@
   - name: Make sure Env is clean
     cisco.intersight.intersight_thermal_policy:
       <<: *api_info
-      name: test_thermal_policy
+      name: "{{ item }}"
       state: absent
+    loop:
+      - test_thermal_policy
+      - test_thermal_policy_2
 
   - name: Create thermal policy - check-mode
     cisco.intersight.intersight_thermal_policy:
@@ -124,14 +127,11 @@
         - creation_info_res_b.api_response | length > 1
 
   always:
-  - name: Remove thermal policy 1
+  - name: Remove thermal policies
     cisco.intersight.intersight_thermal_policy:
       <<: *api_info
-      name: test_thermal_policy
+      name: "{{ item }}"
       state: absent
-
-  - name: Remove thermal policy 2
-    cisco.intersight.intersight_thermal_policy:
-      <<: *api_info
-      name: test_thermal_policy_2
-      state: absent
+    loop:
+      - test_thermal_policy
+      - test_thermal_policy_2

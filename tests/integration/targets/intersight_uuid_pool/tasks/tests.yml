@@ -9,17 +9,14 @@
         validate_certs: "{{ validate_certs | default(omit) }}"
         organization: "{{ organization }}"
 
-  - name: Make sure Env is clean pool1
+  - name: Make sure Env is clean
     cisco.intersight.intersight_uuid_pool:
       <<: *api_info
-      name: test_uuid_pool
+      name: "{{ item }}"
       state: absent
-
-  - name: Make sure Env is clean pool2
-    cisco.intersight.intersight_uuid_pool:
-      <<: *api_info
-      name: test_uuid_pool_2
-      state: absent
+    loop:
+      - test_uuid_pool
+      - test_uuid_pool_2
 
   - name: Create UUID pool - check-mode
     cisco.intersight.intersight_uuid_pool:
@@ -264,14 +261,11 @@
         - not deletion_res_ide.changed
 
   always:
-  - name: Remove test UUID pool
+  - name: Remove test UUID pools
     cisco.intersight.intersight_uuid_pool:
       <<: *api_info
-      name: test_uuid_pool
+      name: "{{ item }}"
       state: absent
-
-  - name: Remove second test UUID pool
-    cisco.intersight.intersight_uuid_pool:
-      <<: *api_info
-      name: test_uuid_pool_2
-      state: absent
+    loop:
+      - test_uuid_pool
+      - test_uuid_pool_2

@@ -12,8 +12,11 @@
   - name: Make sure Env is clean
     cisco.intersight.intersight_ip_pool:
       <<: *api_info
-      name: test_ip_pool
+      name: "{{ item }}"
       state: absent
+    loop:
+      - test_ip_pool
+      - test_ip_pool_2
 
   - name: Create ip pool with global config - check-mode
     cisco.intersight.intersight_ip_pool:
@@ -261,14 +264,11 @@
         - creation_info_res_all.api_response | length > 1
 
   always:
-  - name: Remove ip pool
+  - name: Remove ip pools
     cisco.intersight.intersight_ip_pool:
       <<: *api_info
-      name: test_ip_pool
+      name: "{{ item }}"
       state: absent
-
-  - name: Remove ip pool 2
-    cisco.intersight.intersight_ip_pool:
-      <<: *api_info
-      name: test_ip_pool_2
-      state: absent
+    loop:
+      - test_ip_pool
+      - test_ip_pool_2
