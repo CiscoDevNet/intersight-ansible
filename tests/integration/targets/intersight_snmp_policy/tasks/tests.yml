@@ -1,0 +1,638 @@
+---
+- block:
+  - name: Define anchor for Intersight API login info
+    ansible.builtin.set_fact:
+      api_info: &api_info
+        api_private_key: "{{ api_private_key }}"
+        api_key_id: "{{ api_key_id }}"
+        api_uri: "{{ api_uri | default(omit) }}"
+        validate_certs: "{{ validate_certs | default(omit) }}"
+        organization: "{{ organization }}"
+
+  - name: Make sure Env is clean
+    cisco.intersight.intersight_snmp_policy:
+      <<: *api_info
+      name: "{{ item }}"
+      state: absent
+    loop:
+      - test_snmp_policy_disabled
+      - test_snmp_policy_v2_only
+      - test_snmp_policy_v3_only
+      - test_snmp_policy_mixed
+      - test_snmp_policy_with_users
+      - test_snmp_policy_with_traps
+      - test_validation_fail
+      - test_validation_success
+
+  # Test 1: Disabled SNMP Policy
+  - name: Create disabled SNMP policy - check-mode
+    cisco.intersight.intersight_snmp_policy:
+      <<: *api_info
+      name: test_snmp_policy_disabled
+      description: "Test disabled SNMP policy"
+      enabled: false
+      tags:
+        - Key: Site
+          Value: Test
+    check_mode: true
+    register: disabled_creation_check_mode
+
+  - name: Verify disabled SNMP policy was not created - check-mode
+    ansible.builtin.assert:
+      that:
+        - disabled_creation_check_mode is changed
+        - disabled_creation_check_mode.api_response == {}
+
+  - name: Create disabled SNMP policy
+    cisco.intersight.intersight_snmp_policy:
+      <<: *api_info
+      name: test_snmp_policy_disabled
+      description: "Test disabled SNMP policy"
+      enabled: false
+      tags:
+        - Key: Site
+          Value: Test
+    register: disabled_creation
+
+  - name: Fetch info after disabled SNMP policy creation
+    cisco.intersight.intersight_snmp_policy_info:
+      <<: *api_info
+      name: test_snmp_policy_disabled
+    register: disabled_info
+
+  - name: Verify disabled SNMP policy creation
+    ansible.builtin.assert:
+      that:
+        - disabled_creation.changed
+        - disabled_info.api_response[0].Name == 'test_snmp_policy_disabled'
+        - disabled_info.api_response[0].Enabled == false
+
+  - name: Create disabled SNMP policy (idempotency check)
+    cisco.intersight.intersight_snmp_policy:
+      <<: *api_info
+      name: test_snmp_policy_disabled
+      description: "Test disabled SNMP policy"
+      enabled: false
+      tags:
+        - Key: Site
+          Value: Test
+    register: disabled_creation_ide
+
+  - name: Verify disabled SNMP policy creation (idempotency check)
+    ansible.builtin.assert:
+      that:
+        - not disabled_creation_ide.changed
+
+  # Test 2: SNMPv2 Only Policy
+  - name: Create SNMPv2 only SNMP policy
+    cisco.intersight.intersight_snmp_policy:
+      <<: *api_info
+      name: test_snmp_policy_v2_only
+      description: "Test SNMPv2 only policy"
+      enabled: true
+      v2c_enabled: true
+      v3_enabled: false
+      snmp_port: 161
+      sys_contact: "admin@example.com"
+      sys_location: "Test Location"
+      community_access: "Limited"
+      access_community_string: "public"
+      trap_community: "trapcomm"
+    register: v2_only_creation
+
+  - name: Fetch info after SNMPv2 only policy creation
+    cisco.intersight.intersight_snmp_policy_info:
+      <<: *api_info
+      name: test_snmp_policy_v2_only
+    register: v2_only_info
+
+  - name: Verify SNMPv2 only policy creation
+    ansible.builtin.assert:
+      that:
+        - v2_only_creation.changed
+        - v2_only_info.api_response[0].Name == 'test_snmp_policy_v2_only'
+        - v2_only_info.api_response[0].Enabled == true
+        - v2_only_info.api_response[0].V2Enabled == true
+        - v2_only_info.api_response[0].V3Enabled == false
+        - v2_only_info.api_response[0].CommunityAccess == "Limited"
+        - v2_only_info.api_response[0].AccessCommunityString == "public"
+        - v2_only_info.api_response[0].TrapCommunity == "trapcomm"
+
+  # Test 3: SNMPv3 Only Policy
+  - name: Create SNMPv3 only SNMP policy
+    cisco.intersight.intersight_snmp_policy:
+      <<: *api_info
+      name: test_snmp_policy_v3_only
+      description: "Test SNMPv3 only policy"
+      enabled: true
+      v2c_enabled: false
+      v3_enabled: true
+      snmp_port: 162
+      sys_contact: "admin@example.com"
+      sys_location: "Test Location"
+      community_access: "Disabled"
+      engine_input_id: "test-engine-id"
+      snmp_users:
+        - name: "testuser"
+          security_level: "AuthPriv"
+          auth_password: "testauth123"
+          privacy_password: "testpriv123"
+    register: v3_only_creation
+
+  - name: Fetch info after SNMPv3 only policy creation
+    cisco.intersight.intersight_snmp_policy_info:
+      <<: *api_info
+      name: test_snmp_policy_v3_only
+    register: v3_only_info
+
+  - name: Verify SNMPv3 only policy creation
+    ansible.builtin.assert:
+      that:
+        - v3_only_creation.changed
+        - v3_only_info.api_response[0].Name == 'test_snmp_policy_v3_only'
+        - v3_only_info.api_response[0].Enabled == true
+        - v3_only_info.api_response[0].V2Enabled == false
+        - v3_only_info.api_response[0].V3Enabled == true
+        - v3_only_info.api_response[0].CommunityAccess == "Disabled"
+        - v3_only_info.api_response[0].EngineId == "test-engine-id"
+        - v3_only_info.api_response[0].SnmpUsers | length == 1
+        - v3_only_info.api_response[0].SnmpUsers[0].Name == "testuser"
+        - v3_only_info.api_response[0].SnmpUsers[0].SecurityLevel == "AuthPriv"
+        - v3_only_info.api_response[0].SnmpUsers[0].AuthType == "SHA"
+        - v3_only_info.api_response[0].SnmpUsers[0].PrivacyType == "AES"
+
+  # Test 4: Mixed SNMPv2 and SNMPv3 Policy
+  - name: Create mixed SNMP policy
+    cisco.intersight.intersight_snmp_policy:
+      <<: *api_info
+      name: test_snmp_policy_mixed
+      description: "Test mixed SNMPv2 and SNMPv3 policy"
+      enabled: true
+      v2c_enabled: true
+      v3_enabled: true
+      snmp_port: 161
+      sys_contact: "admin@example.com"
+      sys_location: "Test Location"
+      community_access: "Full"
+      access_community_string: "public"
+      trap_community: "trapcomm"
+      engine_input_id: "mixed-engine-id"
+      snmp_users:
+        - name: "mixeduser"
+          security_level: "AuthNoPriv"
+          auth_password: "mixedauth123"
+    register: mixed_creation
+
+  - name: Fetch info after mixed policy creation
+    cisco.intersight.intersight_snmp_policy_info:
+      <<: *api_info
+      name: test_snmp_policy_mixed
+    register: mixed_info
+
+  - name: Verify mixed policy creation
+    ansible.builtin.assert:
+      that:
+        - mixed_creation.changed
+        - mixed_info.api_response[0].Name == 'test_snmp_policy_mixed'
+        - mixed_info.api_response[0].Enabled == true
+        - mixed_info.api_response[0].V2Enabled == true
+        - mixed_info.api_response[0].V3Enabled == true
+        - mixed_info.api_response[0].CommunityAccess == "Full"
+        - mixed_info.api_response[0].AccessCommunityString == "public"
+        - mixed_info.api_response[0].TrapCommunity == "trapcomm"
+        - mixed_info.api_response[0].EngineId == "mixed-engine-id"
+        - mixed_info.api_response[0].SnmpUsers | length == 1
+        - mixed_info.api_response[0].SnmpUsers[0].Name == "mixeduser"
+        - mixed_info.api_response[0].SnmpUsers[0].SecurityLevel == "AuthNoPriv"
+        - mixed_info.api_response[0].SnmpUsers[0].AuthType == "SHA"
+
+  # Test 5: Policy with multiple SNMP users
+  - name: Create SNMP policy with multiple users
+    cisco.intersight.intersight_snmp_policy:
+      <<: *api_info
+      name: test_snmp_policy_with_users
+      description: "Test SNMP policy with multiple users"
+      enabled: true
+      v2c_enabled: false
+      v3_enabled: true
+      snmp_port: 161
+      sys_contact: "admin@example.com"
+      sys_location: "Test Location"
+      community_access: "Disabled"
+      engine_input_id: "users-engine-id"
+      snmp_users:
+        - name: "admin"
+          security_level: "AuthPriv"
+          auth_password: "adminauth123"
+          privacy_password: "adminpriv123"
+        - name: "readonly"
+          security_level: "AuthNoPriv"
+          auth_password: "readonlyauth123"
+    register: users_creation
+
+  - name: Fetch info after users policy creation
+    cisco.intersight.intersight_snmp_policy_info:
+      <<: *api_info
+      name: test_snmp_policy_with_users
+    register: users_info
+
+  - name: Verify users policy creation
+    ansible.builtin.assert:
+      that:
+        - users_creation.changed
+        - users_info.api_response[0].Name == 'test_snmp_policy_with_users'
+        - users_info.api_response[0].SnmpUsers | length == 2
+        - users_info.api_response[0].SnmpUsers[0].Name == "admin"
+        - users_info.api_response[0].SnmpUsers[0].SecurityLevel == "AuthPriv"
+        - users_info.api_response[0].SnmpUsers[0].AuthType == "SHA"
+        - users_info.api_response[0].SnmpUsers[0].PrivacyType == "AES"
+        - users_info.api_response[0].SnmpUsers[1].Name == "readonly"
+        - users_info.api_response[0].SnmpUsers[1].SecurityLevel == "AuthNoPriv"
+        - users_info.api_response[0].SnmpUsers[1].AuthType == "SHA"
+
+  # Test 6: Policy with SNMP traps (corrected V3 trap type)
+  - name: Create SNMP policy with traps
+    cisco.intersight.intersight_snmp_policy:
+      <<: *api_info
+      name: test_snmp_policy_with_traps
+      description: "Test SNMP policy with traps"
+      enabled: true
+      v2c_enabled: true
+      v3_enabled: true
+      snmp_port: 161
+      sys_contact: "admin@example.com"
+      sys_location: "Test Location"
+      community_access: "Full"
+      access_community_string: "public"
+      trap_community: "trapcomm"
+      engine_input_id: "traps-engine-id"
+      snmp_users:
+        - name: "trapuser"
+          security_level: "AuthPriv"
+          auth_password: "trapauth123"
+          privacy_password: "trappriv123"
+      snmp_traps:
+        - enabled: true
+          version: "V2"
+          community: "trapcomm"
+          type: "Trap"
+          destination: "192.168.1.100"
+          port: 162
+        - enabled: true
+          version: "V2"
+          community: "trapcomm"
+          type: "Inform"
+          destination: "192.168.1.101"
+          port: 162
+        - enabled: true
+          version: "V3"
+          user: "trapuser"
+          type: "Trap"
+          destination: "192.168.1.102"
+          port: 163
+        - enabled: false
+          version: "V2"
+          community: "trapcomm"
+          type: "Trap"
+          destination: "192.168.1.103"
+          port: 162
+    register: traps_creation
+
+  - name: Fetch info after traps policy creation
+    cisco.intersight.intersight_snmp_policy_info:
+      <<: *api_info
+      name: test_snmp_policy_with_traps
+    register: traps_info
+
+  - name: Verify traps policy creation
+    ansible.builtin.assert:
+      that:
+        - traps_creation.changed
+        - traps_info.api_response[0].Name == 'test_snmp_policy_with_traps'
+        - traps_info.api_response[0].SnmpTraps | length == 4
+        - traps_info.api_response[0].SnmpTraps[0].Enabled == true
+        - traps_info.api_response[0].SnmpTraps[0].Version == "V2"
+        - traps_info.api_response[0].SnmpTraps[0].Community == "trapcomm"
+        - traps_info.api_response[0].SnmpTraps[0].Type == "Trap"
+        - traps_info.api_response[0].SnmpTraps[0].Destination == "192.168.1.100"
+        - traps_info.api_response[0].SnmpTraps[1].Type == "Inform"
+        - traps_info.api_response[0].SnmpTraps[2].Version == "V3"
+        - traps_info.api_response[0].SnmpTraps[2].User == "trapuser"
+        - traps_info.api_response[0].SnmpTraps[2].Type == "Trap"
+        - traps_info.api_response[0].SnmpTraps[3].Enabled == false
+
+  # Test 7: Modify existing policy
+  - name: Modify existing SNMP policy
+    cisco.intersight.intersight_snmp_policy:
+      <<: *api_info
+      name: test_snmp_policy_disabled
+      description: "Modified disabled SNMP policy"
+      enabled: true
+      v2c_enabled: true
+      v3_enabled: false
+      snmp_port: 161
+      sys_contact: "modified@example.com"
+      sys_location: "Modified Location"
+      community_access: "Limited"
+      access_community_string: "modified"
+    register: modified_policy
+
+  - name: Fetch info after policy modification
+    cisco.intersight.intersight_snmp_policy_info:
+      <<: *api_info
+      name: test_snmp_policy_disabled
+    register: modified_info
+
+  - name: Verify policy modification
+    ansible.builtin.assert:
+      that:
+        - modified_policy.changed
+        - modified_info.api_response[0].Name == 'test_snmp_policy_disabled'
+        - modified_info.api_response[0].Enabled == true
+        - modified_info.api_response[0].V2Enabled == true
+        - modified_info.api_response[0].SysContact == "modified@example.com"
+        - modified_info.api_response[0].SysLocation == "Modified Location"
+        - modified_info.api_response[0].AccessCommunityString == "modified"
+
+  # Test 8: Fetch all SNMP policies
+  - name: Fetch all SNMP policies under selected organization
+    cisco.intersight.intersight_snmp_policy_info:
+      <<: *api_info
+    register: all_policies_info
+
+  - name: Check that there are SNMP policies under this organization
+    ansible.builtin.assert:
+      that:
+        - all_policies_info.api_response | length >= 5
+
+  # VALIDATION TESTS - Testing expected failures #
+  
+  # Test 9: Both v2c and v3 disabled while SNMP is enabled
+  - name: Test validation - Both v2c and v3 disabled (should fail)
+    cisco.intersight.intersight_snmp_policy:
+      <<: *api_info
+      name: test_validation_fail
+      enabled: true
+      v2c_enabled: false
+      v3_enabled: false
+      sys_contact: "test@example.com"
+      sys_location: "Test Location"
+    register: validation_fail_1
+    failed_when:
+      - "'At least one of v2c_enabled or v3_enabled must be true when SNMP is enabled' not in validation_fail_1.msg"
+      - not validation_fail_1.failed
+
+  # Test 10: Missing sys_contact when SNMP is enabled
+  - name: Test validation - Missing sys_contact (should fail)
+    cisco.intersight.intersight_snmp_policy:
+      <<: *api_info
+      name: test_validation_fail
+      enabled: true
+      v2c_enabled: true
+      v3_enabled: true
+      sys_location: "Test Location"
+    register: validation_fail_2
+    failed_when:
+      - "'sys_contact and sys_location are required when SNMP is enabled' not in validation_fail_2.msg"
+      - not validation_fail_2.failed
+
+  # Test 11: Missing sys_location when SNMP is enabled
+  - name: Test validation - Missing sys_location (should fail)
+    cisco.intersight.intersight_snmp_policy:
+      <<: *api_info
+      name: test_validation_fail
+      enabled: true
+      v2c_enabled: true
+      v3_enabled: true
+      sys_contact: "test@example.com"
+    register: validation_fail_3
+    failed_when:
+      - "'sys_contact and sys_location are required when SNMP is enabled' not in validation_fail_3.msg"
+      - not validation_fail_3.failed
+
+  # Test 12: SNMP users with v3_enabled=false
+  - name: Test validation - SNMP users without v3_enabled (should fail)
+    cisco.intersight.intersight_snmp_policy:
+      <<: *api_info
+      name: test_validation_fail
+      enabled: true
+      v2c_enabled: true
+      v3_enabled: false
+      sys_contact: "test@example.com"
+      sys_location: "Test Location"
+      snmp_users:
+        - name: "testuser"
+          security_level: "AuthNoPriv"
+          auth_password: "testauth123"
+    register: validation_fail_4
+    failed_when:
+      - "'snmp_users cannot be specified when v3_enabled is false' not in validation_fail_4.msg"
+      - not validation_fail_4.failed
+
+  # Test 13: V3-only with non-disabled community access
+  - name: Test validation - V3-only with non-disabled community access (should fail)
+    cisco.intersight.intersight_snmp_policy:
+      <<: *api_info
+      name: test_validation_fail
+      enabled: true
+      v2c_enabled: false
+      v3_enabled: true
+      sys_contact: "test@example.com"
+      sys_location: "Test Location"
+      community_access: "Full"
+    register: validation_fail_5
+    failed_when:
+      - "'community_access must be' not in validation_fail_5.msg"
+      - "'Disabled' not in validation_fail_5.msg"
+      - not validation_fail_5.failed
+
+  # Test 14: AuthPriv user missing privacy_password
+  - name: Test validation - AuthPriv user missing privacy_password (should fail)
+    cisco.intersight.intersight_snmp_policy:
+      <<: *api_info
+      name: test_validation_fail
+      enabled: true
+      v2c_enabled: true
+      v3_enabled: true
+      sys_contact: "test@example.com"
+      sys_location: "Test Location"
+      snmp_users:
+        - name: "testuser"
+          security_level: "AuthPriv"
+          auth_password: "testauth123"
+    register: validation_fail_6
+    failed_when:
+      - "'privacy_password is required for security_level' not in validation_fail_6.msg"
+      - not validation_fail_6.failed
+
+  # Test 15: V2 trap without v2c_enabled
+  - name: Test validation - V2 trap without v2c_enabled (should fail)
+    cisco.intersight.intersight_snmp_policy:
+      <<: *api_info
+      name: test_validation_fail
+      enabled: true
+      v2c_enabled: false
+      v3_enabled: true
+      sys_contact: "test@example.com"
+      sys_location: "Test Location"
+      snmp_traps:
+        - enabled: true
+          version: "V2"
+          type: "Trap"
+          destination: "192.168.1.100"
+          port: 162
+    register: validation_fail_7
+    failed_when:
+      - "'V2' not in validation_fail_7.msg"
+      - "'v2c_enabled is false' not in validation_fail_7.msg"
+      - not validation_fail_7.failed
+
+  # Test 16: V3 trap without v3_enabled
+  - name: Test validation - V3 trap without v3_enabled (should fail)
+    cisco.intersight.intersight_snmp_policy:
+      <<: *api_info
+      name: test_validation_fail
+      enabled: true
+      v2c_enabled: true
+      v3_enabled: false
+      sys_contact: "test@example.com"
+      sys_location: "Test Location"
+      snmp_traps:
+        - enabled: true
+          version: "V3"
+          user: "testuser"
+          type: "Trap"
+          destination: "192.168.1.100"
+          port: 162
+    register: validation_fail_8
+    failed_when:
+      - "'V3' not in validation_fail_8.msg"
+      - "'v3_enabled is false' not in validation_fail_8.msg"
+      - not validation_fail_8.failed
+
+  # Test 17: V2 trap missing community
+  - name: Test validation - V2 trap missing community (should fail)
+    cisco.intersight.intersight_snmp_policy:
+      <<: *api_info
+      name: test_validation_fail
+      enabled: true
+      v2c_enabled: true
+      v3_enabled: true
+      sys_contact: "test@example.com"
+      sys_location: "Test Location"
+      snmp_traps:
+        - enabled: true
+          version: "V2"
+          type: "Trap"
+          destination: "192.168.1.100"
+          port: 162
+    register: validation_fail_9
+    failed_when:
+      - "'community is required for SNMP trap version' not in validation_fail_9.msg"
+      - not validation_fail_9.failed
+
+  # Test 18: V3 trap missing user
+  - name: Test validation - V3 trap missing user (should fail)
+    cisco.intersight.intersight_snmp_policy:
+      <<: *api_info
+      name: test_validation_fail
+      enabled: true
+      v2c_enabled: true
+      v3_enabled: true
+      sys_contact: "test@example.com"
+      sys_location: "Test Location"
+      snmp_traps:
+        - enabled: true
+          version: "V3"
+          type: "Trap"
+          destination: "192.168.1.100"
+          port: 162
+    register: validation_fail_10
+    failed_when:
+      - "'user is required for SNMP trap version' not in validation_fail_10.msg"
+      - not validation_fail_10.failed
+
+  # Test 19: V3 trap with Inform type (NEW validation)
+  - name: Test validation - V3 trap with Inform type (should fail)
+    cisco.intersight.intersight_snmp_policy:
+      <<: *api_info
+      name: test_validation_fail
+      enabled: true
+      v2c_enabled: true
+      v3_enabled: true
+      sys_contact: "test@example.com"
+      sys_location: "Test Location"
+      snmp_users:
+        - name: "testuser"
+          security_level: "AuthPriv"
+          auth_password: "testauth123"
+          privacy_password: "testpriv123"
+      snmp_traps:
+        - enabled: true
+          version: "V3"
+          user: "testuser"
+          type: "Inform"
+          destination: "192.168.1.100"
+          port: 162
+    register: validation_fail_11
+    failed_when:
+      - "'V3' not in validation_fail_11.msg"
+      - "'Inform' not in validation_fail_11.msg"
+      - "'Trap' not in validation_fail_11.msg"
+      - not validation_fail_11.failed
+
+  # Test 20: Valid mixed configuration (should succeed)
+  - name: Test validation - Valid mixed SNMPv2 and SNMPv3 configuration (should succeed)
+    cisco.intersight.intersight_snmp_policy:
+      <<: *api_info
+      name: test_validation_success
+      enabled: true
+      v2c_enabled: true
+      v3_enabled: true
+      sys_contact: "test@example.com"
+      sys_location: "Test Location"
+      community_access: "Full"
+      access_community_string: "public"
+      trap_community: "trapcomm"
+      engine_input_id: "mixed-validation-id"
+      snmp_users:
+        - name: "validuser"
+          security_level: "AuthPriv"
+          auth_password: "validauth123"
+          privacy_password: "validpriv123"
+      snmp_traps:
+        - enabled: true
+          version: "V2"
+          community: "trapcomm"
+          type: "Inform"
+          destination: "192.168.1.100"
+          port: 162
+        - enabled: true
+          version: "V3"
+          user: "validuser"
+          type: "Trap"
+          destination: "192.168.1.101"
+          port: 162
+    register: validation_success_1
+
+  - name: Verify validation success for mixed configuration
+    ansible.builtin.assert:
+      that:
+        - validation_success_1.changed
+        - not validation_success_1.failed
+
+  always:
+  - name: Remove all test SNMP policies
+    cisco.intersight.intersight_snmp_policy:
+      <<: *api_info
+      name: "{{ item }}"
+      state: absent
+    loop:
+      - test_snmp_policy_disabled
+      - test_snmp_policy_v2_only
+      - test_snmp_policy_v3_only
+      - test_snmp_policy_mixed
+      - test_snmp_policy_with_users
+      - test_snmp_policy_with_traps
+      - test_validation_fail
+      - test_validation_success 
