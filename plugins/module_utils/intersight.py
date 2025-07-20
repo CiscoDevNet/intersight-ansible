@@ -142,6 +142,11 @@ def compare_values(expected, actual):
             # Compare the MOID string against the Moid field in the object reference
             if actual['Moid'] == expected:
                 return True
+        # Handle case where expected is a string and actual is an object reference
+        elif (isinstance(expected, str) and isinstance(actual, dict) and
+              'Name' in actual and actual.get('ObjectType') == 'organization.Organization'):
+            if actual['Name'] == expected:
+                return True
         # if expected and actual != expected:
         if actual != expected:
             return False

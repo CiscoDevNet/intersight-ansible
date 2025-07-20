@@ -1,0 +1,346 @@
+---
+- block:
+  - name: Define anchor for Intersight API login info
+    ansible.builtin.set_fact:
+      api_info: &api_info
+        api_private_key: "{{ api_private_key }}"
+        api_key_id: "{{ api_key_id }}"
+        api_uri: "{{ api_uri | default(omit) }}"
+        validate_certs: "{{ validate_certs | default(omit) }}"
+
+  
+  # Fetch Organization MOID
+  - name: Get organization details using REST API
+    cisco.intersight.intersight_rest_api:
+      <<: *api_info
+      resource_path: /organization/Organizations
+      query_params:
+        $filter: "Name eq '{{ organization }}'"
+    register: org_result
+
+  - name: Set organization MOID fact
+    ansible.builtin.set_fact:
+      organization_moid: "{{ org_result.api_response.Moid }}"
+
+  - name: Verify organization was found
+    ansible.builtin.assert:
+      that:
+        - org_result.api_response.Name == organization
+        - organization_moid is defined
+        - organization_moid | length > 0
+
+  # Cleanup
+  - name: Clean up test thermal policy using REST API
+    cisco.intersight.intersight_rest_api:
+      <<: *api_info
+      resource_path: "/thermal/Policies"
+      query_params:
+        $filter: "Name eq '{{ test_thermal_policy_name }}'"
+      state: absent
+
+  - name: Clean up test multicast policy using REST API
+    cisco.intersight.intersight_rest_api:
+      <<: *api_info
+      resource_path: "/fabric/MulticastPolicies"
+      query_params:
+        $filter: "Name eq '{{ test_multicast_policy_name }}'"
+      state: absent
+
+  # Thermal Policy Tests
+  - name: Create thermal policy using REST API - check mode
+    cisco.intersight.intersight_rest_api:
+      <<: *api_info
+      resource_path: "/thermal/Policies"
+      update_method: post
+      api_body: |
+        {
+          "Organization": {
+            "ObjectType": "organization.Organization",
+            "Moid": "{{ organization_moid }}"
+          },
+          "Name": "{{ test_thermal_policy_name }}",
+          "FanControlMode": "Balanced",
+          "Tags": [
+            {
+              "Key": "Test",
+              "Value": "RestAPI"
+            },
+            {
+              "Key": "Environment", 
+              "Value": "CI"
+            }
+          ]
+        }
+    check_mode: true
+    register: thermal_create_check
+
+  - name: Verify thermal policy was not created in check mode
+    ansible.builtin.assert:
+      that:
+        - thermal_create_check is changed
+        - thermal_create_check.api_response == {}
+
+  - name: Create thermal policy using REST API
+    cisco.intersight.intersight_rest_api:
+      <<: *api_info
+      resource_path: "/thermal/Policies"
+      update_method: post
+      api_body: |
+        {
+          "Organization": {
+            "ObjectType": "organization.Organization",
+            "Moid": "{{ organization_moid }}"
+          },
+          "Name": "{{ test_thermal_policy_name }}",
+          "FanControlMode": "Balanced",
+          "Tags": [
+            {
+              "Key": "Test",
+              "Value": "RestAPI"
+            },
+            {
+              "Key": "Environment", 
+              "Value": "CI"
+            }
+          ]
+        }
+    register: thermal_create
+
+  - name: Verify thermal policy was created via REST API
+    ansible.builtin.assert:
+      that:
+        - thermal_create is changed
+        - thermal_create.api_response.Name == test_thermal_policy_name
+        - thermal_create.api_response.FanControlMode == "Balanced"
+
+  - name: Verify thermal policy creation using dedicated info module
+    cisco.intersight.intersight_thermal_policy_info:
+      <<: *api_info
+      name: "{{ test_thermal_policy_name }}"
+    register: thermal_info_verify
+
+  - name: Assert thermal policy was created correctly using info module
+    ansible.builtin.assert:
+      that:
+        - thermal_info_verify.api_response | length == 1
+        - thermal_info_verify.api_response[0].Name == test_thermal_policy_name
+        - thermal_info_verify.api_response[0].FanControlMode == "Balanced"
+
+  - name: Get thermal policy using REST API with query filter
+    cisco.intersight.intersight_rest_api:
+      <<: *api_info
+      resource_path: "/thermal/Policies"
+      query_params:
+        $filter: "Name eq '{{ test_thermal_policy_name }}'"
+    register: thermal_get
+
+  - name: Verify thermal policy GET operation
+    ansible.builtin.assert:
+      that:
+        - thermal_get is not changed
+        - thermal_get.api_response.Name == test_thermal_policy_name
+        - thermal_get.api_response.FanControlMode == "Balanced"
+
+  - name: Create thermal policy using REST API - idempotency check
+    cisco.intersight.intersight_rest_api:
+      <<: *api_info
+      resource_path: "/thermal/Policies"
+      query_params:
+        $filter: "Name eq '{{ test_thermal_policy_name }}'"
+      update_method: post
+      api_body: |
+        {
+          "Organization": {
+            "ObjectType": "organization.Organization",
+            "Moid": "{{ organization_moid }}"
+          },
+          "Name": "{{ test_thermal_policy_name }}",
+          "FanControlMode": "Balanced",
+          "Tags": [
+            {
+              "Key": "Test",
+              "Value": "RestAPI"
+            },
+            {
+              "Key": "Environment", 
+              "Value": "CI"
+            }
+          ]
+        }
+    register: thermal_create_idem
+
+  - name: Verify thermal policy creation is idempotent
+    ansible.builtin.assert:
+      that:
+        - thermal_create_idem is not changed
+
+  - name: Update thermal policy using REST API
+    cisco.intersight.intersight_rest_api:
+      <<: *api_info
+      resource_path: "/thermal/Policies"
+      query_params:
+        $filter: "Name eq '{{ test_thermal_policy_name }}'"
+      update_method: post
+      api_body: |
+        {
+          "Organization": {
+            "ObjectType": "organization.Organization",
+            "Moid": "{{ organization_moid }}"
+          },
+          "Name": "{{ test_thermal_policy_name }}",
+          "FanControlMode": "HighPower",
+          "Tags": [
+            {
+              "Key": "Test",
+              "Value": "RestAPI"
+            },
+            {
+              "Key": "Environment", 
+              "Value": "CI"
+            }
+          ]
+        }
+    register: thermal_update
+
+  - name: Verify thermal policy was updated via REST API
+    ansible.builtin.assert:
+      that:
+        - thermal_update is changed
+        - thermal_update.api_response.FanControlMode == "HighPower"
+
+  - name: Verify thermal policy update using dedicated info module
+    cisco.intersight.intersight_thermal_policy_info:
+      <<: *api_info
+      name: "{{ test_thermal_policy_name }}"
+    register: thermal_info_update
+
+  - name: Assert thermal policy was updated correctly
+    ansible.builtin.assert:
+      that:
+        - thermal_info_update.api_response[0].FanControlMode == "HighPower"
+
+  # Multicast Policy Tests
+  - name: Create multicast policy using REST API
+    cisco.intersight.intersight_rest_api:
+      <<: *api_info
+      resource_path: "/fabric/MulticastPolicies"
+      update_method: post
+      api_body: |
+        {
+          "Organization": {
+            "ObjectType": "organization.Organization",
+            "Moid": "{{ organization_moid }}"
+          },
+          "Name": "{{ test_multicast_policy_name }}",
+          "QuerierState": "Disabled",
+          "SnoopingState": "Enabled",
+          "SrcIpProxy": "Enabled",
+          "Tags": [
+            {
+              "Key": "Test",
+              "Value": "RestAPI"
+            }
+          ]
+        }
+    register: multicast_create
+
+  - name: Verify multicast policy was created via REST API
+    ansible.builtin.assert:
+      that:
+        - multicast_create is changed
+        - multicast_create.api_response.Name == test_multicast_policy_name
+        - multicast_create.api_response.QuerierState == "Disabled"
+        - multicast_create.api_response.SnoopingState == "Enabled"
+
+  - name: Verify multicast policy creation using dedicated info module
+    cisco.intersight.intersight_multicast_policy_info:
+      <<: *api_info
+      name: "{{ test_multicast_policy_name }}"
+    register: multicast_info_verify
+
+  - name: Assert multicast policy was created correctly using info module
+    ansible.builtin.assert:
+      that:
+        - multicast_info_verify.api_response | length == 1
+        - multicast_info_verify.api_response[0].Name == test_multicast_policy_name
+        - multicast_info_verify.api_response[0].QuerierState == "Disabled"
+        - multicast_info_verify.api_response[0].SnoopingState == "Enabled"
+
+  - name: Update multicast policy using REST API (enable querier)
+    cisco.intersight.intersight_rest_api:
+      <<: *api_info
+      resource_path: "/fabric/MulticastPolicies"
+      query_params:
+        $filter: "Name eq '{{ test_multicast_policy_name }}'"
+      update_method: post
+      api_body: |
+        {
+          "Organization": {
+            "ObjectType": "organization.Organization",
+            "Moid": "{{ organization_moid }}"
+          },
+          "Name": "{{ test_multicast_policy_name }}",
+          "QuerierState": "Enabled",
+          "QuerierIpAddress": "192.168.1.10",
+          "QuerierIpAddressPeer": "192.168.1.11",
+          "SnoopingState": "Enabled",
+          "SrcIpProxy": "Enabled",
+          "Tags": [
+            {
+              "Key": "Test",
+              "Value": "RestAPI"
+            }
+          ]
+        }
+    register: multicast_update
+
+  - name: Verify multicast policy was updated via REST API
+    ansible.builtin.assert:
+      that:
+        - multicast_update is changed
+        - multicast_update.api_response.QuerierState == "Enabled"
+        - multicast_update.api_response.QuerierIpAddress == "192.168.1.10"
+
+  - name: Verify multicast policy update using dedicated info module
+    cisco.intersight.intersight_multicast_policy_info:
+      <<: *api_info
+      name: "{{ test_multicast_policy_name }}"
+    register: multicast_info_update
+
+  - name: Assert multicast policy was updated correctly
+    ansible.builtin.assert:
+      that:
+        - multicast_info_update.api_response[0].QuerierState == "Enabled"
+        - multicast_info_update.api_response[0].QuerierIpAddress == "192.168.1.10"
+
+  # Error Handling Test
+  - name: Test invalid resource path (should fail gracefully)
+    cisco.intersight.intersight_rest_api:
+      <<: *api_info
+      resource_path: "/invalid/ResourcePath"
+      query_params:
+        $filter: "Name eq 'non-existent'"
+    register: invalid_path_result
+    failed_when:
+      - invalid_path_result is failed
+      - not "'Operation not supported. Check if the API path and method are valid' in invalid_path_result.msg"
+
+  always:
+    # Cleanup
+    - name: Delete thermal policy using REST API
+      cisco.intersight.intersight_rest_api:
+        <<: *api_info
+        resource_path: "/thermal/Policies"
+        query_params:
+          $filter: "Name eq '{{ test_thermal_policy_name }}'"
+        state: absent
+      failed_when: false
+
+    - name: Delete multicast policy using REST API
+      cisco.intersight.intersight_rest_api:
+        <<: *api_info
+        resource_path: "/fabric/MulticastPolicies"
+        query_params:
+          $filter: "Name eq '{{ test_multicast_policy_name }}'"
+        state: absent
+      failed_when: false

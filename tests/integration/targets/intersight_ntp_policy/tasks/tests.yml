@@ -1,0 +1,231 @@
+---
+- block:
+  - name: Define anchor for Intersight API login info
+    ansible.builtin.set_fact:
+      api_info: &api_info
+        api_private_key: "{{ api_private_key }}"
+        api_key_id: "{{ api_key_id }}"
+        api_uri: "{{ api_uri | default(omit) }}"
+        validate_certs: "{{ validate_certs | default(omit) }}"
+        organization: "{{ organization }}"
+
+  - name: Make sure Env is clean
+    cisco.intersight.intersight_ntp_policy:
+      <<: *api_info
+      name: "{{ item }}"
+      state: absent
+    loop:
+      - test_ntp_policy_basic
+      - test_ntp_policy_disabled
+      - test_ntp_policy_with_servers
+      - test_ntp_policy_updated
+
+  # Test 1: Basic NTP Policy Creation
+  - name: Create basic NTP policy - check-mode
+    cisco.intersight.intersight_ntp_policy:
+      <<: *api_info
+      name: test_ntp_policy_basic
+      ntp_servers:
+        - pool.ntp.org
+      description: "Test basic NTP policy"
+      enable: true
+      tags:
+        - Key: Site
+          Value: Test
+    check_mode: true
+    register: basic_creation_check_mode
+
+  - name: Verify basic NTP policy was not created - check-mode
+    ansible.builtin.assert:
+      that:
+        - basic_creation_check_mode is changed
+        - basic_creation_check_mode.api_response == {}
+
+  - name: Create basic NTP policy
+    cisco.intersight.intersight_ntp_policy:
+      <<: *api_info
+      name: test_ntp_policy_basic
+      ntp_servers:
+        - pool.ntp.org
+        - time.google.com
+      description: "Test basic NTP policy"
+      enable: true
+      tags:
+        - Key: Site
+          Value: Test
+    register: basic_creation
+
+  - name: Verify basic NTP policy creation
+    ansible.builtin.assert:
+      that:
+        - basic_creation.changed
+
+  - name: Create basic NTP policy (idempotency check)
+    cisco.intersight.intersight_ntp_policy:
+      <<: *api_info
+      name: test_ntp_policy_basic
+      ntp_servers:
+        - pool.ntp.org
+        - time.google.com
+      description: "Test basic NTP policy"
+      enable: true
+      tags:
+        - Key: Site
+          Value: Test
+    register: basic_creation_ide
+
+  - name: Verify basic NTP policy creation (idempotency check)
+    ansible.builtin.assert:
+      that:
+        - not basic_creation_ide.changed
+
+  # Test 2: Disabled NTP Policy
+  - name: Create disabled NTP policy
+    cisco.intersight.intersight_ntp_policy:
+      <<: *api_info
+      name: test_ntp_policy_disabled
+      description: "Test disabled NTP policy"
+      enable: false
+      tags:
+        - Key: Environment
+          Value: Test
+    register: disabled_creation
+
+  - name: Verify disabled NTP policy creation
+    ansible.builtin.assert:
+      that:
+        - disabled_creation.changed
+
+  - name: Create disabled NTP policy (idempotency check)
+    cisco.intersight.intersight_ntp_policy:
+      <<: *api_info
+      name: test_ntp_policy_disabled
+      description: "Test disabled NTP policy"
+      enable: false
+      tags:
+        - Key: Environment
+          Value: Test
+    register: disabled_creation_ide
+
+  - name: Verify disabled NTP policy creation (idempotency check)
+    ansible.builtin.assert:
+      that:
+        - not disabled_creation_ide.changed
+
+  # Test 3: NTP Policy with servers and timezone
+  - name: Create NTP policy with servers and timezone
+    cisco.intersight.intersight_ntp_policy:
+      <<: *api_info
+      name: test_ntp_policy_with_servers
+      description: "Test NTP policy with servers and timezone"
+      enable: true
+      ntp_servers:
+        - pool.ntp.org
+        - time.google.com
+        - time.cloudflare.com
+      timezone: "America/New_York"
+      tags:
+        - Key: Configuration
+          Value: Complete
+    register: servers_creation
+
+  - name: Verify NTP policy with servers creation
+    ansible.builtin.assert:
+      that:
+        - servers_creation.changed
+
+  - name: Create NTP policy with servers (idempotency check)
+    cisco.intersight.intersight_ntp_policy:
+      <<: *api_info
+      name: test_ntp_policy_with_servers
+      description: "Test NTP policy with servers and timezone"
+      enable: true
+      ntp_servers:
+        - pool.ntp.org
+        - time.google.com
+        - time.cloudflare.com
+      timezone: "America/New_York"
+      tags:
+        - Key: Configuration
+          Value: Complete
+    register: servers_creation_ide
+
+  - name: Verify NTP policy with servers (idempotency check)
+    ansible.builtin.assert:
+      that:
+        - not servers_creation_ide.changed
+
+  # Test 4: Update NTP Policy
+  - name: Update basic NTP policy description
+    cisco.intersight.intersight_ntp_policy:
+      <<: *api_info
+      name: test_ntp_policy_basic
+      description: "Updated test basic NTP policy"
+      enable: true
+      ntp_servers:
+        - pool.ntp.org
+        - time.google.com
+        - time.cloudflare.com
+      tags:
+        - Key: Site
+          Value: Test
+        - Key: Updated
+          Value: "true"
+    register: basic_update
+
+  - name: Verify basic NTP policy update
+    ansible.builtin.assert:
+      that:
+        - basic_update.changed
+
+  - name: Update NTP policy servers and timezone
+    cisco.intersight.intersight_ntp_policy:
+      <<: *api_info
+      name: test_ntp_policy_with_servers
+      description: "Updated NTP policy with modified servers"
+      enable: true
+      ntp_servers:
+        - 0.pool.ntp.org
+        - 1.pool.ntp.org
+        - ntp.ubuntu.com
+      timezone: "America/Chicago"
+      tags:
+        - Key: Configuration
+          Value: Updated
+    register: servers_update
+
+  - name: Verify NTP policy servers update
+    ansible.builtin.assert:
+      that:
+        - servers_update.changed
+
+  - name: Disable NTP policy
+    cisco.intersight.intersight_ntp_policy:
+      <<: *api_info
+      name: test_ntp_policy_disabled
+      description: "Updated disabled NTP policy"
+      enable: false
+      ntp_servers:
+        - disabled.ntp.server
+      timezone: "UTC"
+      tags:
+        - Key: Environment
+          Value: Disabled
+    register: disabled_update
+
+  - name: Verify disabled NTP policy update
+    ansible.builtin.assert:
+      that:
+        - disabled_update.changed
+
+  always:
+  - name: Remove all test NTP policies
+    cisco.intersight.intersight_ntp_policy:
+      <<: *api_info
+      name: "{{ item }}"
+      state: absent
+    loop:
+      - test_ntp_policy_basic
+      - test_ntp_policy_disabled
+      - test_ntp_policy_with_servers
+      - test_ntp_policy_updated 
