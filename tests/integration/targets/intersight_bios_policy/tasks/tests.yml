@@ -1,0 +1,152 @@
+---
+- block:
+  - name: Define anchor for Intersight API login info
+    ansible.builtin.set_fact:
+      api_info: &api_info
+        api_private_key: "{{ api_private_key }}"
+        api_key_id: "{{ api_key_id }}"
+        api_uri: "{{ api_uri | default(omit) }}"
+        validate_certs: "{{ validate_certs | default(omit) }}"
+        organization: "{{ organization }}"
+
+  - name: Make sure Env is clean
+    cisco.intersight.intersight_bios_policy:
+      <<: *api_info
+      name: "{{ item }}"
+      state: absent
+    loop:
+      - test_bios_policy_basic
+      - test_bios_policy_updated
+      - test_bios_policy_with_settings
+
+  # Test 1: Basic BIOS Policy Creation
+  - name: Create basic BIOS policy - check-mode
+    cisco.intersight.intersight_bios_policy:
+      <<: *api_info
+      name: test_bios_policy_basic
+      description: "Test basic BIOS policy"
+      tags:
+        - Key: Site
+          Value: Test
+    check_mode: true
+    register: basic_creation_check_mode
+
+  - name: Verify basic BIOS policy was not created - check-mode
+    ansible.builtin.assert:
+      that:
+        - basic_creation_check_mode is changed
+        - basic_creation_check_mode.api_response == {}
+
+  - name: Create basic BIOS policy
+    cisco.intersight.intersight_bios_policy:
+      <<: *api_info
+      name: test_bios_policy_basic
+      description: "Test basic BIOS policy"
+      tags:
+        - Key: Site
+          Value: Test
+    register: basic_creation
+
+  - name: Verify basic BIOS policy creation
+    ansible.builtin.assert:
+      that:
+        - basic_creation.changed
+
+  - name: Create basic BIOS policy (idempotency check)
+    cisco.intersight.intersight_bios_policy:
+      <<: *api_info
+      name: test_bios_policy_basic
+      description: "Test basic BIOS policy"
+      tags:
+        - Key: Site
+          Value: Test
+    register: basic_creation_ide
+
+  - name: Verify basic BIOS policy creation (idempotency check)
+    ansible.builtin.assert:
+      that:
+        - not basic_creation_ide.changed
+
+  # Test 2: BIOS Policy with specific settings
+  - name: Create BIOS policy with specific settings
+    cisco.intersight.intersight_bios_policy:
+      <<: *api_info
+      name: test_bios_policy_with_settings
+      description: "Test BIOS policy with specific settings"
+      intel_hyper_threading_tech: "enabled"
+      intel_turbo_boost_tech: "enabled" 
+      intel_virtualization_technology: "enabled"
+      tags:
+        - Key: Environment
+          Value: Test
+    register: settings_creation
+
+  - name: Verify BIOS policy with settings creation
+    ansible.builtin.assert:
+      that:
+        - settings_creation.changed
+
+  - name: Create BIOS policy with settings (idempotency check)
+    cisco.intersight.intersight_bios_policy:
+      <<: *api_info
+      name: test_bios_policy_with_settings
+      description: "Test BIOS policy with specific settings"
+      intel_hyper_threading_tech: "enabled"
+      intel_turbo_boost_tech: "enabled"
+      intel_virtualization_technology: "enabled"
+      tags:
+        - Key: Environment
+          Value: Test
+    register: settings_creation_ide
+
+  - name: Verify BIOS policy with settings (idempotency check)
+    ansible.builtin.assert:
+      that:
+        - not settings_creation_ide.changed
+
+  # Test 3: Update BIOS Policy
+  - name: Update BIOS policy description
+    cisco.intersight.intersight_bios_policy:
+      <<: *api_info
+      name: test_bios_policy_basic
+      description: "Updated test basic BIOS policy"
+      tags:
+        - Key: Site
+          Value: Test
+        - Key: Updated
+          Value: "true"
+    register: basic_update
+
+  - name: Verify BIOS policy update
+    ansible.builtin.assert:
+      that:
+        - basic_update.changed
+
+  - name: Update BIOS policy settings
+    cisco.intersight.intersight_bios_policy:
+      <<: *api_info
+      name: test_bios_policy_with_settings
+      description: "Updated BIOS policy with modified settings"
+      intel_hyper_threading_tech: "disabled"
+      intel_turbo_boost_tech: "enabled"
+      intel_virtualization_technology: "disabled"
+      tags:
+        - Key: Environment
+          Value: Updated
+    register: settings_update
+
+  - name: Verify BIOS policy settings update
+    ansible.builtin.assert:
+      that:
+        - settings_update.changed
+
+  always:
+  - name: Remove all test BIOS policies
+    cisco.intersight.intersight_bios_policy:
+      <<: *api_info
+      name: "{{ item }}"
+      state: absent
+    loop:
+      - test_bios_policy_basic
+      - test_bios_policy_updated
+      - test_bios_policy_with_settings

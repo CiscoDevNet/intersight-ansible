@@ -147,13 +147,22 @@ def main():
             'Name': intersight.module.params['organization'],
         },
         'Name': intersight.module.params['name'],
-        'Tags': intersight.module.params['tags'],
-        'Description': intersight.module.params['description'],
-        'Enabled': intersight.module.params['enable'],
-        'NtpServers': intersight.module.params['ntp_servers'],
-        'Timezone': intersight.module.params['timezone'],
+        'Enabled': intersight.module.params['enable']
     }
-
+    if intersight.module.params['state'] == 'present':
+        if not intersight.module.params['ntp_servers'] and intersight.module.params['enable']:
+            intersight.module.fail_json(msg="NTP servers are required when state is present and NTP is enabled")
+        else:
+            intersight.api_body['NtpServers'] = intersight.module.params['ntp_servers']
+        if intersight.module.params['timezone']:
+            intersight.api_body['Timezone'] = intersight.module.params['timezone']
+        if intersight.module.params['tags']:
+            intersight.api_body['Tags'] = intersight.module.params['tags']
+        if intersight.module.params['description']:
+            intersight.api_body['Description'] = intersight.module.params['description']
+        # Prevent a case where idempotency fails because of NtpServers (None vs [])
+        if intersight.module.params['enable'] is False:
+            intersight.api_body['NtpServers'] = []
     #
     # Code below should be common across all policy modules
     #
