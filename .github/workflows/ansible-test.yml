@@ -59,7 +59,7 @@ jobs:
         env:
           RUN_ALL_TESTS: ${{ github.event.inputs.run_all_tests }}
         run: |
-          python3 .github/scripts/map_changes_to_tests.py
+          python3 .github/workflows/scripts/map_changes_to_tests.py
 
   integration:
     name: >-
