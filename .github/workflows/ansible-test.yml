@@ -2,6 +2,15 @@
 name: Ansible-test CI
 on:
   workflow_dispatch:
+    inputs:
+      run_all_tests:
+        description: 'Run all integration tests (true/false)'
+        required: false
+        default: 'false'
+        type: choice
+        options:
+          - 'false'
+          - 'true'
   push:
     branches:
       - stable-ci
@@ -18,8 +27,40 @@ concurrency:
 
 permissions:
   contents: read
+  pull-requests: read
 
 jobs:
+  detect-changes:
+    name: Detect Changed Files
+    runs-on: ubuntu-latest
+    outputs:
+      targets: ${{ steps.map-tests.outputs.targets }}
+      skip_tests: ${{ steps.map-tests.outputs.skip_tests }}
+    steps:
+      - name: Get User Permission
+        id: checkAccess
+        uses: actions-cool/check-user-permission@v2
+        with:
+          require: write
+          username: ${{ github.triggering_actor }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Checkout code
+        if: steps.checkAccess.outputs.require-result == 'true'
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0  # Fetch full history for comparison
+
+      - name: Map changed files to test targets
+        if: steps.checkAccess.outputs.require-result == 'true'
+        id: map-tests
+        env:
+          RUN_ALL_TESTS: ${{ github.event.inputs.run_all_tests }}
+        run: |
+          python3 .github/scripts/map_changes_to_tests.py
+
   integration:
     name: >-
       Integration (Ⓐ${{ matrix.ansible }})
@@ -27,6 +68,8 @@ jobs:
       ${{ contains(fromJson(
           '["stable-2.9", "stable-2.10", "stable-2.11"]'
       ), matrix.ansible) && 'ubuntu-20.04' || 'ubuntu-latest' }}
+    needs: detect-changes
+    if: needs.detect-changes.outputs.skip_tests != 'true'
     strategy:
       matrix:
         ansible:
@@ -43,6 +86,7 @@ jobs:
           username: ${{ github.triggering_actor }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      
       # Run integration tests inside a Docker container.
       # The docker container has all the pinned dependencies that are
       # required and all Python versions Ansible supports.
@@ -54,11 +98,23 @@ jobs:
         with:
           ansible-core-version: ${{ matrix.ansible }}
           testing-type: integration
+          target: ${{ needs.detect-changes.outputs.targets }}
           pre-test-cmd: chmod +x ./tests/integration/targets/prepare_test_run/generate_integration_config.sh && ./tests/integration/targets/prepare_test_run/generate_integration_config.sh
           git-checkout-ref: ${{ github.event.pull_request.head.sha }}
         env:
           API_PRIVATE_KEY: ${{ secrets.INTERSIGHT_API_PRIVATE_KEY_CI }}
           API_KEY_ID: ${{ secrets.INTERSIGHT_API_KEY_ID_CI }}
+
+  integration-skipped:
+    name: Integration (Skipped - No relevant changes)
+    runs-on: ubuntu-latest
+    needs: detect-changes
+    if: needs.detect-changes.outputs.skip_tests == 'true'
+    steps:
+      - name: Log skip reason
+        run: |
+          echo "Integration tests skipped - no relevant changes detected"
+          echo "This job automatically succeeds to satisfy branch protection rules"
 
   check: # This job does nothing and is only used for the branch protection
     # or multi-stage CI jobs, like making sure that all tests pass before
@@ -66,7 +122,9 @@ jobs:
     if: always()
 
     needs:
+      - detect-changes
       - integration
+      - integration-skipped
 
     runs-on: ubuntu-latest
 
@@ -74,4 +132,6 @@ jobs:
       - name: Decide whether the needed jobs succeeded or failed
         uses: re-actors/alls-green@release/v1
         with:
+          # Allow skipping integration jobs when no changes detected
+          allowed-skips: integration, integration-skipped
           jobs: ${{ toJSON(needs) }}
