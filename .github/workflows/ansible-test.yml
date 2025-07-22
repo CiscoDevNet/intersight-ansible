@@ -71,12 +71,16 @@ jobs:
     needs: detect-changes
     if: needs.detect-changes.outputs.skip_tests != 'true'
     strategy:
+      fail-fast: false
+      max-parallel: 1
       matrix:
         ansible:
-          # - stable-2.16
-          # - stable-2.17
-          # - stable-2.18
+          - stable-2.16
+          - stable-2.17
+          - stable-2.18
           - stable-2.19
+    outputs:
+      results: ${{ steps.test-results.outputs.results }}
     steps:
       - name: Get User Permission
         id: checkAccess
@@ -92,6 +96,7 @@ jobs:
       # required and all Python versions Ansible supports.
       - name: Perform integration testing
         if: steps.checkAccess.outputs.require-result == 'true'
+        id: integration-test
         # See the documentation for the following GitHub action on
         # https://github.com/ansible-community/ansible-test-gh-action/blob/main/README.md
         uses: ansible-community/ansible-test-gh-action@release/v1
@@ -104,6 +109,19 @@ jobs:
         env:
           API_PRIVATE_KEY: ${{ secrets.INTERSIGHT_API_PRIVATE_KEY_CI }}
           API_KEY_ID: ${{ secrets.INTERSIGHT_API_KEY_ID_CI }}
+
+      - name: Record test result
+        id: test-results
+        if: always()
+        run: |
+          if [ "${{ steps.integration-test.outcome }}" = "success" ]; then
+            echo "Test for ${{ matrix.ansible }}: ✅ PASSED" >> $GITHUB_STEP_SUMMARY
+            echo "results=${{ matrix.ansible }}:success" >> $GITHUB_OUTPUT
+          else
+            echo "Test for ${{ matrix.ansible }}: ❌ FAILED" >> $GITHUB_STEP_SUMMARY
+            echo "results=${{ matrix.ansible }}:failure" >> $GITHUB_OUTPUT
+            echo "Integration test failed for ${{ matrix.ansible }}" >&2
+          fi
 
   integration-skipped:
     name: Integration (Skipped - No relevant changes)
