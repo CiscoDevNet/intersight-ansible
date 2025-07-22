@@ -4,13 +4,16 @@ on:
   workflow_dispatch:
     inputs:
       run_all_tests:
-        description: 'Run all integration tests (true/false)'
+        description: 'Run all integration tests on all Ansible versions (true/false)'
         required: false
         default: 'false'
         type: choice
         options:
           - 'false'
           - 'true'
+  schedule:
+    # Run weekly regression tests every Sunday at 02:00 UTC
+    - cron: '0 2 * * 0'
   push:
     branches:
       - stable-ci
@@ -59,11 +62,19 @@ jobs:
         env:
           RUN_ALL_TESTS: ${{ github.event.inputs.run_all_tests }}
         run: |
-          python3 .github/workflows/scripts/map_changes_to_tests.py
+          # For weekly regression (scheduled) or manual all-tests run, force run all integration tests
+          if [[ "${{ github.event_name }}" == "schedule" || "${{ github.event.inputs.run_all_tests }}" == "true" ]]; then
+            echo "targets=" >> $GITHUB_OUTPUT
+            echo "skip_tests=false" >> $GITHUB_OUTPUT
+            echo "Running weekly regression - all integration tests will be executed"
+          else
+            python3 .github/workflows/scripts/map_changes_to_tests.py
+          fi
 
   integration:
     name: >-
-      Integration (Ⓐ${{ matrix.ansible }})
+      ${{ (github.event_name == 'schedule' || github.event.inputs.run_all_tests == 'true') && 
+      'Weekly Regression Integration (Ⓐ' || 'Integration (Ⓐ' }}${{ matrix.ansible }})
     runs-on: >-
       ${{ contains(fromJson(
           '["stable-2.9", "stable-2.10", "stable-2.11"]'
@@ -114,13 +125,14 @@ jobs:
         id: test-results
         if: always()
         run: |
+          TEST_TYPE="${{ (github.event_name == 'schedule' || github.event.inputs.run_all_tests == 'true') && 'Weekly regression integration' || 'Integration' }}"
           if [ "${{ steps.integration-test.outcome }}" = "success" ]; then
-            echo "Test for ${{ matrix.ansible }}: ✅ PASSED" >> $GITHUB_STEP_SUMMARY
+            echo "$TEST_TYPE test for ${{ matrix.ansible }}: ✅ PASSED" >> $GITHUB_STEP_SUMMARY
             echo "results=${{ matrix.ansible }}:success" >> $GITHUB_OUTPUT
           else
-            echo "Test for ${{ matrix.ansible }}: ❌ FAILED" >> $GITHUB_STEP_SUMMARY
+            echo "$TEST_TYPE test for ${{ matrix.ansible }}: ❌ FAILED" >> $GITHUB_STEP_SUMMARY
             echo "results=${{ matrix.ansible }}:failure" >> $GITHUB_OUTPUT
-            echo "Integration test failed for ${{ matrix.ansible }}" >&2
+            echo "$TEST_TYPE test failed for ${{ matrix.ansible }}" >&2
           fi
 
   integration-skipped:
@@ -134,7 +146,8 @@ jobs:
           echo "Integration tests skipped - no relevant changes detected"
           echo "This job automatically succeeds to satisfy branch protection rules"
 
-  check: # This job does nothing and is only used for the branch protection
+
+  final_check: # This job does nothing and is only used for the branch protection
     # or multi-stage CI jobs, like making sure that all tests pass before
     # a publishing job is started.
     if: always()
