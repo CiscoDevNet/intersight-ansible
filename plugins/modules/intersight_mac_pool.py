@@ -162,11 +162,7 @@ def main():
     }
     mac_blocks_dict = []
     if module.params['state'] == 'present':
-        if intersight.module.params['tags']:
-            intersight.api_body['Tags'] = intersight.module.params['tags']
-
-        if intersight.module.params['description']:
-            intersight.api_body['Description'] = intersight.module.params['description']
+        intersight.set_tags_and_description()
 
         # Validate that mac_blocks was passed. We don't mark it as required in order to support absent.
         if not intersight.module.params['mac_blocks']:

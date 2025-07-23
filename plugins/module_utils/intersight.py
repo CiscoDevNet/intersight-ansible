@@ -542,3 +542,12 @@ class IntersightModule():
         if filter_conditions:
             query_params["$filter"] = " and ".join(filter_conditions)
         return query_params
+
+    def set_tags_and_description(self):
+        """
+        Generalize the pattern of setting tags and description in api_body if they are provided in module params.
+        """
+        if self.module.params.get('tags'):
+            self.api_body['Tags'] = self.module.params['tags']
+        if self.module.params.get('description'):
+            self.api_body['Description'] = self.module.params['description']

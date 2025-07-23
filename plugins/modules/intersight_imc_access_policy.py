@@ -178,12 +178,13 @@ def main():
     intersight.result['trace_id'] = ''
     intersight.api_body = {
         'Name': intersight.module.params['name'],
-        'Tags': intersight.module.params['tags'],
-        'Description': intersight.module.params['description'],
+
         'Organization': {
             'Name': intersight.module.params['organization'],
         },
     }
+    if module.params['state'] == 'present':
+        intersight.set_tags_and_description()
 
     if intersight.module.params['out_of_band']:
         intersight.api_body['ConfigurationType'] = {

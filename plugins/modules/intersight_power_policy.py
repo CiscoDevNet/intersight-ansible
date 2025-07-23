@@ -293,11 +293,7 @@ def main():
     }
 
     if module.params['state'] == 'present':
-        if intersight.module.params['tags']:
-            intersight.api_body['Tags'] = intersight.module.params['tags']
-
-        if intersight.module.params['description']:
-            intersight.api_body['Description'] = intersight.module.params['description']
+        intersight.set_tags_and_description()
 
         platform = module.params['target_platform']
 

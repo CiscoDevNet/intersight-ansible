@@ -155,12 +155,7 @@ def main():
         'FanControlMode': intersight.module.params['fan_control_mode']
     }
 
-    if intersight.module.params['tags']:
-        intersight.api_body['Tags'] = intersight.module.params['tags']
-
-    # Passing an empty description to this API will result with 400 HTTP error.
-    if intersight.module.params['description']:
-        intersight.api_body['Description'] = intersight.module.params['description']
+    intersight.set_tags_and_description()
 
     #
     # Code below should be common across all policy modules

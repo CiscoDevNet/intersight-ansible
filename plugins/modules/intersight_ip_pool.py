@@ -359,11 +359,7 @@ def main():
     }
 
     if module.params['state'] == 'present':
-        if intersight.module.params['tags']:
-            intersight.api_body['Tags'] = intersight.module.params['tags']
-
-        if intersight.module.params['description']:
-            intersight.api_body['Description'] = intersight.module.params['description']
+        intersight.set_tags_and_description()
 
         # Validate that at least one of ipv4_blocks/ipv6_blocks was passed. We don't mark it as required in order to support absent.
         if not intersight.module.params['ipv4_blocks'] and not intersight.module.params['ipv6_blocks']:

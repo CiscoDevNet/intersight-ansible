@@ -359,9 +359,9 @@ def main():
             'Name': intersight.module.params['organization'],
         },
         'Name': intersight.module.params['name'],
-        'Tags': intersight.module.params['tags'],
-        'Description': intersight.module.params['description'],
+
     }
+    intersight.set_tags_and_description()
     intersight.result['api_response'] = {}
     # Get assigned server information (if defined)
     if intersight.module.params['assigned_server']:

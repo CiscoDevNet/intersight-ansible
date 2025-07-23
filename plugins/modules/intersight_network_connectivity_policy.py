@@ -224,11 +224,7 @@ def main():
     }
 
     if intersight.module.params['state'] == 'present':
-        if intersight.module.params['description']:
-            intersight.api_body['Description'] = intersight.module.params['description']
-
-        if intersight.module.params['tags']:
-            intersight.api_body['Tags'] = intersight.module.params['tags']
+        intersight.set_tags_and_description()
 
         # Add fields for static DNS servers if not using DHCP
         if not intersight.module.params['enable_ipv4_dns_from_dhcp']:

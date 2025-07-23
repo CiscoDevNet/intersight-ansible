@@ -561,11 +561,7 @@ def build_api_body(intersight):
             intersight.api_body['SnmpTraps'] = []
 
         # Add optional parameters
-        if params.get('tags'):
-            intersight.api_body['Tags'] = params['tags']
-
-        if params.get('description'):
-            intersight.api_body['Description'] = params['description']
+        intersight.set_tags_and_description()
 
 
 def main():
