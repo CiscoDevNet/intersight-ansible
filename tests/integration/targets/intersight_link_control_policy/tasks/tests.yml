@@ -1,0 +1,192 @@
+---
+- name: Test intersight_link_control_policy module
+  block:
+    - name: Define anchor for Intersight API login info
+      ansible.builtin.set_fact:
+        api_info: &api_info
+          api_private_key: "{{ api_private_key }}"
+          api_key_id: "{{ api_key_id }}"
+          api_uri: "{{ api_uri | default(omit) }}"
+          validate_certs: "{{ validate_certs | default(omit) }}"
+          organization: "{{ organization }}"
+
+    - name: Make sure Env is clean
+      cisco.intersight.intersight_link_control_policy:
+        <<: *api_info
+        name: "{{ item }}"
+        state: absent
+      loop:
+        - test_link_control_policy
+        - test_link_control_policy_2
+        - test_link_control_aggressive
+        - test_link_control_disabled
+
+    - name: Create link control policy - check-mode
+      cisco.intersight.intersight_link_control_policy:
+        <<: *api_info
+        name: test_link_control_policy
+        description: "Test link control policy description"
+        tags:
+          - Key: Site
+            Value: Test
+          - Key: Site2
+            Value: Test2
+        udld_admin_state: "Enabled"
+        udld_mode: "normal"
+      check_mode: true
+      register: creation_res_check_mode
+
+    - name: Verify link control policy was not created - check-mode
+      ansible.builtin.assert:
+        that:
+          - creation_res_check_mode is changed
+          - creation_res_check_mode.api_response == {}
+
+    - name: Create link control policy
+      cisco.intersight.intersight_link_control_policy:
+        <<: *api_info
+        name: test_link_control_policy
+        description: "Test link control policy description"
+        tags:
+          - Key: Site
+            Value: Test
+          - Key: Site2
+            Value: Test2
+        udld_admin_state: "Enabled"
+        udld_mode: "normal"
+      register: creation_res
+
+    - name: Fetch info after creation
+      cisco.intersight.intersight_link_control_policy_info:
+        <<: *api_info
+        name: test_link_control_policy
+      register: creation_info_res
+
+    - name: Verify link control policy creation by info
+      ansible.builtin.assert:
+        that:
+          - creation_res.changed
+          - creation_info_res.api_response[0].Name == 'test_link_control_policy'
+          - creation_info_res.api_response[0].UdldSettings.AdminState == 'Enabled'
+          - creation_info_res.api_response[0].UdldSettings.Mode == 'normal'
+
+    - name: Verify link control policy creation response aligns with info response
+      ansible.builtin.assert:
+        that:
+          - creation_res.api_response.Name == creation_info_res.api_response[0].Name
+          - creation_res.api_response.UdldSettings.AdminState == creation_info_res.api_response[0].UdldSettings.AdminState
+          - creation_res.api_response.UdldSettings.Mode == creation_info_res.api_response[0].UdldSettings.Mode
+
+    - name: Create link control policy (idempotency check)
+      cisco.intersight.intersight_link_control_policy:
+        <<: *api_info
+        name: test_link_control_policy
+        description: "Test link control policy description"
+        tags:
+          - Key: Site
+            Value: Test
+          - Key: Site2
+            Value: Test2
+        udld_admin_state: "Enabled"
+        udld_mode: "normal"
+      register: creation_res_ide
+
+    - name: Verify link control policy creation (idempotency check)
+      ansible.builtin.assert:
+        that:
+          - not creation_res_ide.changed
+
+    - name: Change UDLD mode to aggressive for existing link control policy
+      cisco.intersight.intersight_link_control_policy:
+        <<: *api_info
+        name: test_link_control_policy
+        udld_admin_state: "Enabled"
+        udld_mode: "aggressive"
+      register: changed_res
+
+    - name: Fetch info after change
+      cisco.intersight.intersight_link_control_policy_info:
+        <<: *api_info
+        name: test_link_control_policy
+      register: change_info_res
+
+    - name: Verify link control policy change by info
+      ansible.builtin.assert:
+        that:
+          - changed_res.changed
+          - change_info_res.api_response[0].Name == 'test_link_control_policy'
+          - change_info_res.api_response[0].UdldSettings.AdminState == 'Enabled'
+          - change_info_res.api_response[0].UdldSettings.Mode == 'aggressive'
+
+    - name: Create link control policy with aggressive mode enabled
+      cisco.intersight.intersight_link_control_policy:
+        <<: *api_info
+        name: test_link_control_aggressive
+        description: "Test link control policy with aggressive UDLD"
+        udld_admin_state: "Enabled"
+        udld_mode: "aggressive"
+      register: creation_res_aggressive
+
+    - name: Verify aggressive mode creation
+      ansible.builtin.assert:
+        that:
+          - creation_res_aggressive.changed
+          - creation_res_aggressive.api_response.UdldSettings.AdminState == 'Enabled'
+          - creation_res_aggressive.api_response.UdldSettings.Mode == 'aggressive'
+
+    - name: Create link control policy with UDLD disabled
+      cisco.intersight.intersight_link_control_policy:
+        <<: *api_info
+        name: test_link_control_disabled
+        description: "Test link control policy with UDLD disabled"
+        udld_admin_state: "Disabled"
+        udld_mode: "normal"
+      register: creation_res_disabled
+
+    - name: Verify disabled UDLD creation
+      ansible.builtin.assert:
+        that:
+          - creation_res_disabled.changed
+          - creation_res_disabled.api_response.UdldSettings.AdminState == 'Disabled'
+          - creation_res_disabled.api_response.UdldSettings.Mode == 'normal'
+
+    - name: Test failure case - try to create policy with disabled admin state and aggressive mode
+      cisco.intersight.intersight_link_control_policy:
+        <<: *api_info
+        name: test_link_control_invalid
+        udld_admin_state: "Disabled"
+        udld_mode: "aggressive"
+      register: validation_failure_res
+      failed_when:
+        - "not 'Cannot configure the link control policy.' in validation_failure_res.msg"
+
+    - name: Create another link control policy
+      cisco.intersight.intersight_link_control_policy:
+        <<: *api_info
+        name: test_link_control_policy_2
+        description: "Test another link control policy description"
+        udld_admin_state: "Enabled"
+        udld_mode: "normal"
+      register: creation_res_b
+
+    - name: Fetch all link control policies under selected organization
+      cisco.intersight.intersight_link_control_policy_info:
+        <<: *api_info
+      register: creation_info_res_b
+
+    - name: Check that there are at least 4 link control policies under this organization
+      ansible.builtin.assert:
+        that:
+          - creation_info_res_b.api_response | length >= 4
+
+  always:
+    - name: Remove link control policies
+      cisco.intersight.intersight_link_control_policy:
+        <<: *api_info
+        name: "{{ item }}"
+        state: absent
+      loop:
+        - test_link_control_policy
+        - test_link_control_policy_2
+        - test_link_control_aggressive
+        - test_link_control_disabled
