@@ -156,10 +156,7 @@ def main():
             intersight.api_body['NtpServers'] = intersight.module.params['ntp_servers']
         if intersight.module.params['timezone']:
             intersight.api_body['Timezone'] = intersight.module.params['timezone']
-        if intersight.module.params['tags']:
-            intersight.api_body['Tags'] = intersight.module.params['tags']
-        if intersight.module.params['description']:
-            intersight.api_body['Description'] = intersight.module.params['description']
+        intersight.set_tags_and_description()
         # Prevent a case where idempotency fails because of NtpServers (None vs [])
         if intersight.module.params['enable'] is False:
             intersight.api_body['NtpServers'] = []

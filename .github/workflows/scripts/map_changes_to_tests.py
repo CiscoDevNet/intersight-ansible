@@ -78,7 +78,7 @@ def map_files_to_test_targets(changed_files):
             print(f"Module utils changed: {file_path}")
             # For module_utils changes, we could run core tests or all tests
             # Let's run a representative set of core tests
-            core_tests = {'intersight_rest_api', 'intersight_info'} & available_targets
+            core_tests = {'intersight_rest_api'} & available_targets
             test_targets.update(core_tests)
             print(f"Added core tests for module_utils change: {core_tests}")
 

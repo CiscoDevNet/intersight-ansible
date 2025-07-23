@@ -230,10 +230,10 @@ def main():
             'Name': intersight.module.params['organization'],
         },
         'Name': intersight.module.params['name'],
-        'Tags': intersight.module.params['tags'],
-        'Description': intersight.module.params['description'],
+
     }
     if module.params['state'] == 'present':
+        intersight.set_tags_and_description()
         intersight.api_body['Prefix'] = intersight.module.params['prefix']
         UuidSuffixBlocks = []
         for uuid_block in intersight.module.params['uuid_suffix_blocks']:

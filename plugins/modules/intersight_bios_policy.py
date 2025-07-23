@@ -8527,10 +8527,7 @@ def main():
             'Name': intersight.module.params['organization']
         }
     }
-    if intersight.module.params['tags']:
-        intersight.api_body['Tags'] = intersight.module.params['tags']
-    if intersight.module.params['description']:
-        intersight.api_body['Description'] = intersight.module.params['description']
+    intersight.set_tags_and_description()
 
     check_and_add_prop('AcsControlGpu1state', 'acs_control_gpu1state', intersight.module.params, intersight.api_body)
     check_and_add_prop('AcsControlGpu2state', 'acs_control_gpu2state', intersight.module.params, intersight.api_body)
