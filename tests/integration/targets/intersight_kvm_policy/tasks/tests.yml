@@ -1,0 +1,315 @@
+---
+- block:
+  - name: Define anchor for Intersight API login info
+    ansible.builtin.set_fact:
+      api_info: &api_info
+        api_private_key: "{{ api_private_key }}"
+        api_key_id: "{{ api_key_id }}"
+        api_uri: "{{ api_uri | default(omit) }}"
+        validate_certs: "{{ validate_certs | default(omit) }}"
+        organization: "{{ organization }}"
+
+  - name: Make sure environment is clean
+    cisco.intersight.intersight_kvm_policy:
+      <<: *api_info
+      name: "{{ item }}"
+      state: absent
+    loop:
+      - test_kvm_policy_enabled
+      - test_kvm_policy_disabled
+      - test_kvm_policy_custom
+      - test_kvm_policy_validation
+
+  - name: Create enabled KVM policy with defaults - check-mode
+    cisco.intersight.intersight_kvm_policy:
+      <<: *api_info
+      name: test_kvm_policy_enabled
+      description: "Test enabled KVM policy with default settings"
+      enabled: true
+      tags:
+        - Key: Site
+          Value: Test
+    check_mode: true
+    register: enabled_creation_check_mode
+
+  - name: Verify enabled KVM policy was not created - check-mode
+    ansible.builtin.assert:
+      that:
+        - enabled_creation_check_mode is changed
+        - enabled_creation_check_mode.api_response == {}
+
+  - name: Create enabled KVM policy with defaults
+    cisco.intersight.intersight_kvm_policy:
+      <<: *api_info
+      name: test_kvm_policy_enabled
+      description: "Test enabled KVM policy with default settings"
+      enabled: true
+      tags:
+        - Key: Site
+          Value: Test
+    register: enabled_creation
+
+  - name: Fetch info after enabled KVM policy creation
+    cisco.intersight.intersight_kvm_policy_info:
+      <<: *api_info
+      name: test_kvm_policy_enabled
+    register: enabled_info
+
+  - name: Verify enabled KVM policy creation
+    ansible.builtin.assert:
+      that:
+        - enabled_creation.changed
+        - enabled_info.api_response[0].Name == 'test_kvm_policy_enabled'
+        - enabled_info.api_response[0].Enabled == true
+        - enabled_info.api_response[0].MaximumSessions == 4
+        - enabled_info.api_response[0].RemotePort == 2068
+        - enabled_info.api_response[0].EnableVideoEncryption == true
+        - enabled_info.api_response[0].EnableLocalServerVideo == true
+        - enabled_info.api_response[0].TunneledKvmEnabled == false
+
+  - name: Verify enabled KVM policy creation response aligns with info response
+    ansible.builtin.assert:
+      that:
+        - enabled_creation.api_response.Name == enabled_info.api_response[0].Name
+        - enabled_creation.api_response.Enabled == enabled_info.api_response[0].Enabled
+        - enabled_creation.api_response.MaximumSessions == enabled_info.api_response[0].MaximumSessions
+
+  - name: Create enabled KVM policy with defaults (idempotency check)
+    cisco.intersight.intersight_kvm_policy:
+      <<: *api_info
+      name: test_kvm_policy_enabled
+      description: "Test enabled KVM policy with default settings"
+      enabled: true
+      tags:
+        - Key: Site
+          Value: Test
+    register: enabled_creation_ide
+
+  - name: Verify enabled KVM policy creation (idempotency check)
+    ansible.builtin.assert:
+      that:
+        - not enabled_creation_ide.changed
+
+  - name: Create disabled KVM policy
+    cisco.intersight.intersight_kvm_policy:
+      <<: *api_info
+      name: test_kvm_policy_disabled
+      description: "Test disabled KVM policy"
+      enabled: false
+      tags:
+        - Key: Security
+          Value: Disabled
+    register: disabled_creation
+
+  - name: Fetch info after disabled KVM policy creation
+    cisco.intersight.intersight_kvm_policy_info:
+      <<: *api_info
+      name: test_kvm_policy_disabled
+    register: disabled_info
+
+  - name: Verify disabled KVM policy creation
+    ansible.builtin.assert:
+      that:
+        - disabled_creation.changed
+        - disabled_info.api_response[0].Name == 'test_kvm_policy_disabled'
+        - disabled_info.api_response[0].Enabled == false
+
+  - name: Create disabled KVM policy (idempotency check)
+    cisco.intersight.intersight_kvm_policy:
+      <<: *api_info
+      name: test_kvm_policy_disabled
+      description: "Test disabled KVM policy"
+      enabled: false
+      tags:
+        - Key: Security
+          Value: Disabled
+    register: disabled_creation_ide
+
+  - name: Verify disabled KVM policy creation (idempotency check)
+    ansible.builtin.assert:
+      that:
+        - not disabled_creation_ide.changed
+
+  - name: Create KVM policy with custom settings
+    cisco.intersight.intersight_kvm_policy:
+      <<: *api_info
+      name: test_kvm_policy_custom
+      description: "Test KVM policy with custom settings"
+      enabled: true
+      maximum_sessions: 2
+      remote_port: 3000
+      enable_video_encryption: true
+      enable_local_server_video: false
+      tunneled_kvm_enabled: true
+      tags:
+        - Key: Environment
+          Value: Custom
+    register: custom_creation
+
+  - name: Fetch info after custom KVM policy creation
+    cisco.intersight.intersight_kvm_policy_info:
+      <<: *api_info
+      name: test_kvm_policy_custom
+    register: custom_info
+
+  - name: Verify custom KVM policy creation
+    ansible.builtin.assert:
+      that:
+        - custom_creation.changed
+        - custom_info.api_response[0].Name == 'test_kvm_policy_custom'
+        - custom_info.api_response[0].Enabled == true
+        - custom_info.api_response[0].MaximumSessions == 2
+        - custom_info.api_response[0].RemotePort == 3000
+        - custom_info.api_response[0].EnableVideoEncryption == true
+        - custom_info.api_response[0].EnableLocalServerVideo == false
+        - custom_info.api_response[0].TunneledKvmEnabled == true
+
+  - name: Create custom KVM policy (idempotency check)
+    cisco.intersight.intersight_kvm_policy:
+      <<: *api_info
+      name: test_kvm_policy_custom
+      description: "Test KVM policy with custom settings"
+      enabled: true
+      maximum_sessions: 2
+      remote_port: 3000
+      enable_video_encryption: true
+      enable_local_server_video: false
+      tunneled_kvm_enabled: true
+      tags:
+        - Key: Environment
+          Value: Custom
+    register: custom_creation_ide
+
+  - name: Verify custom KVM policy creation (idempotency check)
+    ansible.builtin.assert:
+      that:
+        - not custom_creation_ide.changed
+
+  - name: Update KVM policy from enabled to disabled
+    cisco.intersight.intersight_kvm_policy:
+      <<: *api_info
+      name: test_kvm_policy_enabled
+      description: "Test KVM policy now disabled"
+      enabled: false
+      tags:
+        - Key: Site
+          Value: Test
+        - Key: Status
+          Value: Updated
+    register: enabled_to_disabled_update
+
+  - name: Verify KVM policy update from enabled to disabled
+    ansible.builtin.assert:
+      that:
+        - enabled_to_disabled_update.changed
+
+  - name: Fetch info after disabling KVM policy
+    cisco.intersight.intersight_kvm_policy_info:
+      <<: *api_info
+      name: test_kvm_policy_enabled
+    register: disabled_updated_info
+
+  - name: Verify KVM policy is now disabled
+    ansible.builtin.assert:
+      that:
+        - disabled_updated_info.api_response[0].Enabled == false
+
+  - name: Update KVM policy from disabled to enabled with new settings
+    cisco.intersight.intersight_kvm_policy:
+      <<: *api_info
+      name: test_kvm_policy_disabled
+      description: "Test KVM policy now enabled with custom settings"
+      enabled: true
+      maximum_sessions: 3
+      remote_port: 2500
+      enable_video_encryption: false
+      enable_local_server_video: true
+      tunneled_kvm_enabled: true
+      tags:
+        - Key: Security
+          Value: Enabled
+    register: disabled_to_enabled_update
+
+  - name: Verify KVM policy update from disabled to enabled
+    ansible.builtin.assert:
+      that:
+        - disabled_to_enabled_update.changed
+
+  - name: Fetch info after enabling KVM policy
+    cisco.intersight.intersight_kvm_policy_info:
+      <<: *api_info
+      name: test_kvm_policy_disabled
+    register: enabled_updated_info
+
+  - name: Verify KVM policy is now enabled with new settings
+    ansible.builtin.assert:
+      that:
+        - enabled_updated_info.api_response[0].Enabled == true
+        - enabled_updated_info.api_response[0].MaximumSessions == 3
+        - enabled_updated_info.api_response[0].RemotePort == 2500
+
+  - name: Test validation failure - maximum_sessions too low
+    cisco.intersight.intersight_kvm_policy:
+      <<: *api_info
+      name: test_kvm_policy_validation
+      description: "Test validation failure"
+      enabled: true
+      maximum_sessions: 0
+    register: validation_max_sessions_low
+    failed_when:
+      - "'maximum_sessions must be between 1 and 4 (inclusive)' not in validation_max_sessions_low.msg"
+
+  - name: Test validation failure - maximum_sessions too high
+    cisco.intersight.intersight_kvm_policy:
+      <<: *api_info
+      name: test_kvm_policy_validation
+      description: "Test validation failure"
+      enabled: true
+      maximum_sessions: 5
+    register: validation_max_sessions_high
+    failed_when:
+      - "'maximum_sessions must be between 1 and 4 (inclusive)' not in validation_max_sessions_high.msg"
+
+  - name: Test validation failure - remote_port too low
+    cisco.intersight.intersight_kvm_policy:
+      <<: *api_info
+      name: test_kvm_policy_validation
+      description: "Test validation failure"
+      enabled: true
+      remote_port: 1000
+    register: validation_remote_port_low
+    failed_when:
+      - "'remote_port must be between 1024 and 65535 (inclusive)' not in validation_remote_port_low.msg"
+
+  - name: Test validation failure - remote_port too high
+    cisco.intersight.intersight_kvm_policy:
+      <<: *api_info
+      name: test_kvm_policy_validation
+      description: "Test validation failure"
+      enabled: true
+      remote_port: 70000
+    register: validation_remote_port_high
+    failed_when:
+      - "'remote_port must be between 1024 and 65535 (inclusive)' not in validation_remote_port_high.msg"
+
+  - name: Fetch all KVM policies under the organization
+    cisco.intersight.intersight_kvm_policy_info:
+      <<: *api_info
+    register: all_policies_info
+
+  - name: Check that there are at least 3 KVM policies under this organization
+    ansible.builtin.assert:
+      that:
+        - all_policies_info.api_response | length >= 3
+
+  always:
+  - name: Remove test KVM policies
+    cisco.intersight.intersight_kvm_policy:
+      <<: *api_info
+      name: "{{ item }}"
+      state: absent
+    loop:
+      - test_kvm_policy_enabled
+      - test_kvm_policy_disabled
+      - test_kvm_policy_custom
+      - test_kvm_policy_validation 
