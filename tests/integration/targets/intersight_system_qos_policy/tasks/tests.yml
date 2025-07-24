@@ -1,0 +1,297 @@
+---
+- block:
+  - name: Define anchor for Intersight API login info
+    ansible.builtin.set_fact:
+      api_info: &api_info
+        api_private_key: "{{ api_private_key }}"
+        api_key_id: "{{ api_key_id }}"
+        api_uri: "{{ api_uri | default(omit) }}"
+        validate_certs: "{{ validate_certs | default(omit) }}"
+        organization: "{{ organization }}"
+
+  - name: Make sure Env is clean
+    cisco.intersight.intersight_system_qos_policy:
+      <<: *api_info
+      name: "{{ item }}"
+      state: absent
+    loop:
+      - test_system_qos_policy
+      - test_system_qos_policy_minimal
+      - test_system_qos_policy_custom
+      - test_system_qos_policy_partial
+      - test_be_cos_restriction
+
+  - name: Create system QoS policy with defaults - check mode
+    cisco.intersight.intersight_system_qos_policy:
+      <<: *api_info
+      name: test_system_qos_policy
+      description: "Test System QoS policy with defaults"
+      tags:
+        - Key: Environment
+          Value: Test
+        - Key: Purpose
+          Value: Integration
+    check_mode: true
+    register: creation_res_check_mode
+
+  - name: Verify system QoS policy was not created - check mode
+    ansible.builtin.assert:
+      that:
+        - creation_res_check_mode is changed
+        - creation_res_check_mode.api_response == {}
+
+  - name: Create system QoS policy with defaults
+    cisco.intersight.intersight_system_qos_policy:
+      <<: *api_info
+      name: test_system_qos_policy
+      description: "Test System QoS policy with defaults"
+      tags:
+        - Key: Environment
+          Value: Test
+        - Key: Purpose
+          Value: Integration
+    register: creation_res
+
+  - name: Verify system QoS policy was created with defaults
+    ansible.builtin.assert:
+      that:
+        - creation_res is changed
+        - creation_res.api_response.Name == "test_system_qos_policy"
+        - creation_res.api_response.Description == "Test System QoS policy with defaults"
+        - creation_res.api_response.Classes | length == 6
+        - (creation_res.api_response.Classes | selectattr('Name', 'equalto', 'Best Effort') | first).AdminState == 'Enabled'
+        - (creation_res.api_response.Classes | selectattr('Name', 'equalto', 'FC') | first).AdminState == 'Enabled'
+        - (creation_res.api_response.Classes | selectattr('Name', 'equalto', 'Bronze') | first).AdminState == 'Disabled'
+        # Verify MulticastOptimize is always false for all classes
+        - creation_res.api_response.Classes | selectattr('MulticastOptimize', 'equalto', false) | list | length == 6
+
+  - name: Update system QoS policy (idempotent)
+    cisco.intersight.intersight_system_qos_policy:
+      <<: *api_info
+      name: test_system_qos_policy
+      description: "Test System QoS policy with defaults"
+      tags:
+        - Key: Environment
+          Value: Test
+        - Key: Purpose
+          Value: Integration
+    register: update_res_idempotent
+
+  - name: Verify system QoS policy update was idempotent
+    ansible.builtin.assert:
+      that:
+        - update_res_idempotent is not changed
+
+  - name: Create system QoS policy with custom classes
+    cisco.intersight.intersight_system_qos_policy:
+      <<: *api_info
+      name: test_system_qos_policy_custom
+      description: "Test System QoS policy with custom classes"
+      classes:
+        - name: Bronze
+          admin_state: Enabled
+          weight: 7
+        - name: Silver
+          admin_state: Enabled
+          weight: 8
+        - name: Gold
+          admin_state: Enabled
+          weight: 9
+        - name: Platinum
+          admin_state: Enabled
+          weight: 10
+        - name: 'Best Effort'
+          weight: 6
+        - name: FC
+          weight: 8
+    register: custom_creation_res
+
+  - name: Verify system QoS policy was created with custom settings
+    ansible.builtin.assert:
+      that:
+        - custom_creation_res is changed
+        - custom_creation_res.api_response.Name == "test_system_qos_policy_custom"
+        - (custom_creation_res.api_response.Classes | selectattr('Name', 'equalto', 'Bronze') | first).AdminState == 'Enabled'
+        - (custom_creation_res.api_response.Classes | selectattr('Name', 'equalto', 'FC') | first).Weight == 8
+        # Verify MulticastOptimize is always false even with custom settings
+        - custom_creation_res.api_response.Classes | selectattr('MulticastOptimize', 'equalto', false) | list | length == 6
+
+  - name: Create system QoS policy with partial classes
+    cisco.intersight.intersight_system_qos_policy:
+      <<: *api_info
+      name: test_system_qos_policy_partial
+      description: "Test System QoS policy with partial classes"
+      classes:
+        - name: Gold
+          admin_state: Enabled
+        - name: 'Best Effort'
+          weight: 8
+    register: partial_creation_res
+
+  - name: Verify system QoS policy was created with partial settings and defaults
+    ansible.builtin.assert:
+      that:
+        - partial_creation_res is changed
+        - partial_creation_res.api_response.Classes | length == 6
+        - (partial_creation_res.api_response.Classes | selectattr('Name', 'equalto', 'Gold') | first).AdminState == 'Enabled'
+        - (partial_creation_res.api_response.Classes | selectattr('Name', 'equalto', 'Bronze') | first).AdminState == 'Disabled'
+        - (partial_creation_res.api_response.Classes | selectattr('Name', 'equalto', 'Best Effort') | first).Weight == 8
+        # Verify MulticastOptimize is always false for partial configuration
+        - partial_creation_res.api_response.Classes | selectattr('MulticastOptimize', 'equalto', false) | list | length == 6
+
+  - name: Get all system QoS policies
+    cisco.intersight.intersight_system_qos_policy_info:
+      <<: *api_info
+    register: all_policies_info
+
+  - name: Verify info module returns all policies
+    ansible.builtin.assert:
+      that:
+        - all_policies_info.api_response | length >= 3
+        - all_policies_info.api_response | selectattr('Name', 'equalto', 'test_system_qos_policy') | list | length == 1
+
+  - name: Get specific system QoS policy
+    cisco.intersight.intersight_system_qos_policy_info:
+      <<: *api_info
+      name: test_system_qos_policy_custom
+    register: specific_policy_info
+
+  - name: Verify info module returns specific policy
+    ansible.builtin.assert:
+      that:
+        - specific_policy_info.api_response | length == 1
+        - specific_policy_info.api_response[0].Name == "test_system_qos_policy_custom"
+        - specific_policy_info.api_response[0].Classes | length == 6
+
+  - name: Get system QoS policies by organization
+    cisco.intersight.intersight_system_qos_policy_info:
+      <<: *api_info
+      organization: "{{ organization }}"
+    register: org_policies_info
+
+  - name: Verify info module filters by organization
+    ansible.builtin.assert:
+      that:
+        - org_policies_info.api_response | length >= 3
+  
+  - name: Try to create policy with invalid class name
+    cisco.intersight.intersight_system_qos_policy:
+      <<: *api_info
+      name: test_invalid_class
+      classes:
+        - name: InvalidClass
+          admin_state: Enabled
+    register: invalid_class_result
+    failed_when:
+     - "not 'value of name must be one of: Bronze, Silver, Gold, Platinum, Best Effort, FC, got: InvalidClass found in classes' in invalid_class_result.msg"
+
+  - name: Try to create policy with invalid FC settings
+    cisco.intersight.intersight_system_qos_policy:
+      <<: *api_info
+      name: test_invalid_fc
+      classes:
+        - name: FC
+          admin_state: Disabled
+          cos: 5
+          mtu: 1500
+          packet_drop: true
+    register: invalid_fc_result
+    failed_when:
+     - "not 'FC class must always be enabled' in invalid_fc_result.msg"
+
+  - name: Try to create policy with invalid Best Effort settings
+    cisco.intersight.intersight_system_qos_policy:
+      <<: *api_info
+      name: test_invalid_be
+      classes:
+        - name: 'Best Effort'
+          admin_state: Disabled
+          cos: 5
+          packet_drop: false
+    register: invalid_be_result
+    failed_when:
+     - "not 'Best Effort class must always be enabled' in invalid_be_result.msg"
+
+  - name: Try to create policy with invalid weight
+    cisco.intersight.intersight_system_qos_policy:
+      <<: *api_info
+      name: test_invalid_weight
+      classes:
+        - name: Bronze
+          weight: 15
+    register: invalid_weight_result
+    failed_when:
+     - "not 'Weight value must be between 0-10' in invalid_weight_result.msg"
+
+  - name: Try to create policy with invalid CoS value
+    cisco.intersight.intersight_system_qos_policy:
+      <<: *api_info
+      name: test_invalid_cos
+      classes:
+        - name: Bronze
+          cos: 10
+    register: invalid_cos_result
+    failed_when:
+     - "not 'CoS value must be between 0-6' in invalid_cos_result.msg"
+
+  - name: Try to create policy with invalid MTU value
+    cisco.intersight.intersight_system_qos_policy:
+      <<: *api_info
+      name: test_invalid_mtu
+      classes:
+        - name: Bronze
+          mtu: 10000
+    register: invalid_mtu_result
+    failed_when:
+     - "not 'MTU value must be between 1500-9216' in invalid_mtu_result.msg"
+
+  - name: Try to create policy with Best Effort CoS modification
+    cisco.intersight.intersight_system_qos_policy:
+      <<: *api_info
+      name: test_be_cos_restriction
+      classes:
+        - name: 'Best Effort'
+          cos: 3
+    register: be_cos_result
+    failed_when:
+     - "not 'Best Effort class CoS cannot be modified by user' in be_cos_result.msg"
+
+  - name: Create minimal system QoS policy
+    cisco.intersight.intersight_system_qos_policy:
+      <<: *api_info
+      name: test_system_qos_policy_minimal
+    register: minimal_creation_res
+
+  - name: Verify minimal policy was created with all defaults
+    ansible.builtin.assert:
+      that:
+        - minimal_creation_res is changed
+        - minimal_creation_res.api_response.Name == "test_system_qos_policy_minimal"
+        - minimal_creation_res.api_response.Classes | length == 6
+        - (minimal_creation_res.api_response.Classes | selectattr('Name', 'equalto', 'Best Effort') | first).AdminState == 'Enabled'
+        - (minimal_creation_res.api_response.Classes | selectattr('Name', 'equalto', 'FC') | first).AdminState == 'Enabled'
+        - (minimal_creation_res.api_response.Classes | selectattr('Name', 'equalto', 'Bronze') | first).AdminState == 'Disabled'
+        - (minimal_creation_res.api_response.Classes | selectattr('Name', 'equalto', 'Silver') | first).AdminState == 'Disabled'
+        - (minimal_creation_res.api_response.Classes | selectattr('Name', 'equalto', 'Gold') | first).AdminState == 'Disabled'
+        - (minimal_creation_res.api_response.Classes | selectattr('Name', 'equalto', 'Platinum') | first).AdminState == 'Disabled'
+        # Verify MulticastOptimize is always false for minimal policy
+        - minimal_creation_res.api_response.Classes | selectattr('MulticastOptimize', 'equalto', false) | list | length == 6
+
+  always:
+  - name: Remove all test system QoS policies
+    cisco.intersight.intersight_system_qos_policy:
+      <<: *api_info
+      name: "{{ item }}"
+      state: absent
+    loop:
+      - test_system_qos_policy
+      - test_system_qos_policy_minimal
+      - test_system_qos_policy_custom
+      - test_system_qos_policy_partial
+      - test_invalid_class
+      - test_invalid_fc
+      - test_invalid_be
+      - test_invalid_weight
+      - test_invalid_cos
+      - test_invalid_mtu
+      - test_be_cos_restriction 
