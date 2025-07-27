@@ -1,0 +1,351 @@
+---
+- block:
+  - name: Define anchor for Intersight API login info
+    ansible.builtin.set_fact:
+      api_info: &api_info
+        api_private_key: "{{ api_private_key }}"
+        api_key_id: "{{ api_key_id }}"
+        api_uri: "{{ api_uri | default(omit) }}"
+        validate_certs: "{{ validate_certs | default(omit) }}"
+        organization: "{{ organization }}"
+
+  - name: Make sure Env is clean
+    cisco.intersight.intersight_ipmi_over_lan_policy:
+      <<: *api_info
+      name: "{{ item }}"
+      state: absent
+    loop:
+      - test_ipmi_policy_basic
+      - test_ipmi_policy_encrypted
+      - test_ipmi_policy_disabled
+      - test_ipmi_policy_updated
+      - test_ipmi_policy_validation
+
+  - name: Create basic IPMI over LAN policy - check-mode
+    cisco.intersight.intersight_ipmi_over_lan_policy:
+      <<: *api_info
+      name: test_ipmi_policy_basic
+      description: "Test basic IPMI over LAN policy"
+      enabled: true
+      privilege: "admin"
+      tags:
+        - Key: Site
+          Value: Test
+    check_mode: true
+    register: basic_creation_check_mode
+
+  - name: Verify basic IPMI over LAN policy was not created - check-mode
+    ansible.builtin.assert:
+      that:
+        - basic_creation_check_mode is changed
+        - basic_creation_check_mode.api_response == {}
+
+  - name: Create basic IPMI over LAN policy
+    cisco.intersight.intersight_ipmi_over_lan_policy:
+      <<: *api_info
+      name: test_ipmi_policy_basic
+      description: "Test basic IPMI over LAN policy"
+      enabled: true
+      privilege: "admin"
+      tags:
+        - Key: Site
+          Value: Test
+    register: basic_creation
+
+  - name: Verify basic IPMI over LAN policy creation
+    ansible.builtin.assert:
+      that:
+        - basic_creation.changed
+
+  - name: Create basic IPMI over LAN policy (idempotency check)
+    cisco.intersight.intersight_ipmi_over_lan_policy:
+      <<: *api_info
+      name: test_ipmi_policy_basic
+      description: "Test basic IPMI over LAN policy"
+      enabled: true
+      privilege: "admin"
+      tags:
+        - Key: Site
+          Value: Test
+    register: basic_creation_ide
+
+  - name: Verify basic IPMI over LAN policy creation (idempotency check)
+    ansible.builtin.assert:
+      that:
+        - not basic_creation_ide.changed
+
+  - name: Fetch info after basic IPMI over LAN policy creation
+    cisco.intersight.intersight_ipmi_over_lan_policy_info:
+      <<: *api_info
+      name: test_ipmi_policy_basic
+    register: basic_info
+
+  - name: Verify basic IPMI over LAN policy info
+    ansible.builtin.assert:
+      that:
+        - basic_info.api_response | length == 1
+        - basic_info.api_response[0].Name == "test_ipmi_policy_basic"
+        - basic_info.api_response[0].Enabled == true
+        - basic_info.api_response[0].Privilege == "admin"
+
+  - name: Create IPMI over LAN policy with encryption - check-mode
+    cisco.intersight.intersight_ipmi_over_lan_policy:
+      <<: *api_info
+      name: test_ipmi_policy_encrypted
+      description: "Test IPMI over LAN policy with encryption"
+      enabled: true
+      privilege: "user"
+      encryption_key: "AB2134AC"
+      tags:
+        - Key: Environment
+          Value: Production
+    check_mode: true
+    register: encrypted_creation_check_mode
+
+  - name: Verify IPMI over LAN policy with encryption was not created - check-mode
+    ansible.builtin.assert:
+      that:
+        - encrypted_creation_check_mode is changed
+        - encrypted_creation_check_mode.api_response == {}
+
+  - name: Create IPMI over LAN policy with encryption
+    cisco.intersight.intersight_ipmi_over_lan_policy:
+      <<: *api_info
+      name: test_ipmi_policy_encrypted
+      description: "Test IPMI over LAN policy with encryption"
+      enabled: true
+      privilege: "user"
+      encryption_key: "AB2134AC"
+      tags:
+        - Key: Environment
+          Value: Production
+    register: encrypted_creation
+
+  - name: Verify IPMI over LAN policy with encryption creation
+    ansible.builtin.assert:
+      that:
+        - encrypted_creation.changed
+
+  - name: Fetch info after encrypted IPMI over LAN policy creation
+    cisco.intersight.intersight_ipmi_over_lan_policy_info:
+      <<: *api_info
+      name: test_ipmi_policy_encrypted
+    register: encrypted_info
+
+  - name: Verify encrypted IPMI over LAN policy info
+    ansible.builtin.assert:
+      that:
+        - encrypted_info.api_response | length == 1
+        - encrypted_info.api_response[0].Name == "test_ipmi_policy_encrypted"
+        - encrypted_info.api_response[0].Enabled == true
+        - encrypted_info.api_response[0].Privilege == "user"
+        - encrypted_info.api_response[0].IsEncryptionKeySet == true
+
+  - name: Create disabled IPMI over LAN policy
+    cisco.intersight.intersight_ipmi_over_lan_policy:
+      <<: *api_info
+      name: test_ipmi_policy_disabled
+      description: "Test disabled IPMI over LAN policy"
+      enabled: false
+      privilege: "read-only"
+      tags:
+        - Key: Status
+          Value: Disabled
+    register: disabled_creation
+
+  - name: Verify disabled IPMI over LAN policy creation
+    ansible.builtin.assert:
+      that:
+        - disabled_creation.changed
+
+  - name: Fetch info after disabled IPMI over LAN policy creation
+    cisco.intersight.intersight_ipmi_over_lan_policy_info:
+      <<: *api_info
+      name: test_ipmi_policy_disabled
+    register: disabled_info
+
+  - name: Verify disabled IPMI over LAN policy info
+    ansible.builtin.assert:
+      that:
+        - disabled_info.api_response | length == 1
+        - disabled_info.api_response[0].Name == "test_ipmi_policy_disabled"
+        - disabled_info.api_response[0].Enabled == false
+
+  - name: Create disabled IPMI policy without encryption key
+    cisco.intersight.intersight_ipmi_over_lan_policy:
+      <<: *api_info
+      name: test_ipmi_policy_disabled_no_key
+      description: "Test disabled IPMI policy without encryption"
+      enabled: false
+    register: disabled_no_key_creation
+
+  - name: Verify disabled IPMI policy creation without key
+    ansible.builtin.assert:
+      that:
+        - disabled_no_key_creation.changed
+
+  - name: Fetch info after disabled IPMI policy creation without key
+    cisco.intersight.intersight_ipmi_over_lan_policy_info:
+      <<: *api_info
+      name: test_ipmi_policy_disabled_no_key
+    register: disabled_no_key_info
+
+  - name: Verify disabled IPMI policy info without key
+    ansible.builtin.assert:
+      that:
+        - disabled_no_key_info.api_response | length == 1
+        - disabled_no_key_info.api_response[0].Name == "test_ipmi_policy_disabled_no_key"
+        - disabled_no_key_info.api_response[0].Enabled == false
+
+  - name: Update IPMI over LAN policy from enabled to disabled
+    cisco.intersight.intersight_ipmi_over_lan_policy:
+      <<: *api_info
+      name: test_ipmi_policy_basic
+      description: "Updated IPMI over LAN policy description"
+      enabled: false
+      privilege: "user"
+      encryption_key: "00"
+      tags:
+        - Key: Site
+          Value: Updated
+        - Key: Environment
+          Value: Testing
+    register: policy_update
+
+  - name: Verify IPMI over LAN policy update
+    ansible.builtin.assert:
+      that:
+        - policy_update.changed
+
+  - name: Fetch info after IPMI over LAN policy update
+    cisco.intersight.intersight_ipmi_over_lan_policy_info:
+      <<: *api_info
+      name: test_ipmi_policy_basic
+    register: updated_info
+
+  - name: Verify updated IPMI over LAN policy info
+    ansible.builtin.assert:
+      that:
+        - updated_info.api_response | length == 1
+        - updated_info.api_response[0].Name == "test_ipmi_policy_basic"
+        - updated_info.api_response[0].Enabled == false
+
+  - name: Update IPMI policy from disabled to enabled with encryption
+    cisco.intersight.intersight_ipmi_over_lan_policy:
+      <<: *api_info
+      name: test_ipmi_policy_basic
+      description: "Re-enabled IPMI policy with encryption"
+      enabled: true
+      privilege: "read-only"
+      encryption_key: "DEADBEEF"
+      tags:
+        - Key: Site
+          Value: ReEnabled
+    register: re_enable_update
+
+  - name: Verify IPMI policy re-enable update
+    ansible.builtin.assert:
+      that:
+        - re_enable_update.changed
+
+  - name: Fetch info after IPMI policy re-enable
+    cisco.intersight.intersight_ipmi_over_lan_policy_info:
+      <<: *api_info
+      name: test_ipmi_policy_basic
+    register: re_enabled_info
+
+  - name: Verify re-enabled IPMI policy info
+    ansible.builtin.assert:
+      that:
+        - re_enabled_info.api_response | length == 1
+        - re_enabled_info.api_response[0].Name == "test_ipmi_policy_basic"
+        - re_enabled_info.api_response[0].Enabled == true
+        - re_enabled_info.api_response[0].Privilege == "read-only"
+        - re_enabled_info.api_response[0].IsEncryptionKeySet == true
+
+  - name: Fetch all IPMI over LAN policies
+    cisco.intersight.intersight_ipmi_over_lan_policy_info:
+      <<: *api_info
+    register: all_policies_info
+
+  - name: Verify all IPMI over LAN policies fetch
+    ansible.builtin.assert:
+      that:
+        - all_policies_info.api_response | length >= 3
+
+  - name: Test invalid encryption key (odd number of characters)
+    cisco.intersight.intersight_ipmi_over_lan_policy:
+      <<: *api_info
+      name: test_ipmi_policy_validation
+      description: "Test validation"
+      enabled: true
+      privilege: "admin"
+      encryption_key: "ABC"
+    register: validation_result
+    failed_when:
+     - "'even number of characters' not in validation_result.msg"
+
+  - name: Test invalid encryption key (non-hex characters)
+    cisco.intersight.intersight_ipmi_over_lan_policy:
+      <<: *api_info
+      name: test_ipmi_policy_validation
+      description: "Test validation"
+      enabled: true
+      privilege: "admin"
+      encryption_key: "WXYZ"
+    register: validation_result_2
+    failed_when:
+     - "'hexadecimal characters' not in validation_result_2.msg"
+
+  - name: Test encryption key too long (over 40 characters)
+    cisco.intersight.intersight_ipmi_over_lan_policy:
+      <<: *api_info
+      name: test_ipmi_policy_validation
+      description: "Test validation"
+      enabled: true
+      privilege: "admin"
+      encryption_key: "0123456789ABCDEF0123456789ABCDEF0123456788"
+    register: validation_result_3
+    failed_when:
+     - "'not exceed 40 characters' not in validation_result_3.msg"
+
+  - name: Test user privilege level
+    cisco.intersight.intersight_ipmi_over_lan_policy:
+      <<: *api_info
+      name: test_ipmi_policy_user_privilege
+      description: "Test user privilege level"
+      enabled: true
+      privilege: "user"
+    register: user_privilege_creation
+
+  - name: Verify user privilege policy creation
+    ansible.builtin.assert:
+      that:
+        - user_privilege_creation.changed
+
+  - name: Fetch info for user privilege policy
+    cisco.intersight.intersight_ipmi_over_lan_policy_info:
+      <<: *api_info
+      name: test_ipmi_policy_user_privilege
+    register: user_privilege_info
+
+  - name: Verify user privilege policy info
+    ansible.builtin.assert:
+      that:
+        - user_privilege_info.api_response | length == 1
+        - user_privilege_info.api_response[0].Privilege == "user"
+
+  always:
+    - name: Clean up IPMI over LAN policies
+      cisco.intersight.intersight_ipmi_over_lan_policy:
+        <<: *api_info
+        name: "{{ item }}"
+        state: absent
+      loop:
+        - test_ipmi_policy_basic
+        - test_ipmi_policy_encrypted
+        - test_ipmi_policy_disabled
+        - test_ipmi_policy_disabled_no_key
+        - test_ipmi_policy_updated
+        - test_ipmi_policy_validation
+        - test_ipmi_policy_user_privilege
