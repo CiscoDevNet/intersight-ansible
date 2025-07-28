@@ -1,0 +1,262 @@
+---
+- block:
+  - name: Define anchor for Intersight API login info
+    ansible.builtin.set_fact:
+      api_info: &api_info
+        api_private_key: "{{ api_private_key }}"
+        api_key_id: "{{ api_key_id }}"
+        api_uri: "{{ api_uri | default(omit) }}"
+        validate_certs: "{{ validate_certs | default(omit) }}"
+        organization: "{{ organization }}"
+
+  - name: Make sure Env is clean
+    cisco.intersight.intersight_ethernet_qos_policy:
+      <<: *api_info
+      name: "{{ item }}"
+      state: absent
+    loop:
+      - test_ethernet_qos_policy
+      - test_ethernet_qos_policy_2
+      - test_ethernet_qos_policy_platinum
+      - test_ethernet_qos_policy_defaults
+
+  - name: Create ethernet qos policy - check-mode
+    cisco.intersight.intersight_ethernet_qos_policy:
+      <<: *api_info
+      name: test_ethernet_qos_policy
+      description: "Test ethernet qos policy description"
+      tags:
+        - Key: Site
+          Value: Test
+        - Key: Environment
+          Value: Test
+      mtu: 1500
+      cos: 0
+      priority: "Best Effort"
+      trust_host_cos: false
+      rate_limit: 0
+      burst: 10240
+    check_mode: true
+    register: creation_res_check_mode
+
+  - name: Verify ethernet qos policy was not created - check-mode
+    ansible.builtin.assert:
+      that:
+        - creation_res_check_mode is changed
+        - creation_res_check_mode.api_response == {}
+
+  - name: Create ethernet qos policy
+    cisco.intersight.intersight_ethernet_qos_policy:
+      <<: *api_info
+      name: test_ethernet_qos_policy
+      description: "Test ethernet qos policy description"
+      tags:
+        - Key: Site
+          Value: Test
+        - Key: Environment
+          Value: Test
+      mtu: 1500
+      cos: 0
+      priority: "Best Effort"
+      trust_host_cos: false
+      rate_limit: 0
+      burst: 10240
+    register: creation_res
+
+  - name: Fetch info after creation
+    cisco.intersight.intersight_ethernet_qos_policy_info:
+      <<: *api_info
+      name: test_ethernet_qos_policy
+    register: creation_info_res
+
+  - name: Verify ethernet qos policy creation by info
+    ansible.builtin.assert:
+      that:
+        - creation_res.changed
+        - creation_info_res.api_response[0].Name == 'test_ethernet_qos_policy'
+        - creation_info_res.api_response[0].Mtu == 1500
+        - creation_info_res.api_response[0].Cos == 0
+        - creation_info_res.api_response[0].Priority == 'Best Effort'
+        - creation_info_res.api_response[0].TrustHostCos == false
+        - creation_info_res.api_response[0].RateLimit == 0
+        - creation_info_res.api_response[0].Burst == 10240
+
+  - name: Verify ethernet qos policy creation response aligns with info response
+    ansible.builtin.assert:
+      that:
+        - creation_res.api_response.Name == creation_info_res.api_response[0].Name
+        - creation_res.api_response.Mtu == creation_info_res.api_response[0].Mtu
+        - creation_res.api_response.Cos == creation_info_res.api_response[0].Cos
+        - creation_res.api_response.Priority == creation_info_res.api_response[0].Priority
+        - creation_res.api_response.TrustHostCos == creation_info_res.api_response[0].TrustHostCos
+        - creation_res.api_response.RateLimit == creation_info_res.api_response[0].RateLimit
+        - creation_res.api_response.Burst == creation_info_res.api_response[0].Burst
+
+  - name: Create ethernet qos policy (idempotency check)
+    cisco.intersight.intersight_ethernet_qos_policy:
+      <<: *api_info
+      name: test_ethernet_qos_policy
+      description: "Test ethernet qos policy description"
+      tags:
+        - Key: Site
+          Value: Test
+        - Key: Environment
+          Value: Test
+      mtu: 1500
+      cos: 0
+      priority: "Best Effort"
+      trust_host_cos: false
+      rate_limit: 0
+      burst: 10240
+    register: creation_res_ide
+
+  - name: Verify ethernet qos policy creation (idempotency check)
+    ansible.builtin.assert:
+      that:
+        - not creation_res_ide.changed
+
+  - name: Change MTU and priority on existing ethernet qos policy
+    cisco.intersight.intersight_ethernet_qos_policy:
+      <<: *api_info
+      name: test_ethernet_qos_policy
+      mtu: 9000
+      priority: "Gold"
+      cos: 3
+    register: changed_res
+
+  - name: Fetch info after change
+    cisco.intersight.intersight_ethernet_qos_policy_info:
+      <<: *api_info
+      name: test_ethernet_qos_policy
+    register: change_info_res
+
+  - name: Verify ethernet qos policy change by info
+    ansible.builtin.assert:
+      that:
+        - changed_res.changed
+        - change_info_res.api_response[0].Name == 'test_ethernet_qos_policy'
+        - change_info_res.api_response[0].Mtu == 9000
+        - change_info_res.api_response[0].Priority == 'Gold'
+        - change_info_res.api_response[0].Cos == 3
+
+  - name: Create platinum priority ethernet qos policy with trust host cos
+    cisco.intersight.intersight_ethernet_qos_policy:
+      <<: *api_info
+      name: test_ethernet_qos_policy_platinum
+      description: "Test platinum ethernet qos policy"
+      mtu: 9000
+      cos: 5
+      priority: "Platinum"
+      trust_host_cos: true
+      rate_limit: 10000
+      burst: 100000
+    register: creation_res_platinum
+
+  - name: Fetch info for platinum policy
+    cisco.intersight.intersight_ethernet_qos_policy_info:
+      <<: *api_info
+      name: test_ethernet_qos_policy_platinum
+    register: platinum_info_res
+
+  - name: Verify platinum ethernet qos policy creation
+    ansible.builtin.assert:
+      that:
+        - creation_res_platinum.changed
+        - platinum_info_res.api_response[0].Name == 'test_ethernet_qos_policy_platinum'
+        - platinum_info_res.api_response[0].Mtu == 9000
+        - platinum_info_res.api_response[0].Cos == 5
+        - platinum_info_res.api_response[0].Priority == 'Platinum'
+        - platinum_info_res.api_response[0].TrustHostCos == true
+        - platinum_info_res.api_response[0].RateLimit == 10000
+        - platinum_info_res.api_response[0].Burst == 100000
+
+  - name: Create another ethernet qos policy for multiple policies test
+    cisco.intersight.intersight_ethernet_qos_policy:
+      <<: *api_info
+      name: test_ethernet_qos_policy_2
+      description: "Test another ethernet qos policy description"
+      mtu: 1500
+      cos: 2
+      priority: "Silver"
+      trust_host_cos: false
+      rate_limit: 5000
+      burst: 50000
+    register: creation_res_b
+
+  - name: Create ethernet qos policy with defaults (no parameters specified)
+    cisco.intersight.intersight_ethernet_qos_policy:
+      <<: *api_info
+      name: test_ethernet_qos_policy_defaults
+      description: "Test ethernet qos policy with default values"
+    register: creation_res_defaults
+
+  - name: Fetch info for defaults policy
+    cisco.intersight.intersight_ethernet_qos_policy_info:
+      <<: *api_info
+      name: test_ethernet_qos_policy_defaults
+    register: defaults_info_res
+
+  - name: Verify ethernet qos policy defaults are applied correctly
+    ansible.builtin.assert:
+      that:
+        - creation_res_defaults.changed
+        - defaults_info_res.api_response[0].Name == 'test_ethernet_qos_policy_defaults'
+        - defaults_info_res.api_response[0].Mtu == 1500 
+        - defaults_info_res.api_response[0].Cos == 0
+        - defaults_info_res.api_response[0].Priority == 'Best Effort'
+        - defaults_info_res.api_response[0].TrustHostCos == false
+        - defaults_info_res.api_response[0].RateLimit == 0
+        - defaults_info_res.api_response[0].Burst == 10240
+
+  - name: Fetch all ethernet qos policies under selected organization
+    cisco.intersight.intersight_ethernet_qos_policy_info:
+      <<: *api_info
+    register: creation_info_res_b
+
+  - name: Check that there are at least 4 ethernet qos policies under this organization
+    ansible.builtin.assert:
+      that:
+        - creation_info_res_b.api_response | length >= 4
+
+  - name: Test parameter validation - Invalid MTU
+    cisco.intersight.intersight_ethernet_qos_policy:
+      <<: *api_info
+      name: test_invalid_mtu
+      mtu: 10000
+    register: invalid_mtu_res
+    failed_when:
+      - "'MTU must be between 1500 and 9000' not in invalid_mtu_res.msg"
+
+  - name: Test parameter validation - Invalid CoS
+    cisco.intersight.intersight_ethernet_qos_policy:
+      <<: *api_info
+      name: test_invalid_cos
+      cos: 7
+    register: invalid_cos_res
+    failed_when:
+      - "'CoS must be between 0 and 6' not in invalid_cos_res.msg"
+
+  - name: Test parameter validation - Invalid Rate Limit
+    cisco.intersight.intersight_ethernet_qos_policy:
+      <<: *api_info
+      name: test_invalid_rate_limit
+      rate_limit: 100001
+    register: invalid_rate_limit_res
+    failed_when:
+      - "'Rate limit must be between 0 and 100000' not in invalid_rate_limit_res.msg"
+
+  always:
+  - name: Remove ethernet qos policies
+    cisco.intersight.intersight_ethernet_qos_policy:
+      <<: *api_info
+      name: "{{ item }}"
+      state: absent
+    loop:
+      - test_ethernet_qos_policy
+      - test_ethernet_qos_policy_2
+      - test_ethernet_qos_policy_platinum
+      - test_ethernet_qos_policy_defaults
+      - test_invalid_mtu
+      - test_invalid_cos
+      - test_invalid_rate_limit
+      - test_invalid_burst 
