@@ -1,0 +1,423 @@
+---
+- block:
+  - name: Define anchor for Intersight API login info
+    ansible.builtin.set_fact:
+      api_info: &api_info
+        api_private_key: "{{ api_private_key }}"
+        api_key_id: "{{ api_key_id }}"
+        api_uri: "{{ api_uri | default(omit) }}"
+        validate_certs: "{{ validate_certs | default(omit) }}"
+        organization: "{{ organization }}"
+
+  - name: Make sure Env is clean
+    cisco.intersight.intersight_ethernet_network_group_policy:
+      <<: *api_info
+      name: "{{ item }}"
+      state: absent
+    loop:
+      - test_ethernet_network_group_policy_regular
+      - test_ethernet_network_group_policy_qinq
+      - test_ethernet_network_group_policy_qinq_no_native
+      - test_ethernet_network_group_policy_single_vlan
+      - test_ethernet_network_group_policy_defaults
+      - test_ethernet_network_group_policy_complex_vlans
+      - test_ethernet_network_group_policy_whitespace_vlans
+
+  - name: Create ethernet network group policy with regular VLANs - check-mode
+    cisco.intersight.intersight_ethernet_network_group_policy:
+      <<: *api_info
+      name: test_ethernet_network_group_policy_regular
+      description: "Test ethernet network group policy with regular VLANs"
+      tags:
+        - Key: Site
+          Value: Test
+        - Key: Environment
+          Value: Test
+      qinq_enabled: false
+      allowed_vlans: "1-8,12,16"
+    check_mode: true
+    register: creation_res_check_mode
+
+  - name: Verify ethernet network group policy was not created - check-mode
+    ansible.builtin.assert:
+      that:
+        - creation_res_check_mode is changed
+        - creation_res_check_mode.api_response == {}
+
+  - name: Create ethernet network group policy with regular VLANs
+    cisco.intersight.intersight_ethernet_network_group_policy:
+      <<: *api_info
+      name: test_ethernet_network_group_policy_regular
+      description: "Test ethernet network group policy with regular VLANs"
+      tags:
+        - Key: Site
+          Value: Test
+        - Key: Environment
+          Value: Test
+      qinq_enabled: false
+      allowed_vlans: "1-8,12,16"
+    register: creation_res_regular
+
+  - name: Fetch info after regular VLANs policy creation
+    cisco.intersight.intersight_ethernet_network_group_policy_info:
+      <<: *api_info
+      name: test_ethernet_network_group_policy_regular
+    register: creation_info_res_regular
+
+  - name: Verify ethernet network group policy creation with regular VLANs by info
+    ansible.builtin.assert:
+      that:
+        - creation_res_regular.changed
+        - creation_info_res_regular.api_response[0].Name == 'test_ethernet_network_group_policy_regular'
+        - creation_info_res_regular.api_response[0].VlanSettings.QinqEnabled == false
+        - creation_info_res_regular.api_response[0].VlanSettings.AllowedVlans == '1-8,12,16'
+
+  - name: Verify ethernet network group policy creation response aligns with info response
+    ansible.builtin.assert:
+      that:
+        - creation_res_regular.api_response.Name == creation_info_res_regular.api_response[0].Name
+        - creation_res_regular.api_response.VlanSettings.QinqEnabled == creation_info_res_regular.api_response[0].VlanSettings.QinqEnabled
+        - creation_res_regular.api_response.VlanSettings.AllowedVlans == creation_info_res_regular.api_response[0].VlanSettings.AllowedVlans
+
+  - name: Create ethernet network group policy with regular VLANs (idempotency check)
+    cisco.intersight.intersight_ethernet_network_group_policy:
+      <<: *api_info
+      name: test_ethernet_network_group_policy_regular
+      description: "Test ethernet network group policy with regular VLANs"
+      tags:
+        - Key: Site
+          Value: Test
+        - Key: Environment
+          Value: Test
+      qinq_enabled: false
+      allowed_vlans: "1-8,12,16"
+    register: creation_res_regular_ide
+
+  - name: Verify ethernet network group policy creation (idempotency check)
+    ansible.builtin.assert:
+      that:
+        - not creation_res_regular_ide.changed
+
+  - name: Change allowed VLANs on existing ethernet network group policy
+    cisco.intersight.intersight_ethernet_network_group_policy:
+      <<: *api_info
+      name: test_ethernet_network_group_policy_regular
+      qinq_enabled: false
+      allowed_vlans: "1-10,20-30"
+    register: changed_res_regular
+
+  - name: Fetch info after regular VLANs policy change
+    cisco.intersight.intersight_ethernet_network_group_policy_info:
+      <<: *api_info
+      name: test_ethernet_network_group_policy_regular
+    register: change_info_res_regular
+
+  - name: Verify ethernet network group policy change by info
+    ansible.builtin.assert:
+      that:
+        - changed_res_regular.changed
+        - change_info_res_regular.api_response[0].Name == 'test_ethernet_network_group_policy_regular'
+        - change_info_res_regular.api_response[0].VlanSettings.AllowedVlans == '1-10,20-30'
+
+  - name: Create ethernet network group policy with QinQ enabled (with native VLAN)
+    cisco.intersight.intersight_ethernet_network_group_policy:
+      <<: *api_info
+      name: test_ethernet_network_group_policy_qinq
+      description: "Test ethernet network group policy with QinQ enabled"
+      tags:
+        - Key: Type
+          Value: QinQ
+      qinq_enabled: true
+      qinq_vlan: 4
+      native_vlan: 1
+    register: creation_res_qinq
+
+  - name: Fetch info after QinQ policy creation
+    cisco.intersight.intersight_ethernet_network_group_policy_info:
+      <<: *api_info
+      name: test_ethernet_network_group_policy_qinq
+    register: creation_info_res_qinq
+
+  - name: Verify ethernet network group policy creation with QinQ by info
+    ansible.builtin.assert:
+      that:
+        - creation_res_qinq.changed
+        - creation_info_res_qinq.api_response[0].Name == 'test_ethernet_network_group_policy_qinq'
+        - creation_info_res_qinq.api_response[0].VlanSettings.QinqEnabled == true
+        - creation_info_res_qinq.api_response[0].VlanSettings.QinqVlan == 4
+        - creation_info_res_qinq.api_response[0].VlanSettings.NativeVlan == 1
+
+  - name: Create ethernet network group policy with QinQ enabled (no native VLAN)
+    cisco.intersight.intersight_ethernet_network_group_policy:
+      <<: *api_info
+      name: test_ethernet_network_group_policy_qinq_no_native
+      description: "Test ethernet network group policy with QinQ enabled (no native VLAN)"
+      qinq_enabled: true
+      qinq_vlan: 100
+    register: creation_res_qinq_no_native
+
+  - name: Fetch info after QinQ policy creation (no native VLAN)
+    cisco.intersight.intersight_ethernet_network_group_policy_info:
+      <<: *api_info
+      name: test_ethernet_network_group_policy_qinq_no_native
+    register: creation_info_res_qinq_no_native
+
+  - name: Verify ethernet network group policy creation with QinQ (no native VLAN) by info
+    ansible.builtin.assert:
+      that:
+        - creation_res_qinq_no_native.changed
+        - creation_info_res_qinq_no_native.api_response[0].Name == 'test_ethernet_network_group_policy_qinq_no_native'
+        - creation_info_res_qinq_no_native.api_response[0].VlanSettings.QinqEnabled == true
+        - creation_info_res_qinq_no_native.api_response[0].VlanSettings.QinqVlan == 100
+        - creation_info_res_qinq_no_native.api_response[0].VlanSettings.NativeVlan == 0 # Native vlan is set to 0 when not set
+
+  - name: Create ethernet network group policy with single VLAN
+    cisco.intersight.intersight_ethernet_network_group_policy:
+      <<: *api_info
+      name: test_ethernet_network_group_policy_single_vlan
+      description: "Test ethernet network group policy with single VLAN"
+      qinq_enabled: false
+      allowed_vlans: "50"
+    register: creation_res_single
+
+  - name: Fetch info after single VLAN policy creation
+    cisco.intersight.intersight_ethernet_network_group_policy_info:
+      <<: *api_info
+      name: test_ethernet_network_group_policy_single_vlan
+    register: creation_info_res_single
+
+  - name: Verify ethernet network group policy creation with single VLAN by info
+    ansible.builtin.assert:
+      that:
+        - creation_res_single.changed
+        - creation_info_res_single.api_response[0].Name == 'test_ethernet_network_group_policy_single_vlan'
+        - creation_info_res_single.api_response[0].VlanSettings.QinqEnabled == false
+        - creation_info_res_single.api_response[0].VlanSettings.AllowedVlans == '50'
+
+  - name: Create ethernet network group policy with defaults (only name specified)
+    cisco.intersight.intersight_ethernet_network_group_policy:
+      <<: *api_info
+      name: test_ethernet_network_group_policy_defaults
+      description: "Test ethernet network group policy with default values"
+      qinq_enabled: false
+      allowed_vlans: "1"
+    register: creation_res_defaults
+
+  - name: Create ethernet network group policy with complex allowed VLANs format
+    cisco.intersight.intersight_ethernet_network_group_policy:
+      <<: *api_info
+      name: test_ethernet_network_group_policy_complex_vlans
+      description: "Test ethernet network group policy with complex VLAN format"
+      qinq_enabled: false
+      allowed_vlans: "10-15,25,30-35,100"
+    register: creation_res_complex_vlans
+
+  - name: Fetch info after complex VLANs policy creation
+    cisco.intersight.intersight_ethernet_network_group_policy_info:
+      <<: *api_info
+      name: test_ethernet_network_group_policy_complex_vlans
+    register: creation_info_res_complex_vlans
+
+  - name: Verify ethernet network group policy creation with complex VLANs by info
+    ansible.builtin.assert:
+      that:
+        - creation_res_complex_vlans.changed
+        - creation_info_res_complex_vlans.api_response[0].Name == 'test_ethernet_network_group_policy_complex_vlans'
+        - creation_info_res_complex_vlans.api_response[0].VlanSettings.QinqEnabled == false
+        - creation_info_res_complex_vlans.api_response[0].VlanSettings.AllowedVlans == '10-15,25,30-35,100'
+
+  - name: Create ethernet network group policy with allowed VLANs containing whitespace
+    cisco.intersight.intersight_ethernet_network_group_policy:
+      <<: *api_info
+      name: test_ethernet_network_group_policy_whitespace_vlans
+      description: "Test ethernet network group policy with whitespace in VLAN format"
+      qinq_enabled: false
+      allowed_vlans: " 1 - 5 , 10 , 15 - 20 "
+    register: creation_res_whitespace_vlans
+
+  - name: Fetch info after whitespace VLANs policy creation
+    cisco.intersight.intersight_ethernet_network_group_policy_info:
+      <<: *api_info
+      name: test_ethernet_network_group_policy_whitespace_vlans
+    register: creation_info_res_whitespace_vlans
+
+  - name: Verify ethernet network group policy creation with whitespace VLANs by info
+    ansible.builtin.assert:
+      that:
+        - creation_res_whitespace_vlans.changed
+        - creation_info_res_whitespace_vlans.api_response[0].Name == 'test_ethernet_network_group_policy_whitespace_vlans'
+        - creation_info_res_whitespace_vlans.api_response[0].VlanSettings.QinqEnabled == false
+        - creation_info_res_whitespace_vlans.api_response[0].VlanSettings.AllowedVlans == '1-5,10,15-20'
+
+  - name: Fetch info for defaults policy
+    cisco.intersight.intersight_ethernet_network_group_policy_info:
+      <<: *api_info
+      name: test_ethernet_network_group_policy_defaults
+    register: defaults_info_res
+
+  - name: Verify ethernet network group policy defaults are applied correctly
+    ansible.builtin.assert:
+      that:
+        - creation_res_defaults.changed
+        - defaults_info_res.api_response[0].Name == 'test_ethernet_network_group_policy_defaults'
+        - defaults_info_res.api_response[0].VlanSettings.QinqEnabled == false
+        - defaults_info_res.api_response[0].VlanSettings.AllowedVlans == '1'
+
+  - name: Fetch all ethernet network group policies under selected organization
+    cisco.intersight.intersight_ethernet_network_group_policy_info:
+      <<: *api_info
+    register: creation_info_res_all
+
+  - name: Check that there are at least 7 ethernet network group policies under this organization
+    ansible.builtin.assert:
+      that:
+        - creation_info_res_all.api_response | length >= 7
+
+  # Test parameter validation failures
+  - name: Test parameter validation - QinQ enabled without QinQ VLAN
+    cisco.intersight.intersight_ethernet_network_group_policy:
+      <<: *api_info
+      name: test_qinq_missing_vlan
+      qinq_enabled: true
+      state: present
+    register: qinq_missing_vlan_res
+    failed_when:
+      - "'missing required arguments: qinq_vlan' not in qinq_missing_vlan_res.msg"
+
+  - name: Test parameter validation - QinQ disabled without allowed VLANs
+    cisco.intersight.intersight_ethernet_network_group_policy:
+      <<: *api_info
+      name: test_qinq_disabled_no_vlans
+      qinq_enabled: false
+      state: present
+    register: qinq_disabled_no_vlans_res
+    failed_when:
+      - "'missing required arguments: allowed_vlans' not in qinq_disabled_no_vlans_res.msg"
+
+  - name: Test parameter validation - QinQ enabled with allowed VLANs
+    cisco.intersight.intersight_ethernet_network_group_policy:
+      <<: *api_info
+      name: test_qinq_with_allowed_vlans
+      qinq_enabled: true
+      qinq_vlan: 100
+      allowed_vlans: "1-10"
+    register: qinq_with_allowed_vlans_res
+    failed_when:
+      - "'parameters are mutually exclusive: allowed_vlans|qinq_vlan' not in qinq_with_allowed_vlans_res.msg"
+
+  - name: Test parameter validation - QinQ disabled with QinQ VLAN
+    cisco.intersight.intersight_ethernet_network_group_policy:
+      <<: *api_info
+      name: test_qinq_disabled_with_qinq_vlan
+      qinq_enabled: false
+      qinq_vlan: 100
+      allowed_vlans: "1-10"
+    register: qinq_disabled_with_qinq_vlan_res
+    failed_when:
+      - "'parameters are mutually exclusive: allowed_vlans|qinq_vlan' not in qinq_disabled_with_qinq_vlan_res.msg"
+
+  - name: Test parameter validation - Invalid QinQ VLAN (too high)
+    cisco.intersight.intersight_ethernet_network_group_policy:
+      <<: *api_info
+      name: test_invalid_qinq_vlan_high
+      qinq_enabled: true
+      qinq_vlan: 5000
+    register: invalid_qinq_vlan_high_res
+    failed_when:
+      - "'qinq_vlan must be between 2 and 4093' not in invalid_qinq_vlan_high_res.msg"
+
+  - name: Test parameter validation - Native VLAN with allowed VLANs
+    cisco.intersight.intersight_ethernet_network_group_policy:
+      <<: *api_info
+      name: test_native_vlan_with_allowed_vlans
+      qinq_enabled: false
+      native_vlan: 100
+      allowed_vlans: "1-10"
+    register: native_vlan_with_allowed_vlans_res
+    failed_when:
+      - "'parameters are mutually exclusive: allowed_vlans|native_vlan' not in native_vlan_with_allowed_vlans_res.msg"
+
+  - name: Test parameter validation - Invalid allowed VLANs format (incomplete range)
+    cisco.intersight.intersight_ethernet_network_group_policy:
+      <<: *api_info
+      name: test_invalid_allowed_vlans_incomplete_range
+      qinq_enabled: false
+      allowed_vlans: "1-"
+    register: invalid_allowed_vlans_incomplete_range_res
+    failed_when:
+      - "'allowed_vlans must be in format' not in invalid_allowed_vlans_incomplete_range_res.msg"
+
+  - name: Test parameter validation - Invalid allowed VLANs format (letters)
+    cisco.intersight.intersight_ethernet_network_group_policy:
+      <<: *api_info
+      name: test_invalid_allowed_vlans_letters
+      qinq_enabled: false
+      allowed_vlans: "a,b,c"
+    register: invalid_allowed_vlans_letters_res
+    failed_when:
+      - "'allowed_vlans must be in format' not in invalid_allowed_vlans_letters_res.msg"
+
+  - name: Test parameter validation - Invalid allowed VLANs format (trailing comma)
+    cisco.intersight.intersight_ethernet_network_group_policy:
+      <<: *api_info
+      name: test_invalid_allowed_vlans_trailing_comma
+      qinq_enabled: false
+      allowed_vlans: "1,2,3,"
+    register: invalid_allowed_vlans_trailing_comma_res
+    failed_when:
+      - "'allowed_vlans must be in format' not in invalid_allowed_vlans_trailing_comma_res.msg"
+
+  - name: Test parameter validation - Invalid allowed VLANs range (start >= end)
+    cisco.intersight.intersight_ethernet_network_group_policy:
+      <<: *api_info
+      name: test_invalid_allowed_vlans_bad_range
+      qinq_enabled: false
+      allowed_vlans: "5-3"
+    register: invalid_allowed_vlans_bad_range_res
+    failed_when:
+      - "'start must be less than end' not in invalid_allowed_vlans_bad_range_res.msg"
+
+  - name: Test parameter validation - invalid allowed VLANs (VLAN ID too high)
+    cisco.intersight.intersight_ethernet_network_group_policy:
+      <<: *api_info
+      name: test_invalid_allowed_vlans_high_id
+      qinq_enabled: false
+      allowed_vlans: "1,5000"
+    register: invalid_allowed_vlans_high_id_res
+    failed_when:
+      - "'must be between 1 and 4093' not in invalid_allowed_vlans_high_id_res.msg"
+
+  - name: Test parameter validation - Invalid allowed VLANs (VLAN ID too low)
+    cisco.intersight.intersight_ethernet_network_group_policy:
+      <<: *api_info
+      name: test_invalid_allowed_vlans_low_id
+      qinq_enabled: false
+      allowed_vlans: "0,10"
+    register: invalid_allowed_vlans_low_id_res
+    failed_when:
+      - "'must be between 1 and 4093' not in invalid_allowed_vlans_low_id_res.msg"
+
+  - name: Test parameter validation - Empty allowed VLANs
+    cisco.intersight.intersight_ethernet_network_group_policy:
+      <<: *api_info
+      name: test_invalid_allowed_vlans_empty
+      qinq_enabled: false
+      allowed_vlans: ""
+    register: invalid_allowed_vlans_empty_res
+    failed_when:
+      - "'missing required arguments: allowed_vlans' not in invalid_allowed_vlans_empty_res.msg"
+
+  always:
+  - name: Remove ethernet network group policies
+    cisco.intersight.intersight_ethernet_network_group_policy:
+      <<: *api_info
+      name: "{{ item }}"
+      state: absent
+    loop:
+      - test_ethernet_network_group_policy_regular
+      - test_ethernet_network_group_policy_qinq
+      - test_ethernet_network_group_policy_qinq_no_native
+      - test_ethernet_network_group_policy_single_vlan
+      - test_ethernet_network_group_policy_defaults
+      - test_ethernet_network_group_policy_complex_vlans
+      - test_ethernet_network_group_policy_whitespace_vlans
