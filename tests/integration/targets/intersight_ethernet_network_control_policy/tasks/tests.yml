@@ -1,0 +1,226 @@
+---
+- block:
+  - name: Define anchor for Intersight API login info
+    ansible.builtin.set_fact:
+      api_info: &api_info
+        api_private_key: "{{ api_private_key }}"
+        api_key_id: "{{ api_key_id }}"
+        api_uri: "{{ api_uri | default(omit) }}"
+        validate_certs: "{{ validate_certs | default(omit) }}"
+        organization: "{{ organization }}"
+
+  - name: Make sure Env is clean
+    cisco.intersight.intersight_ethernet_network_control_policy:
+      <<: *api_info
+      name: "{{ item }}"
+      state: absent
+    loop:
+      - test_ethernet_network_control_policy
+      - test_ethernet_network_control_policy_2
+      - test_ethernet_network_control_policy_discovery
+      - test_ethernet_network_control_policy_defaults
+
+  - name: Create ethernet network control policy - check-mode
+    cisco.intersight.intersight_ethernet_network_control_policy:
+      <<: *api_info
+      name: test_ethernet_network_control_policy
+      description: "Test ethernet network control policy description"
+      tags:
+        - Key: Site
+          Value: Test
+        - Key: Environment
+          Value: Test
+      cdp_enabled: false
+      mac_registration_mode: "nativeVlanOnly"
+      uplink_fail_action: "linkDown"
+      forge_mac: "allow"
+      lldp_transmit_enabled: false
+      lldp_receive_enabled: false
+    check_mode: true
+    register: creation_res_check_mode
+
+  - name: Verify ethernet network control policy was not created - check-mode
+    ansible.builtin.assert:
+      that:
+        - creation_res_check_mode is changed
+        - creation_res_check_mode.api_response == {}
+
+  - name: Create ethernet network control policy
+    cisco.intersight.intersight_ethernet_network_control_policy:
+      <<: *api_info
+      name: test_ethernet_network_control_policy
+      description: "Test ethernet network control policy description"
+      tags:
+        - Key: Site
+          Value: Test
+        - Key: Environment
+          Value: Test
+      cdp_enabled: false
+      mac_registration_mode: "nativeVlanOnly"
+      uplink_fail_action: "linkDown"
+      forge_mac: "allow"
+      lldp_transmit_enabled: false
+      lldp_receive_enabled: false
+    register: creation_res
+
+  - name: Verify ethernet network control policy was created
+    ansible.builtin.assert:
+      that:
+        - creation_res is changed
+        - creation_res.api_response.Name == "test_ethernet_network_control_policy"
+        - creation_res.api_response.CdpEnabled == false
+        - creation_res.api_response.MacRegistrationMode == "nativeVlanOnly"
+        - creation_res.api_response.UplinkFailAction == "linkDown"
+        - creation_res.api_response.ForgeMac == "allow"
+        - creation_res.api_response.LldpSettings.TransmitEnabled == false
+        - creation_res.api_response.LldpSettings.ReceiveEnabled == false
+
+  - name: Create ethernet network control policy - idempotent
+    cisco.intersight.intersight_ethernet_network_control_policy:
+      <<: *api_info
+      name: test_ethernet_network_control_policy
+      description: "Test ethernet network control policy description"
+      tags:
+        - Key: Site
+          Value: Test
+        - Key: Environment
+          Value: Test
+      cdp_enabled: false
+      mac_registration_mode: "nativeVlanOnly"
+      uplink_fail_action: "linkDown"
+      forge_mac: "allow"
+      lldp_transmit_enabled: false
+      lldp_receive_enabled: false
+    register: creation_res_idem
+
+  - name: Verify ethernet network control policy creation was idempotent
+    ansible.builtin.assert:
+      that:
+        - creation_res_idem is not changed
+
+  - name: Update ethernet network control policy
+    cisco.intersight.intersight_ethernet_network_control_policy:
+      <<: *api_info
+      name: test_ethernet_network_control_policy
+      description: "Updated ethernet network control policy description"
+      tags:
+        - Key: Site
+          Value: Test
+        - Key: Environment
+          Value: Production
+      cdp_enabled: true
+      mac_registration_mode: "allVlans"
+      uplink_fail_action: "warning"
+      forge_mac: "deny"
+      lldp_transmit_enabled: true
+      lldp_receive_enabled: true
+    register: update_res
+
+  - name: Verify ethernet network control policy was updated
+    ansible.builtin.assert:
+      that:
+        - update_res is changed
+        - update_res.api_response.Name == "test_ethernet_network_control_policy"
+        - update_res.api_response.CdpEnabled == true
+        - update_res.api_response.MacRegistrationMode == "allVlans"
+        - update_res.api_response.UplinkFailAction == "warning"
+        - update_res.api_response.ForgeMac == "deny"
+        - update_res.api_response.LldpSettings.TransmitEnabled == true
+        - update_res.api_response.LldpSettings.ReceiveEnabled == true
+
+  - name: Create ethernet network control policy with discovery protocols enabled
+    cisco.intersight.intersight_ethernet_network_control_policy:
+      <<: *api_info
+      name: test_ethernet_network_control_policy_discovery
+      description: "Test ethernet network control policy with discovery protocols"
+      cdp_enabled: true
+      mac_registration_mode: "allVlans"
+      uplink_fail_action: "warning"
+      forge_mac: "deny"
+      lldp_transmit_enabled: true
+      lldp_receive_enabled: true
+    register: discovery_policy_res
+
+  - name: Verify discovery-enabled ethernet network control policy was created
+    ansible.builtin.assert:
+      that:
+        - discovery_policy_res is changed
+        - discovery_policy_res.api_response.Name == "test_ethernet_network_control_policy_discovery"
+        - discovery_policy_res.api_response.CdpEnabled == true
+        - discovery_policy_res.api_response.MacRegistrationMode == "allVlans"
+        - discovery_policy_res.api_response.UplinkFailAction == "warning"
+        - discovery_policy_res.api_response.ForgeMac == "deny"
+        - discovery_policy_res.api_response.LldpSettings.TransmitEnabled == true
+        - discovery_policy_res.api_response.LldpSettings.ReceiveEnabled == true
+
+  - name: Create ethernet network control policy with defaults
+    cisco.intersight.intersight_ethernet_network_control_policy:
+      <<: *api_info
+      name: test_ethernet_network_control_policy_defaults
+      description: "Test ethernet network control policy with default values"
+    register: defaults_policy_res
+
+  - name: Verify default ethernet network control policy was created
+    ansible.builtin.assert:
+      that:
+        - defaults_policy_res is changed
+        - defaults_policy_res.api_response.Name == "test_ethernet_network_control_policy_defaults"
+        - defaults_policy_res.api_response.CdpEnabled == false
+        - defaults_policy_res.api_response.MacRegistrationMode == "nativeVlanOnly"
+        - defaults_policy_res.api_response.UplinkFailAction == "linkDown"
+        - defaults_policy_res.api_response.ForgeMac == "allow"
+        - defaults_policy_res.api_response.LldpSettings.TransmitEnabled == false
+        - defaults_policy_res.api_response.LldpSettings.ReceiveEnabled == false
+
+  - name: Get all ethernet network control policies
+    cisco.intersight.intersight_ethernet_network_control_policy_info:
+      <<: *api_info
+    register: all_policies
+
+  - name: Verify all policies were returned
+    ansible.builtin.assert:
+      that:
+        - all_policies.api_response | length >= 3
+        - all_policies.api_response | selectattr('Name', 'equalto', 'test_ethernet_network_control_policy') | list | length == 1
+        - all_policies.api_response | selectattr('Name', 'equalto', 'test_ethernet_network_control_policy_discovery') | list | length == 1
+        - all_policies.api_response | selectattr('Name', 'equalto', 'test_ethernet_network_control_policy_defaults') | list | length == 1
+
+  - name: Get specific ethernet network control policy by name
+    cisco.intersight.intersight_ethernet_network_control_policy_info:
+      <<: *api_info
+      name: test_ethernet_network_control_policy
+    register: specific_policy
+
+  - name: Verify specific policy was returned
+    ansible.builtin.assert:
+      that:
+        - specific_policy.api_response | length == 1
+        - specific_policy.api_response[0].Name == "test_ethernet_network_control_policy"
+        - specific_policy.api_response[0].CdpEnabled == true
+        - specific_policy.api_response[0].MacRegistrationMode == "allVlans"
+        - specific_policy.api_response[0].UplinkFailAction == "warning"
+        - specific_policy.api_response[0].ForgeMac == "deny"
+        - specific_policy.api_response[0].LldpSettings.TransmitEnabled == true
+        - specific_policy.api_response[0].LldpSettings.ReceiveEnabled == true
+
+  - name: Get ethernet network control policies by organization
+    cisco.intersight.intersight_ethernet_network_control_policy_info:
+      <<: *api_info
+    register: org_policies
+
+  - name: Verify organization policies were returned
+    ansible.builtin.assert:
+      that:
+        - org_policies.api_response | length >= 3
+
+  always:
+    - name: Clean up all test policies
+      cisco.intersight.intersight_ethernet_network_control_policy:
+        <<: *api_info
+        name: "{{ item }}"
+        state: absent
+      loop:
+        - test_ethernet_network_control_policy
+        - test_ethernet_network_control_policy_2
+        - test_ethernet_network_control_policy_discovery
+        - test_ethernet_network_control_policy_defaults

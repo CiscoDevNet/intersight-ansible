@@ -379,6 +379,10 @@ class IntersightModule():
                     # return the 1st element in the results list
                     self.result['api_response'] = response_dict['Results'][0]
                     self.result['trace_id'] = response_dict.get('trace_id')
+                elif response_dict and 'Moid' in response_dict:
+                    # PATCH returned the updated object directly (not in Results array)
+                    self.result['api_response'] = response_dict
+                    self.result['trace_id'] = response_dict.get('trace_id')
             else:
                 # create the resource
                 options = {
