@@ -243,9 +243,7 @@ def main():
             exclude_components.append('local-disk')
         if module.params['exclude_storage_controllers']:
             exclude_components.append('storage-controller')
-        # Specify only if there are any components to exclude
-        if exclude_components:
-            intersight.api_body['ExcludeComponentList'] = exclude_components
+        intersight.api_body['ExcludeComponentList'] = exclude_components
 
     intersight.configure_policy_or_profile(resource_path)
 
