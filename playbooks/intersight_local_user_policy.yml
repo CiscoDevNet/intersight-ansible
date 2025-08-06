@@ -55,3 +55,6 @@
           - username: guest
             role: admin
             password: "{{ vault_password }}"
+          - username: user1
+            role: readonly
+            password: badpassword
