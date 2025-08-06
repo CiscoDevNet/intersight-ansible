@@ -233,7 +233,7 @@ def main():
             },
         }
         intersight.set_tags_and_description()
- 
+
     user_policy_moid = None
     resource_values_match = False
     if intersight.result['api_response'].get('Moid'):
