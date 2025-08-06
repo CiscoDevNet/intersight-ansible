@@ -1,0 +1,358 @@
+---
+- block:
+  - name: Define anchor for Intersight API login info
+    ansible.builtin.set_fact:
+      api_info: &api_info
+        api_private_key: "{{ api_private_key }}"
+        api_key_id: "{{ api_key_id }}"
+        api_uri: "{{ api_uri | default(omit) }}"
+        validate_certs: "{{ validate_certs | default(omit) }}"
+        organization: "{{ organization }}"
+
+  - name: Make sure Env is clean
+    cisco.intersight.intersight_ethernet_adapter_policy:
+      <<: *api_info
+      name: "{{ item }}"
+      state: absent
+    loop:
+      - test_ethernet_adapter_basic
+      - test_ethernet_adapter_advanced
+      - test_ethernet_adapter_roce
+      - test_ethernet_adapter_etherchannel
+      - test_ethernet_adapter_custom_queues
+      - test_ethernet_adapter_no_offload
+      - test_ethernet_adapter_custom_rss
+      - test_ethernet_adapter_updated
+
+  - name: Create basic Ethernet Adapter policy - check-mode
+    cisco.intersight.intersight_ethernet_adapter_policy:
+      <<: *api_info
+      name: test_ethernet_adapter_basic
+      description: "Test basic Ethernet adapter policy"
+      tags:
+        - Key: Site
+          Value: Test
+    check_mode: true
+    register: basic_creation_check_mode
+
+  - name: Verify basic Ethernet Adapter policy was not created - check-mode
+    ansible.builtin.assert:
+      that:
+        - basic_creation_check_mode is changed
+        - basic_creation_check_mode.api_response == {}
+
+  - name: Create basic Ethernet Adapter policy
+    cisco.intersight.intersight_ethernet_adapter_policy:
+      <<: *api_info
+      name: test_ethernet_adapter_basic
+      description: "Test basic Ethernet adapter policy"
+      tags:
+        - Key: Site
+          Value: Test
+    register: basic_creation
+
+  - name: Verify basic Ethernet Adapter policy creation
+    ansible.builtin.assert:
+      that:
+        - basic_creation.changed
+
+  - name: Create basic Ethernet Adapter policy (idempotency check)
+    cisco.intersight.intersight_ethernet_adapter_policy:
+      <<: *api_info
+      name: test_ethernet_adapter_basic
+      description: "Test basic Ethernet adapter policy"
+      tags:
+        - Key: Site
+          Value: Test
+    register: basic_creation_ide
+
+  - name: Verify basic Ethernet Adapter policy creation (idempotency check)
+    ansible.builtin.assert:
+      that:
+        - not basic_creation_ide.changed
+
+  - name: Create advanced Ethernet Adapter policy
+    cisco.intersight.intersight_ethernet_adapter_policy:
+      <<: *api_info
+      name: test_ethernet_adapter_advanced
+      description: "Advanced Ethernet adapter policy with VXLAN and PTP"
+      vxlan_enabled: true
+      ptp_enabled: true
+      arfs_enabled: true
+      advanced_filter: true
+      interrupt_scaling: true
+      interrupt_count: 16
+      rx_queue_count: 8
+      tx_queue_count: 4
+      completion_queue_count: 12
+      tags:
+        - Key: Environment
+          Value: Test
+        - Key: Feature
+          Value: Advanced
+    register: advanced_creation
+
+  - name: Verify advanced Ethernet Adapter policy creation
+    ansible.builtin.assert:
+      that:
+        - advanced_creation.changed
+
+  - name: Create RoCE enabled Ethernet Adapter policy
+    cisco.intersight.intersight_ethernet_adapter_policy:
+      <<: *api_info
+      name: test_ethernet_adapter_roce
+      description: "Ethernet adapter policy with RoCE enabled"
+      roce_enabled: true
+      roce_queue_pairs: 256
+      roce_memory_regions: 131072
+      roce_resource_groups: 2
+      roce_version: 2
+      roce_class_of_service: 5
+      tags:
+        - Key: Protocol
+          Value: RoCE
+    register: roce_creation
+
+  - name: Verify RoCE enabled Ethernet Adapter policy creation
+    ansible.builtin.assert:
+      that:
+        - roce_creation.changed
+
+  - name: Create EtherChannel pinning enabled Ethernet Adapter policy
+    cisco.intersight.intersight_ethernet_adapter_policy:
+      <<: *api_info
+      name: test_ethernet_adapter_etherchannel
+      description: "Ethernet adapter policy with EtherChannel pinning"
+      etherchannel_pinning_enabled: true
+      tx_queue_count: 2
+      completion_queue_count: 6
+      tags:
+        - Key: Feature
+          Value: EtherChannel
+    register: etherchannel_creation
+
+  - name: Verify EtherChannel enabled Ethernet Adapter policy creation
+    ansible.builtin.assert:
+      that:
+        - etherchannel_creation.changed
+
+  - name: Create Ethernet Adapter policy with custom queue settings
+    cisco.intersight.intersight_ethernet_adapter_policy:
+      <<: *api_info
+      name: test_ethernet_adapter_custom_queues
+      description: "Ethernet adapter policy with custom queue settings"
+      rx_queue_count: 8
+      rx_ring_size: 1024
+      tx_queue_count: 4
+      tx_ring_size: 512
+      completion_queue_count: 12
+      completion_ring_size: 2
+      interrupt_count: 16
+      interrupt_coalescing_time: 200
+      interrupt_coalescing_type: "IDLE"
+      uplink_failback_timeout: 10
+      tags:
+        - Key: Feature
+          Value: CustomQueues
+    register: custom_queues_creation
+
+  - name: Verify custom queue settings Ethernet Adapter policy creation
+    ansible.builtin.assert:
+      that:
+        - custom_queues_creation.changed
+
+  - name: Create Ethernet Adapter policy with TCP offload disabled
+    cisco.intersight.intersight_ethernet_adapter_policy:
+      <<: *api_info
+      name: test_ethernet_adapter_no_offload
+      description: "Ethernet adapter policy with TCP offload disabled"
+      tcp_tx_checksum: false
+      tcp_rx_checksum: false
+      tcp_large_send: false
+      tcp_large_receive: false
+      rss_enabled: false
+      tags:
+        - Key: Performance
+          Value: NoOffload
+    register: no_offload_creation
+
+  - name: Verify TCP offload disabled Ethernet Adapter policy creation
+    ansible.builtin.assert:
+      that:
+        - no_offload_creation.changed
+
+  - name: Create Ethernet Adapter policy with custom RSS settings
+    cisco.intersight.intersight_ethernet_adapter_policy:
+      <<: *api_info
+      name: test_ethernet_adapter_custom_rss
+      description: "Ethernet adapter policy with custom RSS configuration"
+      rss_enabled: true
+      rss_ipv4_hash: true
+      rss_ipv6_hash: false
+      rss_tcp_ipv4_hash: false
+      rss_tcp_ipv6_hash: false
+      rss_udp_ipv4_hash: true
+      rss_udp_ipv6_hash: true
+      tags:
+        - Key: Feature
+          Value: CustomRSS
+    register: custom_rss_creation
+
+  - name: Verify custom RSS settings Ethernet Adapter policy creation
+    ansible.builtin.assert:
+      that:
+        - custom_rss_creation.changed
+        - custom_rss_creation.api_response.RssSettings == true
+        - custom_rss_creation.api_response.RssHashSettings.Ipv4Hash == true
+        - custom_rss_creation.api_response.RssHashSettings.Ipv6Hash == false
+        - custom_rss_creation.api_response.RssHashSettings.TcpIpv4Hash == false
+        - custom_rss_creation.api_response.RssHashSettings.TcpIpv6Hash == false
+        - custom_rss_creation.api_response.RssHashSettings.UdpIpv4Hash == true
+        - custom_rss_creation.api_response.RssHashSettings.UdpIpv6Hash == true
+
+  - name: Fetch info after basic policy creation
+    cisco.intersight.intersight_ethernet_adapter_policy_info:
+      <<: *api_info
+      name: test_ethernet_adapter_basic
+    register: basic_info
+
+  - name: Verify basic policy info retrieval
+    ansible.builtin.assert:
+      that:
+        - basic_info.api_response | length == 1
+        - basic_info.api_response[0].Name == "test_ethernet_adapter_basic"
+
+  - name: Fetch info for RoCE policy
+    cisco.intersight.intersight_ethernet_adapter_policy_info:
+      <<: *api_info
+      name: test_ethernet_adapter_roce
+    register: roce_info
+
+  - name: Verify RoCE policy info retrieval
+    ansible.builtin.assert:
+      that:
+        - roce_info.api_response | length == 1
+        - roce_info.api_response[0].Name == "test_ethernet_adapter_roce"
+        - roce_info.api_response[0].RoceSettings.Enabled == true
+        - roce_info.api_response[0].RoceSettings.QueuePairs == 256
+
+  - name: Fetch all Ethernet Adapter policies from organization
+    cisco.intersight.intersight_ethernet_adapter_policy_info:
+      <<: *api_info
+    register: all_policies
+
+  - name: Verify all policies retrieval
+    ansible.builtin.assert:
+      that:
+        - all_policies.api_response | length >= 7
+
+  - name: Test validation error - RoCE and NVGRE simultaneously
+    cisco.intersight.intersight_ethernet_adapter_policy:
+      <<: *api_info
+      name: test_validation_fail_roce_nvgre
+      roce_enabled: true
+      nvgre_enabled: true
+    register: validation_error_1
+    failed_when:
+     - not validation_error_1.failed
+     - "'Cannot enable RDMA over Converged Ethernet and NVGRE simultaneously' not in validation_error_1.msg"
+
+  - name: Test validation error - GENEVE and ARFS simultaneously
+    cisco.intersight.intersight_ethernet_adapter_policy:
+      <<: *api_info
+      name: test_validation_fail_geneve_arfs
+      geneve_enabled: true
+      arfs_enabled: true
+    register: validation_error_2
+    failed_when:
+     - not validation_error_2.failed
+     - "'Cannot enable \\'GENEVE Offload\\' not in validation_error_2.msg"
+     - "'Accelerated Receive Flow Steering (ARFS)' not in validation_error_2.msg"
+
+  - name: Test validation error - EtherChannel pinning with tx_queue_count < 2
+    cisco.intersight.intersight_ethernet_adapter_policy:
+      <<: *api_info
+      name: test_validation_fail_etherchannel
+      etherchannel_pinning_enabled: true
+      tx_queue_count: 1
+    register: validation_error_3
+    failed_when:
+     - not validation_error_3.failed
+     - "'Cannot enable ether channel pinning with transmit queue count less than 2' not in validation_error_3.msg"
+
+  - name: Test validation error - interrupt_count out of range
+    cisco.intersight.intersight_ethernet_adapter_policy:
+      <<: *api_info
+      name: test_validation_fail_interrupt_count
+      interrupt_count: 2000
+    register: validation_error_4
+    failed_when:
+     - not validation_error_4.failed
+     - "'interrupt_count must be between 1 and 1024' not in validation_error_4.msg"
+
+  - name: Test validation error - RoCE queue pairs out of range
+    cisco.intersight.intersight_ethernet_adapter_policy:
+      <<: *api_info
+      name: test_validation_fail_roce_queue_pairs
+      roce_enabled: true
+      roce_queue_pairs: 10000
+    register: validation_error_5
+    failed_when:
+     - not validation_error_5.failed
+     - "'roce_queue_pairs must be between 1 and 8192' not in validation_error_5.msg"
+
+  - name: Update basic Ethernet Adapter policy
+    cisco.intersight.intersight_ethernet_adapter_policy:
+      <<: *api_info
+      name: test_ethernet_adapter_basic
+      description: "Updated test basic Ethernet adapter policy"
+      vxlan_enabled: true
+      interrupt_count: 12
+      tags:
+        - Key: Site
+          Value: Test
+        - Key: Updated
+          Value: "true"
+    register: basic_update
+
+  - name: Verify basic Ethernet Adapter policy update
+    ansible.builtin.assert:
+      that:
+        - basic_update.changed
+        - basic_update.api_response.InterruptSettings.Count == 12
+        - basic_update.api_response.VxlanSettings.Enabled == true
+
+
+  - name: Fetch info after basic policy update
+    cisco.intersight.intersight_ethernet_adapter_policy_info:
+      <<: *api_info
+      name: test_ethernet_adapter_basic
+    register: basic_updated_info
+
+  - name: Verify basic policy update through info
+    ansible.builtin.assert:
+      that:
+        - basic_updated_info.api_response[0].Description == "Updated test basic Ethernet adapter policy"
+        - basic_updated_info.api_response[0].VxlanSettings.Enabled == true
+        - basic_updated_info.api_response[0].InterruptSettings.Count == 12
+
+  always:
+    - name: Clean up test policies
+      cisco.intersight.intersight_ethernet_adapter_policy:
+        <<: *api_info
+        name: "{{ item }}"
+        state: absent
+      loop:
+        - test_ethernet_adapter_basic
+        - test_ethernet_adapter_advanced
+        - test_ethernet_adapter_roce
+        - test_ethernet_adapter_etherchannel
+        - test_ethernet_adapter_custom_queues
+        - test_ethernet_adapter_no_offload
+        - test_ethernet_adapter_custom_rss
+        - test_ethernet_adapter_updated
+        - test_validation_fail_roce_nvgre
+        - test_validation_fail_geneve_arfs
+        - test_validation_fail_etherchannel
+        - test_validation_fail_interrupt_count
+        - test_validation_fail_roce_queue_pairs
