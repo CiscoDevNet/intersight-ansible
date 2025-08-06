@@ -223,6 +223,17 @@ def main():
         },
     )
 
+    if module.params['state'] == 'present':
+        intersight.api_body = {
+            'Name': intersight.module.params['name'],
+            'PasswordProperties': {
+                'EnforceStrongPassword': intersight.module.params['enforce_strong_password'],
+                'EnablePasswordExpiry': intersight.module.params['enable_password_expiry'],
+                'PasswordHistory': intersight.module.params['password_history'],
+            },
+        }
+        intersight.set_tags_and_description()
+ 
     user_policy_moid = None
     resource_values_match = False
     if intersight.result['api_response'].get('Moid'):
@@ -251,19 +262,9 @@ def main():
                         },
                     }
                 )
-            intersight.api_body = {
-                'Name': intersight.module.params['name'],
-                'Tags': intersight.module.params['tags'],
-                'Description': intersight.module.params['description'],
-                'PasswordProperties': {
-                    'EnforceStrongPassword': intersight.module.params['enforce_strong_password'],
-                    'EnablePasswordExpiry': intersight.module.params['enable_password_expiry'],
-                    'PasswordHistory': intersight.module.params['password_history'],
-                },
-                'EndPointUserRoles': end_point_user_roles,
-                'Organization': {
-                    'Name': intersight.module.params['organization'],
-                },
+            intersight.api_body['EndPointUserRoles'] = end_point_user_roles
+            intersight.api_body['Organization'] = {
+                'Name': intersight.module.params['organization'],
             }
             resource_values_match = compare_values(intersight.api_body, intersight.result['api_response'])
         elif module.params['state'] == 'absent':
@@ -274,18 +275,8 @@ def main():
             user_policy_moid = None
 
     if module.params['state'] == 'present' and not resource_values_match:
-        intersight.api_body = {
-            'Name': intersight.module.params['name'],
-            'Tags': intersight.module.params['tags'],
-            'Description': intersight.module.params['description'],
-            'PasswordProperties': {
-                'EnforceStrongPassword': intersight.module.params['enforce_strong_password'],
-                'EnablePasswordExpiry': intersight.module.params['enable_password_expiry'],
-                'PasswordHistory': intersight.module.params['password_history'],
-            },
-            'Organization': {
-                'Moid': organization_moid
-            },
+        intersight.api_body['Organization'] = {
+            'Moid': organization_moid,
         }
 
         if module.params['purge']:
@@ -312,6 +303,7 @@ def main():
 
             # EndPointUser local_users list config
             for user in intersight.module.params['local_users']:
+                intersight.result['api_response'] = {}
                 # check for existing user in this organization
                 filter_str = "Name eq '" + user['username'] + "'"
                 filter_str += "and Organization.Moid eq '" + organization_moid + "'"
