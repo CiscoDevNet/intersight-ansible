@@ -1,0 +1,618 @@
+---
+- block:
+  - name: Define anchor for Intersight API login info
+    ansible.builtin.set_fact:
+      api_info: &api_info
+        api_private_key: "{{ api_private_key }}"
+        api_key_id: "{{ api_key_id }}"
+        api_uri: "{{ api_uri | default(omit) }}"
+        validate_certs: "{{ validate_certs | default(omit) }}"
+        organization: "{{ organization }}"
+
+  - name: Make sure Env is clean
+    cisco.intersight.intersight_storage_policy:
+      <<: *api_info
+      name: "{{ item }}"
+      state: absent
+    loop:
+      - test_storage_policy
+      - test_storage_policy_m2
+      - test_storage_policy_raid0
+      - test_storage_policy_full_config
+      - test_storage_policy_validate
+      - test_storage_policy_dg_single
+      - test_storage_policy_dg_nested
+      - test_storage_policy_dg_add_del
+
+  - name: Create basic storage policy - check-mode
+    cisco.intersight.intersight_storage_policy:
+      <<: *api_info
+      name: test_storage_policy
+      description: "Test basic storage policy description"
+      m2_virtual_drive_config:
+        enable: false
+      raid0_drive_config:
+        enable: false
+      tags:
+        - Key: "Site"
+          Value: "Test"
+    check_mode: true
+    register: creation_res_check_mode
+
+  - name: Verify storage policy was not created - check-mode
+    ansible.builtin.assert:
+      that:
+        - creation_res_check_mode is changed
+        - creation_res_check_mode.api_response == {}
+
+  - name: Create basic storage policy
+    cisco.intersight.intersight_storage_policy:
+      <<: *api_info
+      name: test_storage_policy
+      description: "Test basic storage policy description"
+      m2_virtual_drive_config:
+        enable: false
+      raid0_drive_config:
+        enable: false
+      tags:
+        - Key: "Site"
+          Value: "Test"
+    register: creation_res
+
+  - name: Fetch info after creation
+    cisco.intersight.intersight_storage_policy_info:
+      <<: *api_info
+      name: test_storage_policy
+    register: creation_info_res
+
+  - name: Verify basic storage policy creation by info
+    ansible.builtin.assert:
+      that:
+        - creation_res.changed
+        - creation_info_res.api_response[0].Name == 'test_storage_policy'
+        - creation_info_res.api_response[0].UseJbodForVdCreation == false
+        - creation_info_res.api_response[0].UnusedDisksState == "NoChange"
+        - creation_info_res.api_response[0].DefaultDriveMode == "UnconfiguredGood"
+
+  - name: Verify storage policy creation response aligns with info response
+    ansible.builtin.assert:
+      that:
+        - creation_res.api_response.Name == creation_info_res.api_response[0].Name
+        - creation_res.api_response.UseJbodForVdCreation == creation_info_res.api_response[0].UseJbodForVdCreation
+        - creation_res.api_response.UnusedDisksState == creation_info_res.api_response[0].UnusedDisksState
+
+  - name: Create basic storage policy (idempotency check)
+    cisco.intersight.intersight_storage_policy:
+      <<: *api_info
+      name: test_storage_policy
+      description: "Test basic storage policy description"
+      m2_virtual_drive_config:
+        enable: false
+      raid0_drive_config:
+        enable: false
+      tags:
+        - Key: "Site"
+          Value: "Test"
+    register: creation_res_ide
+
+  - name: Verify storage policy creation (idempotency check)
+    ansible.builtin.assert:
+      that:
+        - not creation_res_ide.changed
+
+  - name: Validate failure due to invalid drive mode and JBOD combination
+    cisco.intersight.intersight_storage_policy:
+      <<: *api_info
+      name: test_storage_policy_validate
+      description: "Test policy validation"
+      default_drive_mode: "Jbod"
+      use_jbod_for_vd_creation: true
+      m2_virtual_drive_config:
+        enable: false
+      raid0_drive_config:
+        enable: false
+      state: present
+    register: failure_res
+    failed_when:
+      - "'use_jbod_for_vd_creation must be disabled' not in failure_res.msg"
+
+  - name: Create storage policy with M.2 virtual drive enabled
+    cisco.intersight.intersight_storage_policy:
+      <<: *api_info
+      name: test_storage_policy_m2
+      description: "Test storage policy with M.2 virtual drive"
+      m2_virtual_drive_config:
+        enable: true
+        controller_slot: "MSTOR-RAID-1"
+        name: "TestM2VD"
+      raid0_drive_config:
+        enable: false
+      tags:
+        - Key: "Feature"
+          Value: "M2"
+    register: creation_res_m2
+
+  - name: Verify storage policy with M.2 configuration
+    ansible.builtin.assert:
+      that:
+        - creation_res_m2.changed
+        - creation_res_m2.api_response.Name == 'test_storage_policy_m2'
+        - creation_res_m2.api_response.M2VirtualDrive.Enable == true
+        - creation_res_m2.api_response.M2VirtualDrive.ControllerSlot == "MSTOR-RAID-1"
+        - creation_res_m2.api_response.M2VirtualDrive.Name == "TestM2VD"
+
+  - name: Create storage policy with RAID0 configuration
+    cisco.intersight.intersight_storage_policy:
+      <<: *api_info
+      name: test_storage_policy_raid0
+      description: "Test storage policy with RAID0"
+      m2_virtual_drive_config:
+        enable: false
+      raid0_drive_config:
+        enable: true
+        drive_slots: "1,2"
+        strip_size: 128
+        access_policy: "ReadWrite"
+        read_policy: "ReadAhead"
+        write_policy: "WriteBackGoodBbu"
+        disk_cache: "Enable"
+      tags:
+        - Key: "Feature"
+          Value: "RAID0"
+    register: creation_res_raid0
+
+  - name: Verify storage policy with RAID0 configuration
+    ansible.builtin.assert:
+      that:
+        - creation_res_raid0.changed
+        - creation_res_raid0.api_response.Name == 'test_storage_policy_raid0'
+        - creation_res_raid0.api_response.Raid0Drive.Enable == true
+        - creation_res_raid0.api_response.Raid0Drive.DriveSlots == "1,2"
+        - creation_res_raid0.api_response.Raid0Drive.VirtualDrivePolicy.StripSize == 128
+        - creation_res_raid0.api_response.Raid0Drive.VirtualDrivePolicy.AccessPolicy == "ReadWrite"
+
+  - name: Create storage policy with full configuration
+    cisco.intersight.intersight_storage_policy:
+      <<: *api_info
+      name: test_storage_policy_full_config
+      description: "Test storage policy with full configuration"
+      use_jbod_for_vd_creation: true
+      unused_disks_state: "NoChange"
+      default_drive_mode: "UnconfiguredGood"
+      secure_jbods: "1,3"
+      m2_virtual_drive_config:
+        enable: true
+        controller_slot: "MSTOR-RAID-2"
+        name: "FullConfigVD"
+      raid0_drive_config:
+        enable: true
+        drive_slots: "4-6"
+        strip_size: 256
+        access_policy: "Default"
+        read_policy: "NoReadAhead"
+        write_policy: "WriteThrough"
+        disk_cache: "Disable"
+      controller_attached_nvme_slots: "21,22"
+      direct_attached_nvme_slots: "23,24"
+      tags:
+        - Key: "Feature"
+          Value: "FullConfig"
+    register: creation_res_full
+
+  - name: Verify storage policy with full configuration
+    ansible.builtin.assert:
+      that:
+        - creation_res_full.changed
+        - creation_res_full.api_response.Name == 'test_storage_policy_full_config'
+        - creation_res_full.api_response.SecureJbods == "1,3"
+        - creation_res_full.api_response.M2VirtualDrive.Enable == true
+        - creation_res_full.api_response.M2VirtualDrive.ControllerSlot == "MSTOR-RAID-2"
+        - creation_res_full.api_response.Raid0Drive.Enable == true
+        - creation_res_full.api_response.ControllerAttachedNvmeSlots == "21,22"
+        - creation_res_full.api_response.DirectAttachedNvmeSlots == "23,24"
+
+  - name: Fetch all storage policies under the organization
+    cisco.intersight.intersight_storage_policy_info:
+      <<: *api_info
+    register: creation_info_res_all
+
+  - name: Check that there are at least 4 storage policies under this organization
+    ansible.builtin.assert:
+      that:
+        - creation_info_res_all.api_response | length > 3
+
+  - name: Create storage policy with single drive group (RAID1)
+    cisco.intersight.intersight_storage_policy:
+      <<: *api_info
+      name: test_storage_policy_dg_single
+      description: "Policy with single RAID1 drive group"
+      m2_virtual_drive_config:
+        enable: false
+      raid0_drive_config:
+        enable: false
+      drive_groups:
+        - name: raid1-boot-group
+          raid_level: Raid1
+          secure_drive_group: false
+          dedicated_hot_spares: "3"
+          span_groups:
+            - slots: "1,2"
+          virtual_drives:
+            - name: boot-vd
+              size: 102400
+              expand_to_available: false
+              boot_drive: true
+              strip_size: 64
+              access_policy: ReadWrite
+              read_policy: ReadAhead
+              write_policy: WriteBackGoodBbu
+              disk_cache: Enable
+          state: present
+    register: dg_single_create
+
+  - name: Verify single drive group creation via info
+    cisco.intersight.intersight_storage_policy_info:
+      <<: *api_info
+      name: test_storage_policy_dg_single
+    register: dg_single_info
+
+  - name: Assert single drive group exists with expected config
+    ansible.builtin.assert:
+      that:
+        - dg_single_create.changed
+        - dg_single_info.api_response[0].Name == 'test_storage_policy_dg_single'
+        - dg_single_create.api_response.DriveGroups | length == 1
+        - dg_single_create.api_response.DriveGroups[0].RaidLevel == 'Raid1'
+        - dg_single_create.api_response.DriveGroups[0].VirtualDrives[0].VirtualDrivePolicy.StripSize == 64
+
+  - name: Idempotency - apply same single drive group
+    cisco.intersight.intersight_storage_policy:
+      <<: *api_info
+      name: test_storage_policy_dg_single
+      description: "Policy with single RAID1 drive group"
+      m2_virtual_drive_config:
+        enable: false
+      raid0_drive_config:
+        enable: false
+      drive_groups:
+        - name: raid1-boot-group
+          raid_level: Raid1
+          secure_drive_group: false
+          dedicated_hot_spares: "3"
+          span_groups:
+            - slots: "1,2"
+          virtual_drives:
+            - name: boot-vd
+              size: 102400
+              expand_to_available: false
+              boot_drive: true
+              strip_size: 64
+              access_policy: ReadWrite
+              read_policy: ReadAhead
+              write_policy: WriteBackGoodBbu
+              disk_cache: Enable
+          state: present
+    register: dg_single_idem
+
+  - name: Verify idempotency for single drive group
+    ansible.builtin.assert:
+      that:
+        - not dg_single_idem.changed
+
+  - name: Update drive group virtual drive strip size
+    cisco.intersight.intersight_storage_policy:
+      <<: *api_info
+      name: test_storage_policy_dg_single
+      description: "Policy with single RAID1 drive group - updated"
+      m2_virtual_drive_config:
+        enable: false
+      raid0_drive_config:
+        enable: false
+      drive_groups:
+        - name: raid1-boot-group
+          raid_level: Raid1
+          secure_drive_group: false
+          dedicated_hot_spares: "3"
+          span_groups:
+            - slots: "1,2"
+          virtual_drives:
+            - name: boot-vd
+              size: 102400
+              expand_to_available: false
+              boot_drive: true
+              strip_size: 128
+              access_policy: ReadWrite
+              read_policy: ReadAhead
+              write_policy: WriteBackGoodBbu
+              disk_cache: Enable
+          state: present
+    register: dg_single_update
+
+  - name: Fetch info after drive group update
+    cisco.intersight.intersight_storage_policy_info:
+      <<: *api_info
+      name: test_storage_policy_dg_single
+    register: dg_single_update_info
+
+  - name: Assert drive group strip size updated
+    ansible.builtin.assert:
+      that:
+        - dg_single_update.changed
+        - dg_single_update.api_response.DriveGroups[0].VirtualDrives[0].VirtualDrivePolicy.StripSize == 128
+
+  - name: Create storage policy with nested RAID drive group (RAID60)
+    cisco.intersight.intersight_storage_policy:
+      <<: *api_info
+      name: test_storage_policy_dg_nested
+      description: "Policy with RAID60 drive group"
+      m2_virtual_drive_config:
+        enable: false
+      raid0_drive_config:
+        enable: false
+      drive_groups:
+        - name: raid60-enterprise-group
+          raid_level: Raid60
+          secure_drive_group: true
+          dedicated_hot_spares: "33,34"
+          span_groups:
+            - slots: "1,2,3,4"
+            - slots: "5,6,7,8"
+            - slots: "9,10,11,12"
+            - slots: "13,14,15,16"
+          virtual_drives:
+            - name: enterprise-vd1
+              size: 1048576
+              expand_to_available: false
+              boot_drive: false
+              strip_size: 256
+              access_policy: ReadWrite
+              read_policy: ReadAhead
+              write_policy: WriteBackGoodBbu
+              disk_cache: Enable
+            - name: enterprise-vd2
+              size: 0
+              expand_to_available: true
+              boot_drive: false
+              strip_size: 256
+              access_policy: ReadWrite
+              read_policy: ReadAhead
+              write_policy: WriteBackGoodBbu
+              disk_cache: Enable
+          state: present
+    register: dg_nested_create
+
+  - name: Verify nested RAID60 drive group via info
+    cisco.intersight.intersight_storage_policy_info:
+      <<: *api_info
+      name: test_storage_policy_dg_nested
+    register: dg_nested_info
+
+  - name: Assert nested RAID60 configuration
+    ansible.builtin.assert:
+      that:
+        - dg_nested_create.changed
+        - dg_nested_create.api_response.DriveGroups | length == 1
+        - dg_nested_create.api_response.DriveGroups[0].RaidLevel == 'Raid60'
+        - dg_nested_create.api_response.DriveGroups[0].ManualDriveGroup.SpanGroups | length == 4
+        - dg_nested_create.api_response.DriveGroups[0].VirtualDrives | length == 2
+
+  - name: Create base policy for add/delete drive group
+    cisco.intersight.intersight_storage_policy:
+      <<: *api_info
+      name: test_storage_policy_dg_add_del
+      description: "Policy to test add/delete drive group"
+      m2_virtual_drive_config:
+        enable: false
+      raid0_drive_config:
+        enable: false
+      drive_groups:
+        - name: raid0-os-group
+          raid_level: Raid0
+          secure_drive_group: false
+          span_groups:
+            - slots: "1,2"
+          virtual_drives:
+            - name: os-vd
+              size: 51200
+              expand_to_available: false
+              boot_drive: true
+              strip_size: 128
+              access_policy: ReadWrite
+              read_policy: ReadAhead
+              write_policy: WriteThrough
+              disk_cache: Default
+          state: present
+    register: dg_adddel_base
+
+  - name: Verify single drive group present in add/delete policy
+    cisco.intersight.intersight_storage_policy_info:
+      <<: *api_info
+      name: test_storage_policy_dg_add_del
+    register: dg_adddel_info_1
+
+  - name: Assert one drive group present
+    ansible.builtin.assert:
+      that:
+        - dg_adddel_base.changed
+        - dg_adddel_base.api_response.DriveGroups | length == 1
+
+  - name: Add a temporary drive group to the policy
+    cisco.intersight.intersight_storage_policy:
+      <<: *api_info
+      name: test_storage_policy_dg_add_del
+      description: "Policy to test add/delete drive group"
+      m2_virtual_drive_config:
+        enable: false
+      raid0_drive_config:
+        enable: false
+      drive_groups:
+        - name: raid0-os-group
+          raid_level: Raid0
+          secure_drive_group: false
+          span_groups:
+            - slots: "1,2"
+          virtual_drives:
+            - name: os-vd
+              size: 51200
+              expand_to_available: false
+              boot_drive: true
+              strip_size: 128
+              access_policy: ReadWrite
+              read_policy: ReadAhead
+              write_policy: WriteThrough
+              disk_cache: Default
+          state: present
+        - name: temp-raid1-group
+          raid_level: Raid1
+          secure_drive_group: false
+          dedicated_hot_spares: "11"
+          span_groups:
+            - slots: "9,10"
+          virtual_drives:
+            - name: temp-vd
+              size: 102400
+              expand_to_available: false
+              boot_drive: false
+              strip_size: 128
+              access_policy: ReadWrite
+              read_policy: ReadAhead
+              write_policy: WriteBackGoodBbu
+              disk_cache: Enable
+          state: present
+    register: dg_adddel_add
+
+  - name: Verify two drive groups present after add
+    cisco.intersight.intersight_storage_policy_info:
+      <<: *api_info
+      name: test_storage_policy_dg_add_del
+    register: dg_adddel_info_2
+
+  - name: Assert two drive groups
+    ansible.builtin.assert:
+      that:
+        - dg_adddel_add.changed
+        - dg_adddel_add.api_response.DriveGroups | length == 2
+
+  - name: Delete the temporary drive group from the policy
+    cisco.intersight.intersight_storage_policy:
+      <<: *api_info
+      name: test_storage_policy_dg_add_del
+      description: "Policy to test add/delete drive group"
+      m2_virtual_drive_config:
+        enable: false
+      raid0_drive_config:
+        enable: false
+      drive_groups:
+        - name: raid0-os-group
+          raid_level: Raid0
+          secure_drive_group: false
+          span_groups:
+            - slots: "1,2"
+          virtual_drives:
+            - name: os-vd
+              size: 51200
+              expand_to_available: false
+              boot_drive: true
+              strip_size: 128
+              access_policy: ReadWrite
+              read_policy: ReadAhead
+              write_policy: WriteThrough
+              disk_cache: Default
+          state: present
+        - name: temp-raid1-group
+          raid_level: Raid1
+          secure_drive_group: false
+          dedicated_hot_spares: "11"
+          span_groups:
+            - slots: "9,10"
+          virtual_drives:
+            - name: temp-vd
+              size: 102400
+              expand_to_available: false
+              boot_drive: false
+              strip_size: 128
+              access_policy: ReadWrite
+              read_policy: ReadAhead
+              write_policy: WriteBackGoodBbu
+              disk_cache: Enable
+          state: absent
+    register: dg_adddel_del
+
+  - name: Verify one drive group remains after delete
+    cisco.intersight.intersight_storage_policy_info:
+      <<: *api_info
+      name: test_storage_policy_dg_add_del
+    register: dg_adddel_info_3
+
+  - name: Assert temp drive group removed
+    ansible.builtin.assert:
+      that:
+        - dg_adddel_del.changed
+        - dg_adddel_info_3.api_response[0].DriveGroups | length == 1
+        - dg_adddel_info_3.api_response[0].DriveGroups[0].Name == 'raid0-os-group'
+
+  - name: Update storage policy by changing configuration
+    cisco.intersight.intersight_storage_policy:
+      <<: *api_info
+      name: test_storage_policy
+      description: "Test basic storage policy description - updated"
+      use_jbod_for_vd_creation: false
+      unused_disks_state: "NoChange"
+      default_drive_mode: "Jbod"
+      m2_virtual_drive_config:
+        enable: false
+      raid0_drive_config:
+        enable: false
+      tags:
+        - Key: "Site"
+          Value: "Test"
+        - Key: "Updated"
+          Value: "True"
+    register: update_res
+
+  - name: Fetch info after update
+    cisco.intersight.intersight_storage_policy_info:
+      <<: *api_info
+      name: test_storage_policy
+    register: update_info_res
+
+  - name: Verify storage policy update
+    ansible.builtin.assert:
+      that:
+        - update_res.changed
+        - update_info_res.api_response[0].UseJbodForVdCreation == false
+        - update_info_res.api_response[0].UnusedDisksState == "NoChange"
+        - update_info_res.api_response[0].DefaultDriveMode == "Jbod"
+
+  - name: Test validation of unused disks state with RAID0 drive mode
+    cisco.intersight.intersight_storage_policy:
+      <<: *api_info
+      name: test_storage_policy_validate_2
+      description: "Test validation"
+      default_drive_mode: "RAID0"
+      unused_disks_state: "Jbod"
+      m2_virtual_drive_config:
+        enable: false
+      raid0_drive_config:
+        enable: false
+      state: present
+    register: failure_res_2
+    failed_when:
+      - "'unused_disks_state must be set to' not in failure_res_2.msg"
+
+  always:
+  - name: Remove storage policies
+    cisco.intersight.intersight_storage_policy:
+      <<: *api_info
+      name: "{{ item }}"
+      state: absent
+    loop:
+      - test_storage_policy
+      - test_storage_policy_m2
+      - test_storage_policy_raid0
+      - test_storage_policy_full_config
+      - test_storage_policy_validate
+      - test_storage_policy_validate_2
+      - test_storage_policy_dg_single
+      - test_storage_policy_dg_nested
+      - test_storage_policy_dg_add_del
