@@ -1,0 +1,1074 @@
+---
+- block:
+  - name: Define anchor for Intersight API login info
+    ansible.builtin.set_fact:
+      api_info: &api_info
+        api_private_key: "{{ api_private_key }}"
+        api_key_id: "{{ api_key_id }}"
+        api_uri: "{{ api_uri | default(omit) }}"
+        validate_certs: "{{ validate_certs | default(omit) }}"
+
+  - name: Clean up existing test policies
+    cisco.intersight.intersight_lan_connectivity_policy:
+      organization: "{{ organization }}"
+      <<: *api_info
+      name: "{{ item }}"
+      state: absent
+    loop:
+      - test-lan-policy-basic
+      - test-lan-policy-custom-cdn
+      - test-lan-policy-usnic
+      - test-lan-policy-vmq
+      - test-lan-policy-vmq-multiqueue
+      - test-lan-policy-sriov
+      - test-lan-policy-mixed-states
+      - test-lan-policy-idempotency
+      - test-fi-attached-basic
+      - test-fi-attached-iqn-pool
+      - test-fi-attached-static
+      - test-fi-attached-iscsi
+      - test-fi-attached-usnic
+      - test-fi-attached-vmq
+      - test-fi-attached-sriov
+      - test-fi-attached-mixed
+      - test-fi-attached-idempotency
+
+  - name: Get Organization MOID for tests
+    cisco.intersight.intersight_rest_api:
+      <<: *api_info
+      resource_path: /organization/Organizations
+      query_params:
+        $filter: "Name eq '{{ organization }}'"
+    register: org_query_result
+
+  - name: Create Ethernet Network Policy for Standalone tests
+    cisco.intersight.intersight_rest_api:
+      <<: *api_info
+      resource_path: /vnic/EthNetworkPolicies
+      api_body:
+        {
+          "Organization": {
+            "ObjectType": "organization.Organization",
+            "Moid": "{{ org_query_result.api_response.Moid }}"
+          },
+          "Name": "test-lan-eth-network-policy",
+          "Description": "Test Ethernet Network policy for standalone LAN connectivity tests",
+          "VlanSettings": {
+            "Mode": "ACCESS",
+            "DefaultVlan": 1
+          },
+          "Tags": []
+        }
+      update_method: post
+    register: eth_network_policy_res
+
+  - name: Create Ethernet QoS Policy for tests
+    cisco.intersight.intersight_ethernet_qos_policy:
+      <<: *api_info
+      organization: "{{ organization }}"
+      name: test-lan-eth-qos-policy
+      description: "Test Ethernet QoS policy for LAN connectivity tests"
+      mtu: 1500
+      rate_limit: 0
+      cos: 0
+      trust_host_cos: false
+    register: eth_qos_policy_res
+
+  - name: Create Ethernet Adapter Policy for tests
+    cisco.intersight.intersight_ethernet_adapter_policy:
+      <<: *api_info
+      organization: "{{ organization }}"
+      name: test-lan-eth-adapter-policy
+      description: "Test Ethernet Adapter policy for LAN connectivity tests"
+      rss_enabled: true
+      rss_tcp_ipv4_hash: true
+      rss_tcp_ipv6_hash: true
+      rss_udp_ipv4_hash: false
+      rss_udp_ipv6_hash: false
+      uplink_failback_timeout: 5
+    register: eth_adapter_policy_res
+
+  - name: Create MAC Pool for FIAttached tests
+    cisco.intersight.intersight_mac_pool:
+      <<: *api_info
+      organization: "{{ organization }}"
+      name: test-lan-mac-pool
+      description: "Test MAC pool for FIAttached LAN connectivity tests"
+      mac_blocks:
+        - address_from: "00:25:B5:00:00:01"
+          size: 255
+    register: mac_pool_res
+
+  - name: Create IQN Pool for FIAttached tests
+    cisco.intersight.intersight_rest_api:
+      <<: *api_info
+      resource_path: /iqnpool/Pools
+      api_body:
+        {
+          "Organization": {
+            "ObjectType": "organization.Organization",
+            "Moid": "{{ org_query_result.api_response.Moid }}"
+          },
+          "Name": "test-lan-iqn-pool",
+          "Description": "Test IQN pool for FIAttached LAN connectivity tests",
+          "IqnSuffixBlocks": [
+            {
+              "Suffix": "test",
+              "From": 0,
+              "Size": 64
+            }
+          ],
+          "Prefix": "iqn.1995-07.naming-authority",
+          "AssignmentOrder": "default",
+          "Tags": []
+        }
+      update_method: post
+    register: iqn_pool_res
+
+  - name: Create Fabric Ethernet Network Group Policy for FIAttached tests
+    cisco.intersight.intersight_ethernet_network_group_policy:
+      <<: *api_info
+      organization: "{{ organization }}"
+      name: test-lan-fabric-network-group-policy
+      description: "Test Fabric Ethernet Network Group policy for FIAttached tests"
+      qinq_enabled: false
+      allowed_vlans: "1,100-200"
+    register: fabric_network_group_res
+
+  - name: Create Fabric Ethernet Network Control Policy for FIAttached tests
+    cisco.intersight.intersight_ethernet_network_control_policy:
+      <<: *api_info
+      organization: "{{ organization }}"
+      name: test-lan-fabric-network-control-policy
+      description: "Test Fabric Ethernet Network Control policy for FIAttached tests"
+      cdp_enabled: true
+      forge_mac: "allow"
+      lldp_transmit_enabled: true
+      lldp_receive_enabled: true
+      mac_registration_mode: "nativeVlanOnly"
+      uplink_fail_action: "linkDown"
+    register: fabric_network_control_res
+
+  - name: Create iSCSI Boot Policy for FIAttached tests
+    cisco.intersight.intersight_rest_api:
+      <<: *api_info
+      resource_path: /vnic/IscsiBootPolicies
+      api_body:
+        {
+          "Organization": {
+            "ObjectType": "organization.Organization",
+            "Moid": "{{ org_query_result.api_response.Moid }}"
+          },
+          "Name": "test-lan-iscsi-boot-policy",
+          "IscsiIpType": "IPv4",
+          "AutoTargetvendorName": "8",
+          "TargetSourceType": "Auto",
+          "IscsiAdapterPolicy": "",
+          "PrimaryTargetPolicy": "",
+          "SecondaryTargetPolicy": "",
+          "Chap": {
+            "UserId": "",
+            "Password": "",
+            "IsPasswordSet": false
+          },
+          "MutualChap": {
+            "UserId": "",
+            "Password": "",
+            "IsPasswordSet": false
+          },
+          "InitiatorIpSource": "DHCP",
+          "InitiatorIpPool": "",
+          "InitiatorStaticIpV4Address": "",
+          "InitiatorStaticIpV4Config": null,
+          "InitiatorStaticIpV6Address": "",
+          "InitiatorStaticIpV6Config": null,
+          "Tags": []
+        }
+      update_method: post
+    register: iscsi_boot_policy_res
+
+  # STANDALONE TESTS
+
+  - name: Create basic Standalone LAN connectivity policy
+    cisco.intersight.intersight_lan_connectivity_policy:
+      <<: *api_info
+      organization: "{{ organization }}"
+      name: test-lan-policy-basic
+      description: "Basic standalone LAN connectivity policy"
+      state: present
+      target_platform: standalone
+      vnics:
+        - name: eth0-test
+          state: present
+          placement_slot_id: "1"
+          pci_link: 0
+          uplink_port: 0
+          order: 0
+          cdn_source: vnic
+          eth_network_policy_name: test-lan-eth-network-policy
+          eth_qos_policy_name: test-lan-eth-qos-policy
+          eth_adapter_policy_name: test-lan-eth-adapter-policy
+          connection_type: none
+      tags:
+        - Key: TestCase
+          Value: Basic
+    register: test1_result
+
+  - name: Verify basic Standalone LAN connectivity policy results
+    ansible.builtin.assert:
+      that:
+        - test1_result.changed == true
+        - test1_result.api_response.Name == "test-lan-policy-basic"
+        - test1_result.api_response.TargetPlatform == "Standalone"
+        - test1_result.api_response.vNICs | length == 1
+        - test1_result.api_response.vNICs[0].Name == "eth0-test"
+
+  - name: Validate basic policy using info module
+    cisco.intersight.intersight_lan_connectivity_policy_info:
+      <<: *api_info
+      organization: "{{ organization }}"
+      name: test-lan-policy-basic
+    register: basic_policy_info_result
+
+  - name: Verify info module returns correct basic policy data
+    ansible.builtin.assert:
+      that:
+        - basic_policy_info_result.api_response[0].Name == "test-lan-policy-basic"
+        - basic_policy_info_result.api_response[0].TargetPlatform == "Standalone"
+        - basic_policy_info_result.api_response[0].Description == "Basic standalone LAN connectivity policy"
+        - basic_policy_info_result.api_response[0].vNICs | length == 1
+        - basic_policy_info_result.api_response[0].vNICs[0].Name == "eth0-test"
+        - basic_policy_info_result.api_response[0].vNICs[0].Order == 0
+        - basic_policy_info_result.api_response[0].vNICs[0].Placement.Id == "1"
+
+  - name: Create Standalone policy with custom CDN
+    cisco.intersight.intersight_lan_connectivity_policy:
+      <<: *api_info
+      organization: "{{ organization }}"
+      name: test-lan-policy-custom-cdn
+      description: "Standalone with custom CDN values"
+      state: present
+      target_platform: standalone
+      vnics:
+        - name: eth0-custom
+          state: present
+          placement_slot_id: "2"
+          pci_link: 1
+          uplink_port: 1
+          order: 0
+          cdn_source: user
+          cdn_value: custom-eth0-name
+          eth_network_policy_name: test-lan-eth-network-policy
+          eth_qos_policy_name: test-lan-eth-qos-policy
+          eth_adapter_policy_name: test-lan-eth-adapter-policy
+          connection_type: none
+      tags:
+        - Key: TestCase
+          Value: CustomCDN
+    register: test2_result
+
+  - name: Verify Standalone policy with custom CDN results
+    ansible.builtin.assert:
+      that:
+        - test2_result.changed == true
+        - test2_result.api_response.vNICs[0].Cdn.Source == "user"
+        - test2_result.api_response.vNICs[0].Cdn.Value == "custom-eth0-name"
+
+  - name: Create Standalone policy with USNIC
+    cisco.intersight.intersight_lan_connectivity_policy:
+      <<: *api_info
+      organization: "{{ organization }}"
+      name: test-lan-policy-usnic
+      description: "Standalone with USNIC connection type"
+      state: present
+      target_platform: standalone
+      vnics:
+        - name: eth0-usnic
+          state: present
+          placement_slot_id: "3"
+          pci_link: 0
+          uplink_port: 2
+          order: 0
+          cdn_source: vnic
+          eth_network_policy_name: test-lan-eth-network-policy
+          eth_qos_policy_name: test-lan-eth-qos-policy
+          eth_adapter_policy_name: test-lan-eth-adapter-policy
+          connection_type: usnic
+          usnic_settings:
+            count: 15
+            cos: 3
+            usnic_adapter_policy_name: test-lan-eth-adapter-policy
+      tags:
+        - Key: TestCase
+          Value: USNIC
+    register: test3_result
+
+  - name: Verify Standalone policy with USNIC results
+    ansible.builtin.assert:
+      that:
+        - test3_result.changed == true
+        - test3_result.api_response.vNICs[0].UsnicSettings.Count == 15
+        - test3_result.api_response.vNICs[0].UsnicSettings.Cos == 3
+
+  - name: Validate USNIC policy using info module
+    cisco.intersight.intersight_lan_connectivity_policy_info:
+      <<: *api_info
+      organization: "{{ organization }}"
+      name: test-lan-policy-usnic
+    register: usnic_policy_info_result
+
+  - name: Verify info module returns correct USNIC policy data
+    ansible.builtin.assert:
+      that:
+        - usnic_policy_info_result.api_response[0].Name == "test-lan-policy-usnic"
+        - usnic_policy_info_result.api_response[0].TargetPlatform == "Standalone"
+        - usnic_policy_info_result.api_response[0].vNICs[0].Name == "eth0-usnic"
+        - usnic_policy_info_result.api_response[0].vNICs[0].UsnicSettings.Count == 15
+        - usnic_policy_info_result.api_response[0].vNICs[0].UsnicSettings.Cos == 3
+        - usnic_policy_info_result.api_response[0].vNICs[0].Placement.Id == "3"
+
+  - name: Create Standalone policy with VMQ
+    cisco.intersight.intersight_lan_connectivity_policy:
+      <<: *api_info
+      organization: "{{ organization }}"
+      name: test-lan-policy-vmq
+      description: "Standalone with VMQ connection type"
+      state: present
+      target_platform: standalone
+      vnics:
+        - name: eth0-vmq
+          state: present
+          placement_slot_id: "4"
+          pci_link: 0
+          uplink_port: 3
+          order: 0
+          cdn_source: vnic
+          eth_network_policy_name: test-lan-eth-network-policy
+          eth_qos_policy_name: test-lan-eth-qos-policy
+          eth_adapter_policy_name: test-lan-eth-adapter-policy
+          connection_type: vmq
+          vmq_settings:
+            enabled: true
+            multi_queue_support: false
+            num_interrupts: 32
+            num_vmqs: 8
+      tags:
+        - Key: TestCase
+          Value: VMQ
+    register: test4_result
+
+  - name: Verify Standalone policy with VMQ results
+    ansible.builtin.assert:
+      that:
+        - test4_result.changed == true
+        - test4_result.api_response.vNICs[0].VmqSettings.Enabled == true
+        - test4_result.api_response.vNICs[0].VmqSettings.NumVmqs == 8
+
+  - name: Create Standalone policy with VMQ multi-queue
+    cisco.intersight.intersight_lan_connectivity_policy:
+      <<: *api_info
+      organization: "{{ organization }}"
+      name: test-lan-policy-vmq-multiqueue
+      description: "Standalone with VMQ multi-queue support"
+      state: present
+      target_platform: standalone
+      vnics:
+        - name: eth0-vmq-multi
+          state: present
+          placement_slot_id: "5"
+          pci_link: 1
+          uplink_port: 0
+          order: 0
+          cdn_source: vnic
+          eth_network_policy_name: test-lan-eth-network-policy
+          eth_qos_policy_name: test-lan-eth-qos-policy
+          eth_adapter_policy_name: test-lan-eth-adapter-policy
+          connection_type: vmq
+          vmq_settings:
+            enabled: true
+            multi_queue_support: true
+            num_sub_vnics: 32
+            vmmq_adapter_policy_name: test-lan-eth-adapter-policy
+      tags:
+        - Key: TestCase
+          Value: VMQMultiQueue
+    register: test5_result
+
+  - name: Verify Standalone policy with VMQ multi-queue results
+    ansible.builtin.assert:
+      that:
+        - test5_result.changed == true
+        - test5_result.api_response.vNICs[0].VmqSettings.MultiQueueSupport == true
+        - test5_result.api_response.vNICs[0].VmqSettings.NumSubVnics == 32
+
+  - name: Create Standalone policy with SR-IOV
+    cisco.intersight.intersight_lan_connectivity_policy:
+      <<: *api_info
+      organization: "{{ organization }}"
+      name: test-lan-policy-sriov
+      description: "Standalone with SR-IOV connection type"
+      state: present
+      target_platform: standalone
+      vnics:
+        - name: eth0-sriov
+          state: present
+          placement_slot_id: "6"
+          pci_link: 0
+          uplink_port: 1
+          order: 0
+          cdn_source: vnic
+          eth_network_policy_name: test-lan-eth-network-policy
+          eth_qos_policy_name: test-lan-eth-qos-policy
+          eth_adapter_policy_name: test-lan-eth-adapter-policy
+          connection_type: sriov
+          sriov_settings:
+            vf_count: 32
+            rx_count_per_vf: 2
+            tx_count_per_vf: 1
+            comp_count_per_vf: 8
+            int_count_per_vf: 4
+            enabled: true
+      tags:
+        - Key: TestCase
+          Value: SRIOV
+    register: test6_result
+
+  - name: Verify Standalone policy with SR-IOV results
+    ansible.builtin.assert:
+      that:
+        - test6_result.changed == true
+        - test6_result.api_response.vNICs[0].SriovSettings.VfCount == 32
+        - test6_result.api_response.vNICs[0].SriovSettings.Enabled == true
+
+  - name: Create Standalone policy with mixed vNIC states
+    cisco.intersight.intersight_lan_connectivity_policy:
+      <<: *api_info
+      organization: "{{ organization }}"
+      name: test-lan-policy-mixed-states
+      description: "Standalone with multiple vNICs and mixed states"
+      state: present
+      target_platform: standalone
+      vnics:
+        - name: eth0-keep
+          state: present
+          placement_slot_id: "1"
+          pci_link: 0
+          uplink_port: 0
+          order: 0
+          cdn_source: vnic
+          eth_network_policy_name: test-lan-eth-network-policy
+          eth_qos_policy_name: test-lan-eth-qos-policy
+          eth_adapter_policy_name: test-lan-eth-adapter-policy
+          connection_type: none
+        - name: eth1-delete
+          state: absent
+        - name: eth2-new
+          state: present
+          placement_slot_id: "3"
+          pci_link: 1
+          uplink_port: 2
+          order: 1
+          cdn_source: user
+          cdn_value: custom-eth2
+          eth_network_policy_name: test-lan-eth-network-policy
+          eth_qos_policy_name: test-lan-eth-qos-policy
+          eth_adapter_policy_name: test-lan-eth-adapter-policy
+          connection_type: none
+      tags:
+        - Key: TestCase
+          Value: MixedStates
+    register: test7_result
+
+  - name: Verify Standalone policy with mixed vNIC states results
+    ansible.builtin.assert:
+      that:
+        - test7_result.changed == true
+        - test7_result.api_response.vNICs | length == 2
+        - test7_result.api_response.vNICs | selectattr('Name', 'equalto', 'eth0-keep') | list | length == 1
+        - test7_result.api_response.vNICs | selectattr('Name', 'equalto', 'eth2-new') | list | length == 1
+
+  - name: Create Standalone policy for idempotency test
+    cisco.intersight.intersight_lan_connectivity_policy:
+      <<: *api_info
+      organization: "{{ organization }}"
+      name: test-lan-policy-idempotency
+      description: "Test idempotency - should not change on second run"
+      state: present
+      target_platform: standalone
+      vnics:
+        - name: eth0-idempotent
+          state: present
+          placement_slot_id: "1"
+          pci_link: 0
+          uplink_port: 0
+          order: 0
+          cdn_source: vnic
+          eth_network_policy_name: test-lan-eth-network-policy
+          eth_qos_policy_name: test-lan-eth-qos-policy
+          eth_adapter_policy_name: test-lan-eth-adapter-policy
+          connection_type: none
+      tags:
+        - Key: TestCase
+          Value: Idempotency
+    register: test_result
+
+  - name: Run same policy again for idempotency test
+    cisco.intersight.intersight_lan_connectivity_policy:
+      <<: *api_info
+      organization: "{{ organization }}"
+      name: test-lan-policy-idempotency
+      description: "Test idempotency - should not change on second run"
+      state: present
+      target_platform: standalone
+      vnics:
+        - name: eth0-idempotent
+          state: present
+          placement_slot_id: "1"
+          pci_link: 0
+          uplink_port: 0
+          order: 0
+          cdn_source: vnic
+          eth_network_policy_name: test-lan-eth-network-policy
+          eth_qos_policy_name: test-lan-eth-qos-policy
+          eth_adapter_policy_name: test-lan-eth-adapter-policy
+          connection_type: none
+      tags:
+        - Key: TestCase
+          Value: Idempotency
+    register: test_idempotency_result
+
+  - name: Verify Standalone policy idempotency
+    ansible.builtin.assert:
+      that:
+        - test_result.changed == true
+        - test_idempotency_result.changed == false
+
+  # FIATTACHED TESTS
+
+  - name: Create basic FIAttached LAN connectivity policy
+    cisco.intersight.intersight_lan_connectivity_policy:
+      <<: *api_info
+      organization: "{{ organization }}"
+      name: test-fi-attached-basic
+      description: "Basic FIAttached LAN connectivity policy"
+      state: present
+      target_platform: attached
+      azure_qos_enabled: false
+      iqn_allocation_type: None
+      placement_mode: custom
+      vnics:
+        - name: vnic-fi-basic
+          state: present
+          order: 0
+          cdn_source: vnic
+          mac_address_type: pool
+          mac_pool_name: test-lan-mac-pool
+          auto_slot_id: true
+          auto_pci_link: true
+          switch_id: A
+          failover_enabled: false
+          fabric_eth_network_group_policy_name: test-lan-fabric-network-group-policy
+          fabric_eth_network_control_policy_name: test-lan-fabric-network-control-policy
+          eth_qos_policy_name: test-lan-eth-qos-policy
+          eth_adapter_policy_name: test-lan-eth-adapter-policy
+          connection_type: none
+      tags:
+        - Key: TestCase
+          Value: FIBasic
+    register: test_fi_attached_basic_result
+
+  - name: Verify basic FIAttached LAN connectivity policy results
+    ansible.builtin.assert:
+      that:
+        - test_fi_attached_basic_result.changed == true
+        - test_fi_attached_basic_result.api_response.Name == "test-fi-attached-basic"
+        - test_fi_attached_basic_result.api_response.TargetPlatform == "FIAttached"
+        - test_fi_attached_basic_result.api_response.vNICs | length == 1
+        - test_fi_attached_basic_result.api_response.vNICs[0].MacAddressType == "POOL"
+
+  - name: Validate FI-Attached basic policy using info module
+    cisco.intersight.intersight_lan_connectivity_policy_info:
+      <<: *api_info
+      organization: "{{ organization }}"
+      name: test-fi-attached-basic
+    register: fi_basic_policy_info_result
+
+  - name: Verify info module returns correct FI-Attached basic policy data
+    ansible.builtin.assert:
+      that:
+        - fi_basic_policy_info_result.api_response[0].Name == "test-fi-attached-basic"
+        - fi_basic_policy_info_result.api_response[0].TargetPlatform == "FIAttached"
+        - fi_basic_policy_info_result.api_response[0].Description == "Basic FIAttached LAN connectivity policy"
+        - fi_basic_policy_info_result.api_response[0].AzureQosEnabled == false
+        - fi_basic_policy_info_result.api_response[0].IqnAllocationType == "None"
+        - fi_basic_policy_info_result.api_response[0].PlacementMode == "custom"
+        - fi_basic_policy_info_result.api_response[0].vNICs | length == 1
+        - fi_basic_policy_info_result.api_response[0].vNICs[0].Name == "vnic-fi-basic"
+        - fi_basic_policy_info_result.api_response[0].vNICs[0].MacAddressType == "POOL"
+        - fi_basic_policy_info_result.api_response[0].vNICs[0].FailoverEnabled == false
+
+  - name: Create FIAttached policy with IQN Pool
+    cisco.intersight.intersight_lan_connectivity_policy:
+      <<: *api_info
+      organization: "{{ organization }}"
+      name: test-fi-attached-iqn-pool
+      description: "FIAttached with IQN Pool allocation"
+      state: present
+      target_platform: attached
+      azure_qos_enabled: true
+      iqn_allocation_type: Pool
+      iqn_pool_name: test-lan-iqn-pool
+      placement_mode: custom
+      vnics:
+        - name: vnic-iqn-pool
+          state: present
+          order: 0
+          cdn_source: vnic
+          mac_address_type: pool
+          mac_pool_name: test-lan-mac-pool
+          auto_slot_id: true
+          auto_pci_link: true
+          switch_id: A
+          failover_enabled: false
+          fabric_eth_network_group_policy_name: test-lan-fabric-network-group-policy
+          fabric_eth_network_control_policy_name: test-lan-fabric-network-control-policy
+          eth_qos_policy_name: test-lan-eth-qos-policy
+          eth_adapter_policy_name: test-lan-eth-adapter-policy
+          connection_type: none
+      tags:
+        - Key: TestCase
+          Value: IQNPool
+    register: test_fi_attached_iqn_pool_result
+
+  - name: Verify FIAttached policy with IQN Pool results
+    ansible.builtin.assert:
+      that:
+        - test_fi_attached_iqn_pool_result.changed == true
+        - test_fi_attached_iqn_pool_result.api_response.IqnAllocationType == "Pool"
+        - test_fi_attached_iqn_pool_result.api_response.AzureQosEnabled == true
+
+  - name: Create FIAttached policy with static values
+    cisco.intersight.intersight_lan_connectivity_policy:
+      <<: *api_info
+      organization: "{{ organization }}"
+      name: test-fi-attached-static
+      description: "FIAttached with static IQN and MAC"
+      state: present
+      target_platform: attached
+      azure_qos_enabled: false
+      iqn_allocation_type: Static
+      static_iqn_name: "iqn.1991-05.com.microsoft:testserver1"
+      placement_mode: auto
+      vnics:
+        - name: vnic-static
+          state: present
+          order: 0
+          cdn_source: user
+          cdn_value: custom-vnic-name
+          mac_address_type: static
+          static_mac_address: "00:25:B5:AA:BB:CC"
+          auto_slot_id: false
+          auto_pci_link: false
+          switch_id: B
+          failover_enabled: true
+          fabric_eth_network_group_policy_name: test-lan-fabric-network-group-policy
+          fabric_eth_network_control_policy_name: test-lan-fabric-network-control-policy
+          eth_qos_policy_name: test-lan-eth-qos-policy
+          eth_adapter_policy_name: test-lan-eth-adapter-policy
+          connection_type: none
+      tags:
+        - Key: TestCase
+          Value: StaticValues
+    register: test_fi_attached_static_result
+
+  - name: Verify FIAttached policy with static values results
+    ansible.builtin.assert:
+      that:
+        - test_fi_attached_static_result.changed == true
+        - test_fi_attached_static_result.api_response.IqnAllocationType == "Static"
+        - test_fi_attached_static_result.api_response.StaticIqnName == "iqn.1991-05.com.microsoft:testserver1"
+        - test_fi_attached_static_result.api_response.vNICs[0].MacAddressType == "STATIC"
+        - test_fi_attached_static_result.api_response.vNICs[0].StaticMacAddress == "00:25:B5:AA:BB:CC"
+
+  - name: Validate FI-Attached static policy using info module
+    cisco.intersight.intersight_lan_connectivity_policy_info:
+      <<: *api_info
+      organization: "{{ organization }}"
+      name: test-fi-attached-static
+    register: fi_static_policy_info_result
+
+  - name: Verify info module returns correct FI-Attached static policy data
+    ansible.builtin.assert:
+      that:
+        - fi_static_policy_info_result.api_response[0].Name == "test-fi-attached-static"
+        - fi_static_policy_info_result.api_response[0].TargetPlatform == "FIAttached"
+        - fi_static_policy_info_result.api_response[0].IqnAllocationType == "Static"
+        - fi_static_policy_info_result.api_response[0].StaticIqnName == "iqn.1991-05.com.microsoft:testserver1"
+        - fi_static_policy_info_result.api_response[0].PlacementMode == "auto"
+        - fi_static_policy_info_result.api_response[0].vNICs[0].Name == "vnic-static"
+        - fi_static_policy_info_result.api_response[0].vNICs[0].MacAddressType == "STATIC"
+        - fi_static_policy_info_result.api_response[0].vNICs[0].StaticMacAddress == "00:25:B5:AA:BB:CC"
+        - fi_static_policy_info_result.api_response[0].vNICs[0].Cdn.Source == "user"
+        - fi_static_policy_info_result.api_response[0].vNICs[0].Cdn.Value == "custom-vnic-name"
+        - fi_static_policy_info_result.api_response[0].vNICs[0].FailoverEnabled == true
+
+  - name: Create FIAttached policy with iSCSI boot policy
+    cisco.intersight.intersight_lan_connectivity_policy:
+      <<: *api_info
+      organization: "{{ organization }}"
+      name: test-fi-attached-iscsi
+      description: "FIAttached with iSCSI boot policy"
+      state: present
+      target_platform: attached
+      azure_qos_enabled: true
+      iqn_allocation_type: None
+      placement_mode: custom
+      vnics:
+        - name: vnic-iscsi
+          state: present
+          order: 0
+          cdn_source: vnic
+          mac_address_type: pool
+          mac_pool_name: test-lan-mac-pool
+          auto_slot_id: true
+          auto_pci_link: true
+          switch_id: A
+          failover_enabled: false
+          fabric_eth_network_group_policy_name: test-lan-fabric-network-group-policy
+          fabric_eth_network_control_policy_name: test-lan-fabric-network-control-policy
+          eth_qos_policy_name: test-lan-eth-qos-policy
+          eth_adapter_policy_name: test-lan-eth-adapter-policy
+          iscsi_boot_policy_name: test-lan-iscsi-boot-policy
+          connection_type: none
+      tags:
+        - Key: TestCase
+          Value: iSCSIBoot
+    register: test_fi_attached_iscsi_result
+
+  - name: Verify FIAttached policy with iSCSI boot policy results
+    ansible.builtin.assert:
+      that:
+        - test_fi_attached_iscsi_result.changed == true
+        - test_fi_attached_iscsi_result.api_response.vNICs[0].IscsiBootPolicy is defined
+
+  - name: Create FIAttached policy with USNIC
+    cisco.intersight.intersight_lan_connectivity_policy:
+      <<: *api_info
+      organization: "{{ organization }}"
+      name: test-fi-attached-usnic
+      description: "FIAttached with USNIC connection"
+      state: present
+      target_platform: attached
+      azure_qos_enabled: false
+      iqn_allocation_type: None
+      placement_mode: custom
+      vnics:
+        - name: vnic-usnic
+          state: present
+          order: 0
+          cdn_source: vnic
+          mac_address_type: pool
+          mac_pool_name: test-lan-mac-pool
+          auto_slot_id: true
+          auto_pci_link: true
+          switch_id: A
+          failover_enabled: false
+          fabric_eth_network_group_policy_name: test-lan-fabric-network-group-policy
+          fabric_eth_network_control_policy_name: test-lan-fabric-network-control-policy
+          eth_qos_policy_name: test-lan-eth-qos-policy
+          eth_adapter_policy_name: test-lan-eth-adapter-policy
+          connection_type: usnic
+          usnic_settings:
+            count: 20
+            cos: 4
+            usnic_adapter_policy_name: test-lan-eth-adapter-policy
+      tags:
+        - Key: TestCase
+          Value: FIUsnic
+    register: test_fi_attached_usnic_result
+
+  - name: Verify FIAttached policy with USNIC results
+    ansible.builtin.assert:
+      that:
+        - test_fi_attached_usnic_result.changed == true
+        - test_fi_attached_usnic_result.api_response.vNICs[0].UsnicSettings.Count == 20
+        - test_fi_attached_usnic_result.api_response.vNICs[0].UsnicSettings.Cos == 4
+
+  - name: Create FIAttached policy for idempotency test
+    cisco.intersight.intersight_lan_connectivity_policy:
+      <<: *api_info
+      organization: "{{ organization }}"
+      name: test-fi-attached-idempotency
+      description: "FIAttached idempotency test"
+      state: present
+      target_platform: attached
+      azure_qos_enabled: false
+      iqn_allocation_type: None
+      placement_mode: custom
+      vnics:
+        - name: vnic-idempotent
+          state: present
+          order: 0
+          cdn_source: vnic
+          mac_address_type: pool
+          mac_pool_name: test-lan-mac-pool
+          auto_slot_id: true
+          auto_pci_link: true
+          switch_id: A
+          failover_enabled: false
+          fabric_eth_network_group_policy_name: test-lan-fabric-network-group-policy
+          fabric_eth_network_control_policy_name: test-lan-fabric-network-control-policy
+          eth_qos_policy_name: test-lan-eth-qos-policy
+          eth_adapter_policy_name: test-lan-eth-adapter-policy
+          connection_type: none
+      tags:
+        - Key: TestCase
+          Value: FIIdempotency
+    register: test_first_result
+
+  - name: Run same FIAttached policy again for idempotency test
+    cisco.intersight.intersight_lan_connectivity_policy:
+      <<: *api_info
+      organization: "{{ organization }}"
+      name: test-fi-attached-idempotency
+      description: "FIAttached idempotency test"
+      state: present
+      target_platform: attached
+      azure_qos_enabled: false
+      iqn_allocation_type: None
+      placement_mode: custom
+      vnics:
+        - name: vnic-idempotent
+          state: present
+          order: 0
+          cdn_source: vnic
+          mac_address_type: pool
+          mac_pool_name: test-lan-mac-pool
+          auto_slot_id: true
+          auto_pci_link: true
+          switch_id: A
+          failover_enabled: false
+          fabric_eth_network_group_policy_name: test-lan-fabric-network-group-policy
+          fabric_eth_network_control_policy_name: test-lan-fabric-network-control-policy
+          eth_qos_policy_name: test-lan-eth-qos-policy
+          eth_adapter_policy_name: test-lan-eth-adapter-policy
+          connection_type: none
+      tags:
+        - Key: TestCase
+          Value: FIIdempotency
+    register: test_idempotency_result
+
+  - name: Verify FIAttached policy idempotency
+    ansible.builtin.assert:
+      that:
+        - test_first_result.changed == true
+        - test_idempotency_result.changed == false
+
+  # Test info module without specific name to validate multiple policies
+  - name: Get all LAN connectivity policies using info module
+    cisco.intersight.intersight_lan_connectivity_policy_info:
+      <<: *api_info
+      organization: "{{ organization }}"
+    register: all_policies_info_result
+
+  - name: Verify info module returns multiple test policies
+    ansible.builtin.assert:
+      that:
+        - all_policies_info_result.api_response | length >= 10
+        - all_policies_info_result.api_response | selectattr('Name', 'equalto', 'test-lan-policy-basic') | list | length == 1
+        - all_policies_info_result.api_response | selectattr('Name', 'equalto', 'test-fi-attached-basic') | list | length == 1
+        - all_policies_info_result.api_response | selectattr('Name', 'equalto', 'test-fi-attached-static') | list | length == 1
+        - all_policies_info_result.api_response | selectattr('TargetPlatform', 'equalto', 'Standalone') | list | length >= 6
+        - all_policies_info_result.api_response | selectattr('TargetPlatform', 'equalto', 'FIAttached') | list | length >= 4
+
+  # VALIDATION TESTS (Should Fail)
+
+  - name: Missing required vNIC fields (should fail)
+    cisco.intersight.intersight_lan_connectivity_policy:
+      <<: *api_info
+      organization: "{{ organization }}"
+      name: test-validation-fail
+      state: present
+      target_platform: standalone
+      vnics:
+        - name: eth0-incomplete
+          state: present
+    register: test_validation_fail_result
+    failed_when:
+      - test_validation_fail_result.failed == false
+      - "'placement_slot_id is required' not in test_validation_fail_result.msg"
+
+  - name: CDN value without user source (should fail)
+    cisco.intersight.intersight_lan_connectivity_policy:
+      <<: *api_info
+      organization: "{{ organization }}"
+      name: test-cdn-validation-fail
+      state: present
+      target_platform: standalone
+      vnics:
+        - name: eth0-bad-cdn
+          state: present
+          placement_slot_id: "1"
+          pci_link: 0
+          uplink_port: 0
+          order: 0
+          cdn_source: vnic
+          cdn_value: should-not-be-here
+          eth_network_policy_name: test-lan-eth-network-policy
+          eth_qos_policy_name: test-lan-eth-qos-policy
+          eth_adapter_policy_name: test-lan-eth-adapter-policy
+          connection_type: none
+    register: test_cdn_validation_fail_result
+    failed_when:
+      - "'cdn_value should not be provided when cdn_source is set to' not in test_cdn_validation_fail_result.msg"
+
+  - name: USNIC without settings (should fail)
+    cisco.intersight.intersight_lan_connectivity_policy:
+      <<: *api_info
+      organization: "{{ organization }}"
+      name: test-usnic-validation-fail
+      state: present
+      target_platform: standalone
+      vnics:
+        - name: eth0-bad-usnic
+          state: present
+          placement_slot_id: "1"
+          pci_link: 0
+          uplink_port: 0
+          order: 0
+          cdn_source: vnic
+          connection_type: usnic
+          eth_network_policy_name: test-lan-eth-network-policy
+          eth_qos_policy_name: test-lan-eth-qos-policy
+          eth_adapter_policy_name: test-lan-eth-adapter-policy
+    register: test_usnic_validation_fail_result
+    failed_when:
+      - "'usnic_settings is required when connection_type is' not in test_usnic_validation_fail_result.msg"
+
+  - name: FIAttached missing MAC pool (should fail)
+    cisco.intersight.intersight_lan_connectivity_policy:
+      <<: *api_info
+      organization: "{{ organization }}"
+      name: test-fi-validation-mac-pool
+      state: present
+      target_platform: attached
+      iqn_allocation_type: None
+      vnics:
+        - name: vnic-fail
+          state: present
+          mac_address_type: pool
+          fabric_eth_network_group_policy_name: test-lan-fabric-network-group-policy
+          fabric_eth_network_control_policy_name: test-lan-fabric-network-control-policy
+          eth_qos_policy_name: test-lan-eth-qos-policy
+          eth_adapter_policy_name: test-lan-eth-adapter-policy
+    register: test_fi_validation_mac_pool_result
+    failed_when:
+      - test_fi_validation_mac_pool_result.failed == false
+      - "'mac_pool_name is required when mac_address_type is' not in test_fi_validation_mac_pool_result.msg"
+
+  - name: FIAttached missing static MAC (should fail)
+    cisco.intersight.intersight_lan_connectivity_policy:
+      <<: *api_info
+      organization: "{{ organization }}"
+      name: test-fi-validation-static-mac
+      state: present
+      target_platform: attached
+      iqn_allocation_type: None
+      vnics:
+        - name: vnic-fail
+          state: present
+          mac_address_type: static
+          fabric_eth_network_group_policy_name: test-lan-fabric-network-group-policy
+          fabric_eth_network_control_policy_name: test-lan-fabric-network-control-policy
+          eth_qos_policy_name: test-lan-eth-qos-policy
+          eth_adapter_policy_name: test-lan-eth-adapter-policy
+    register: test_fi_validation_static_mac_result
+    failed_when:
+      - test_fi_validation_static_mac_result.failed == false
+      - "'static_mac_address is required when mac_address_type is' not in test_fi_validation_static_mac_result.msg"
+
+  always:
+    - name: Clean up test policies
+      cisco.intersight.intersight_lan_connectivity_policy:
+        <<: *api_info
+        organization: "{{ organization }}"
+        name: "{{ item }}"
+        state: absent
+      loop:
+        - test-lan-policy-basic
+        - test-lan-policy-custom-cdn
+        - test-lan-policy-usnic
+        - test-lan-policy-vmq
+        - test-lan-policy-vmq-multiqueue
+        - test-lan-policy-sriov
+        - test-lan-policy-mixed-states
+        - test-lan-policy-idempotency
+        - test-fi-attached-basic
+        - test-fi-attached-iqn-pool
+        - test-fi-attached-static
+        - test-fi-attached-iscsi
+        - test-fi-attached-usnic
+        - test-fi-attached-vmq
+        - test-fi-attached-sriov
+        - test-fi-attached-mixed
+        - test-fi-attached-idempotency
+
+    # Clean up prerequisite policies
+    - name: Clean up Ethernet Network policies
+      cisco.intersight.intersight_rest_api:
+        <<: *api_info
+        resource_path: /vnic/EthNetworkPolicies
+        query_params:
+          $filter: "Name eq 'test-lan-eth-network-policy'"
+        state: absent
+
+    - name: Clean up QoS policies
+      cisco.intersight.intersight_ethernet_qos_policy:
+        <<: *api_info
+        organization: "{{ organization }}"
+        name: test-lan-eth-qos-policy
+        state: absent
+
+    - name: Clean up Adapter policies
+      cisco.intersight.intersight_ethernet_adapter_policy:
+        <<: *api_info
+        organization: "{{ organization }}"
+        name: test-lan-eth-adapter-policy
+        state: absent
+
+    - name: Clean up MAC pools
+      cisco.intersight.intersight_mac_pool:
+        <<: *api_info
+        organization: "{{ organization }}"
+        name: test-lan-mac-pool
+        state: absent
+
+    - name: Clean up IQN pools
+      cisco.intersight.intersight_rest_api:
+        <<: *api_info
+        resource_path: /iqnpool/Pools
+        query_params:
+          $filter: "Name eq 'test-lan-iqn-pool'"
+        state: absent
+
+    - name: Clean up Fabric Network Group policies
+      cisco.intersight.intersight_ethernet_network_group_policy:
+        <<: *api_info
+        organization: "{{ organization }}"
+        name: test-lan-fabric-network-group-policy
+        state: absent
+
+    - name: Clean up Fabric Network Control policies
+      cisco.intersight.intersight_ethernet_network_control_policy:
+        <<: *api_info
+        organization: "{{ organization }}"
+        name: test-lan-fabric-network-control-policy
+        state: absent
+
+    - name: Clean up iSCSI Boot policies
+      cisco.intersight.intersight_rest_api:
+        <<: *api_info
+        resource_path: /vnic/IscsiBootPolicies
+        query_params:
+          $filter: "Name eq 'test-lan-iscsi-boot-policy'"
+        state: absent
