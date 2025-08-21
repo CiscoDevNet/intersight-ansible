@@ -1,0 +1,646 @@
+---
+- block:
+  - name: Define anchor for Intersight API login info
+    ansible.builtin.set_fact:
+      api_info: &api_info
+        api_private_key: "{{ api_private_key }}"
+        api_key_id: "{{ api_key_id }}"
+        api_uri: "{{ api_uri | default(omit) }}"
+        validate_certs: "{{ validate_certs | default(omit) }}"
+
+  - name: Make sure Env is clean
+    cisco.intersight.intersight_vnic_template:
+      <<: *api_info
+      organization: "{{ organization }}"
+      name: "{{ item }}"
+      state: absent
+    loop:
+      - test_vnic_template
+      - test_vnic_template_2
+      - test_vnic_template_minimal
+      - test_vnic_template_custom_cdn
+      - test_vnic_template_usnic
+      - test_vnic_template_vmq
+      - test_vnic_template_vmq_multiqueue
+      - test_vnic_template_sriov
+
+  # Create required policies for testing
+  - name: Get Organization MOID for tests
+    cisco.intersight.intersight_rest_api:
+      <<: *api_info
+      resource_path: /organization/Organizations
+      query_params:
+        $filter: "Name eq '{{ organization }}'"
+    register: org_query_result
+
+  - name: Create MAC pool for testing
+    cisco.intersight.intersight_mac_pool:
+      <<: *api_info
+      organization: "{{ organization }}"
+      name: mac_pool_for_vnic_template
+      description: "Test MAC pool for vNIC template"
+      mac_blocks:
+        - address_from: "00:25:B5:00:00:00"
+          size: 256
+    register: mac_pool_res
+
+  - name: Create Multicast policy for testing
+    cisco.intersight.intersight_multicast_policy:
+      <<: *api_info
+      organization: "{{ organization }}"
+      name: multicast_policy_for_vnic_template
+      description: "Test multicast policy for vNIC template"
+    register: multicast_policy_res
+
+  - name: Create Ethernet Network Group policy for testing
+    cisco.intersight.intersight_ethernet_network_group_policy:
+      <<: *api_info
+      organization: "{{ organization }}"
+      name: eth_network_group_policy_for_vnic_template
+      description: "Test Ethernet Network Group policy for vNIC template"
+      allowed_vlans: "1-100"
+    register: eth_network_group_policy_res
+
+  - name: Create Ethernet Network Control policy for testing
+    cisco.intersight.intersight_ethernet_network_control_policy:
+      <<: *api_info
+      organization: "{{ organization }}"
+      name: eth_network_control_policy_for_vnic_template
+      description: "Test Ethernet Network Control policy for vNIC template"
+      cdp_enabled: true
+      forge_mac: "allow"
+      lldp_transmit_enabled: true
+      lldp_receive_enabled: true
+      mac_registration_mode: "nativeVlanOnly"
+      uplink_fail_action: "linkDown"
+    register: eth_network_control_policy_res
+
+  - name: Create Ethernet QoS policy for testing
+    cisco.intersight.intersight_ethernet_qos_policy:
+      <<: *api_info
+      organization: "{{ organization }}"
+      name: eth_qos_policy_for_vnic_template
+      description: "Test Ethernet QoS policy for vNIC template"
+      mtu: 1500
+      rate_limit: 0
+      cos: 0
+      trust_host_cos: false
+    register: eth_qos_policy_res
+
+  - name: Create Ethernet Adapter policy for testing
+    cisco.intersight.intersight_ethernet_adapter_policy:
+      <<: *api_info
+      organization: "{{ organization }}"
+      name: eth_adapter_policy_for_vnic_template
+      description: "Test Ethernet Adapter policy for vNIC template"
+      rss_enabled: true
+      rss_tcp_ipv4_hash: true
+      rss_tcp_ipv6_hash: true
+      rss_udp_ipv4_hash: false
+      rss_udp_ipv6_hash: false
+      uplink_failback_timeout: 5
+    register: eth_adapter_policy_res
+
+  - name: Create iSCSI Boot Policy for testing
+    cisco.intersight.intersight_rest_api:
+      <<: *api_info
+      resource_path: /vnic/IscsiBootPolicies
+      api_body:
+        Name: "iscsi_boot_policy_for_vnic_template"
+        Description: "Test iSCSI Boot policy for vNIC template"
+        IscsiIpType: "IPv4"
+        AutoTargetvendorName: "8"
+        TargetSourceType: "Auto"
+        IscsiAdapterPolicy: ""
+        PrimaryTargetPolicy: ""
+        SecondaryTargetPolicy: ""
+        Chap:
+          UserId: ""
+          Password: ""
+          IsPasswordSet: false
+        MutualChap:
+          UserId: ""
+          Password: ""
+          IsPasswordSet: false
+        InitiatorIpSource: "DHCP"
+        InitiatorIpPool: ""
+        InitiatorStaticIpV4Address: ""
+        InitiatorStaticIpV4Config: null
+        InitiatorStaticIpV6Address: ""
+        InitiatorStaticIpV6Config: null
+        Organization:
+          ObjectType: "organization.Organization"
+          Moid: "{{ org_query_result.api_response.Moid }}"
+      update_method: post
+    register: iscsi_boot_policy_res
+
+  - name: Create vNIC template - check-mode
+    cisco.intersight.intersight_vnic_template:
+      <<: *api_info
+      organization: "{{ organization }}"
+      name: test_vnic_template
+      description: "Test vNIC template description"
+      enable_override: false
+      switch_id: "A"
+      failover_enabled: false
+      cdn_source: "vnic"
+      mac_pool_name: "mac_pool_for_vnic_template"
+      fabric_eth_network_group_policy_name: "eth_network_group_policy_for_vnic_template"
+      fabric_eth_network_control_policy_name: "eth_network_control_policy_for_vnic_template"
+      eth_qos_policy_name: "eth_qos_policy_for_vnic_template"
+      eth_adapter_policy_name: "eth_adapter_policy_for_vnic_template"
+      connection_type: "none"
+      tags:
+        - Key: Site
+          Value: Test
+        - Key: Site2
+          Value: Test2
+    check_mode: true
+    register: creation_res_check_mode
+
+  - name: Verify vNIC template was not created - check-mode
+    ansible.builtin.assert:
+      that:
+        - creation_res_check_mode is changed
+        - creation_res_check_mode.api_response == {}
+
+  - name: Create vNIC template
+    cisco.intersight.intersight_vnic_template:
+      <<: *api_info
+      organization: "{{ organization }}"
+      name: test_vnic_template
+      description: "Test vNIC template description"
+      enable_override: false
+      switch_id: "A"
+      failover_enabled: false
+      cdn_source: "vnic"
+      mac_pool_name: "mac_pool_for_vnic_template"
+      fabric_eth_network_group_policy_name: "eth_network_group_policy_for_vnic_template"
+      fabric_eth_network_control_policy_name: "eth_network_control_policy_for_vnic_template"
+      eth_qos_policy_name: "eth_qos_policy_for_vnic_template"
+      eth_adapter_policy_name: "eth_adapter_policy_for_vnic_template"
+      connection_type: "none"
+      tags:
+        - Key: Site
+          Value: Test
+        - Key: Site2
+          Value: Test2
+    register: creation_res
+
+  - name: Fetch info after creation
+    cisco.intersight.intersight_vnic_template_info:
+      <<: *api_info
+      organization: "{{ organization }}"
+      name: test_vnic_template
+    register: creation_info_res
+
+  - name: Verify vNIC template creation by info
+    ansible.builtin.assert:
+      that:
+        - creation_res.changed
+        - creation_info_res.api_response.Name == 'test_vnic_template'
+
+  - name: Verify vNIC template creation response aligns with info response
+    ansible.builtin.assert:
+      that:
+        - creation_res.api_response.Name == creation_info_res.api_response.Name
+
+  - name: Create vNIC template (idempotency check)
+    cisco.intersight.intersight_vnic_template:
+      <<: *api_info
+      organization: "{{ organization }}"
+      name: test_vnic_template
+      description: "Test vNIC template description"
+      enable_override: false
+      switch_id: "A"
+      failover_enabled: false
+      cdn_source: "vnic"
+      mac_pool_name: "mac_pool_for_vnic_template"
+      fabric_eth_network_group_policy_name: "eth_network_group_policy_for_vnic_template"
+      fabric_eth_network_control_policy_name: "eth_network_control_policy_for_vnic_template"
+      eth_qos_policy_name: "eth_qos_policy_for_vnic_template"
+      eth_adapter_policy_name: "eth_adapter_policy_for_vnic_template"
+      connection_type: "none"
+      tags:
+        - Key: Site
+          Value: Test
+        - Key: Site2
+          Value: Test2
+    register: creation_res_ide
+
+  - name: Verify vNIC template creation (idempotency check)
+    ansible.builtin.assert:
+      that:
+        - not creation_res_ide.changed
+
+  - name: Update description of an existing vNIC template
+    cisco.intersight.intersight_vnic_template:
+      <<: *api_info
+      organization: "{{ organization }}"
+      name: test_vnic_template
+      description: "Updated vNIC template description"
+      enable_override: false
+      switch_id: "A"
+      failover_enabled: false
+      cdn_source: "vnic"
+      mac_pool_name: "mac_pool_for_vnic_template"
+      fabric_eth_network_group_policy_name: "eth_network_group_policy_for_vnic_template"
+      fabric_eth_network_control_policy_name: "eth_network_control_policy_for_vnic_template"
+      eth_qos_policy_name: "eth_qos_policy_for_vnic_template"
+      eth_adapter_policy_name: "eth_adapter_policy_for_vnic_template"
+      connection_type: "none"
+      tags:
+        - Key: Site
+          Value: Test
+        - Key: Site2
+          Value: Test2
+    register: changed_res
+
+  - name: Fetch info after change
+    cisco.intersight.intersight_vnic_template_info:
+      <<: *api_info
+      organization: "{{ organization }}"
+      name: test_vnic_template
+    register: change_info_res
+
+  - name: Verify vNIC template change by info
+    ansible.builtin.assert:
+      that:
+        - changed_res.changed
+        - change_info_res.api_response.Name == 'test_vnic_template'
+        - change_info_res.api_response.Description == 'Updated vNIC template description'
+
+  - name: Update vNIC template with operational changes
+    cisco.intersight.intersight_vnic_template:
+      <<: *api_info
+      organization: "{{ organization }}"
+      name: test_vnic_template
+      description: "Comprehensive update test - operational changes"
+      enable_override: true
+      switch_id: "B"
+      failover_enabled: true
+      cdn_source: "user"
+      cdn_value: "updated-template-name"
+      mac_pool_name: "mac_pool_for_vnic_template"
+      fabric_eth_network_group_policy_name: "eth_network_group_policy_for_vnic_template"
+      fabric_eth_network_control_policy_name: "eth_network_control_policy_for_vnic_template"
+      eth_qos_policy_name: "eth_qos_policy_for_vnic_template"
+      eth_adapter_policy_name: "eth_adapter_policy_for_vnic_template"
+      connection_type: "usnic"
+      usnic_settings:
+        count: 10
+        cos: 2
+        usnic_adapter_policy_name: "eth_adapter_policy_for_vnic_template"
+      tags:
+        - Key: Environment
+          Value: Updated
+    register: operational_update_res
+
+  - name: Verify operational update results
+    ansible.builtin.assert:
+      that:
+        - operational_update_res.changed
+        - operational_update_res.api_response.Name == 'test_vnic_template'
+        - operational_update_res.api_response.Description == 'Comprehensive update test - operational changes'
+        - operational_update_res.api_response.EnableOverride == true
+        - operational_update_res.api_response.SwitchId == 'B'
+        - operational_update_res.api_response.FailoverEnabled == true
+        - operational_update_res.api_response.Cdn.Source == 'user'
+        - operational_update_res.api_response.Cdn.Value == 'updated-template-name'
+        - operational_update_res.api_response.UsnicSettings.Count == 10
+        - operational_update_res.api_response.UsnicSettings.Cos == 2
+        - operational_update_res.api_response.Tags | length >= 1
+
+  - name: Create another vNIC template
+    cisco.intersight.intersight_vnic_template:
+      <<: *api_info
+      organization: "{{ organization }}"
+      name: test_vnic_template_2
+      description: "Test another vNIC template description"
+      enable_override: true
+      switch_id: "B"
+      failover_enabled: true
+      cdn_source: "vnic"
+      mac_pool_name: "mac_pool_for_vnic_template"
+      fabric_eth_network_group_policy_name: "eth_network_group_policy_for_vnic_template"
+      fabric_eth_network_control_policy_name: "eth_network_control_policy_for_vnic_template"
+      eth_qos_policy_name: "eth_qos_policy_for_vnic_template"
+      eth_adapter_policy_name: "eth_adapter_policy_for_vnic_template"
+      connection_type: "none"
+    register: creation_res_b
+
+  - name: Fetch all vNIC templates under selected organization
+    cisco.intersight.intersight_vnic_template_info:
+      <<: *api_info
+      organization: "{{ organization }}"
+    register: creation_info_res_b
+
+  - name: Check that there are at least 2 vNIC templates under this organization
+    ansible.builtin.assert:
+      that:
+        - creation_info_res_b.api_response | length > 1
+
+  - name: Test creation without optional parameters
+    cisco.intersight.intersight_vnic_template:
+      <<: *api_info
+      organization: "{{ organization }}"
+      name: test_vnic_template_minimal
+      mac_pool_name: "mac_pool_for_vnic_template"
+      fabric_eth_network_group_policy_name: "eth_network_group_policy_for_vnic_template"
+      fabric_eth_network_control_policy_name: "eth_network_control_policy_for_vnic_template"
+      eth_qos_policy_name: "eth_qos_policy_for_vnic_template"
+      eth_adapter_policy_name: "eth_adapter_policy_for_vnic_template"
+    register: creation_res_minimal
+
+  - name: Verify minimal vNIC template creation
+    ansible.builtin.assert:
+      that:
+        - creation_res_minimal.changed
+        - creation_res_minimal.api_response.Name == 'test_vnic_template_minimal'
+
+  - name: Create vNIC template with custom CDN
+    cisco.intersight.intersight_vnic_template:
+      <<: *api_info
+      organization: "{{ organization }}"
+      name: test_vnic_template_custom_cdn
+      description: "vNIC template with custom CDN"
+      enable_override: false
+      switch_id: "A"
+      failover_enabled: false
+      cdn_source: "user"
+      cdn_value: "Custom-Management-NIC"
+      mac_pool_name: "mac_pool_for_vnic_template"
+      fabric_eth_network_group_policy_name: "eth_network_group_policy_for_vnic_template"
+      fabric_eth_network_control_policy_name: "eth_network_control_policy_for_vnic_template"
+      eth_qos_policy_name: "eth_qos_policy_for_vnic_template"
+      eth_adapter_policy_name: "eth_adapter_policy_for_vnic_template"
+      connection_type: "none"
+    register: custom_cdn_res
+
+  - name: Verify custom CDN template creation
+    ansible.builtin.assert:
+      that:
+        - custom_cdn_res.changed
+        - custom_cdn_res.api_response.Name == 'test_vnic_template_custom_cdn'
+        - custom_cdn_res.api_response.Cdn.Source == 'user'
+        - custom_cdn_res.api_response.Cdn.Value == 'Custom-Management-NIC'
+
+  - name: Create vNIC template with USNIC
+    cisco.intersight.intersight_vnic_template:
+      <<: *api_info
+      organization: "{{ organization }}"
+      name: test_vnic_template_usnic
+      description: "vNIC template with USNIC configuration"
+      enable_override: false
+      switch_id: "A"
+      failover_enabled: false
+      cdn_source: "vnic"
+      mac_pool_name: "mac_pool_for_vnic_template"
+      fabric_eth_network_group_policy_name: "eth_network_group_policy_for_vnic_template"
+      fabric_eth_network_control_policy_name: "eth_network_control_policy_for_vnic_template"
+      eth_qos_policy_name: "eth_qos_policy_for_vnic_template"
+      eth_adapter_policy_name: "eth_adapter_policy_for_vnic_template"
+      connection_type: "usnic"
+      usnic_settings:
+        count: 0
+        cos: 5
+        usnic_adapter_policy_name: "eth_adapter_policy_for_vnic_template"
+    register: usnic_template_res
+
+  - name: Verify USNIC template creation
+    ansible.builtin.assert:
+      that:
+        - usnic_template_res.changed
+        - usnic_template_res.api_response.Name == 'test_vnic_template_usnic'
+        - usnic_template_res.api_response.UsnicSettings.Count == 0
+        - usnic_template_res.api_response.UsnicSettings.Cos == 5
+
+  - name: Create vNIC template with VMQ
+    cisco.intersight.intersight_vnic_template:
+      <<: *api_info
+      organization: "{{ organization }}"
+      name: test_vnic_template_vmq
+      description: "vNIC template with VMQ configuration"
+      enable_override: false
+      switch_id: "A"
+      failover_enabled: false
+      cdn_source: "vnic"
+      mac_pool_name: "mac_pool_for_vnic_template"
+      fabric_eth_network_group_policy_name: "eth_network_group_policy_for_vnic_template"
+      fabric_eth_network_control_policy_name: "eth_network_control_policy_for_vnic_template"
+      eth_qos_policy_name: "eth_qos_policy_for_vnic_template"
+      eth_adapter_policy_name: "eth_adapter_policy_for_vnic_template"
+      connection_type: "vmq"
+      vmq_settings:
+        enabled: true
+        multi_queue_support: false
+        num_interrupts: 16
+        num_vmqs: 4
+    register: vmq_template_res
+
+  - name: Verify VMQ template creation
+    ansible.builtin.assert:
+      that:
+        - vmq_template_res.changed
+        - vmq_template_res.api_response.Name == 'test_vnic_template_vmq'
+        - vmq_template_res.api_response.VmqSettings.Enabled == true
+        - vmq_template_res.api_response.VmqSettings.MultiQueueSupport == false
+        - vmq_template_res.api_response.VmqSettings.NumInterrupts == 16
+        - vmq_template_res.api_response.VmqSettings.NumVmqs == 4
+
+  - name: Create vNIC template with VMQ multi-queue support
+    cisco.intersight.intersight_vnic_template:
+      <<: *api_info
+      organization: "{{ organization }}"
+      name: test_vmq_multiqueue
+      description: "vNIC template with VMQ multi-queue configuration"
+      enable_override: false
+      switch_id: "A"
+      failover_enabled: false
+      cdn_source: "vnic"
+      mac_pool_name: "mac_pool_for_vnic_template"
+      fabric_eth_network_group_policy_name: "eth_network_group_policy_for_vnic_template"
+      fabric_eth_network_control_policy_name: "eth_network_control_policy_for_vnic_template"
+      eth_qos_policy_name: "eth_qos_policy_for_vnic_template"
+      eth_adapter_policy_name: "eth_adapter_policy_for_vnic_template"
+      connection_type: "vmq"
+      vmq_settings:
+        enabled: true
+        multi_queue_support: true
+        num_sub_vnics: 64
+        vmmq_adapter_policy_name: "eth_adapter_policy_for_vnic_template"
+    register: vmq_multiqueue_template_res
+
+  - name: Verify VMQ multi-queue template creation
+    ansible.builtin.assert:
+      that:
+        - vmq_multiqueue_template_res.changed
+        - vmq_multiqueue_template_res.api_response.Name == 'test_vmq_multiqueue'
+        - vmq_multiqueue_template_res.api_response.VmqSettings.Enabled == true
+        - vmq_multiqueue_template_res.api_response.VmqSettings.MultiQueueSupport == true
+        - vmq_multiqueue_template_res.api_response.VmqSettings.NumSubVnics == 64
+
+  - name: Create vNIC template with SR-IOV
+    cisco.intersight.intersight_vnic_template:
+      <<: *api_info
+      organization: "{{ organization }}"
+      name: test_vnic_template_sriov
+      description: "vNIC template with SR-IOV configuration"
+      enable_override: false
+      switch_id: "A"
+      failover_enabled: false
+      cdn_source: "vnic"
+      mac_pool_name: "mac_pool_for_vnic_template"
+      fabric_eth_network_group_policy_name: "eth_network_group_policy_for_vnic_template"
+      fabric_eth_network_control_policy_name: "eth_network_control_policy_for_vnic_template"
+      eth_qos_policy_name: "eth_qos_policy_for_vnic_template"
+      eth_adapter_policy_name: "eth_adapter_policy_for_vnic_template"
+      connection_type: "sriov"
+      sriov_settings:
+        enabled: true
+        vf_count: 64
+        rx_count_per_vf: 4
+        tx_count_per_vf: 1
+        comp_count_per_vf: 5
+        int_count_per_vf: 8
+    register: sriov_template_res
+
+  - name: Verify SR-IOV template creation
+    ansible.builtin.assert:
+      that:
+        - sriov_template_res.changed
+        - sriov_template_res.api_response.Name == 'test_vnic_template_sriov'
+        - sriov_template_res.api_response.SriovSettings.Enabled == true
+        - sriov_template_res.api_response.SriovSettings.VfCount == 64
+        - sriov_template_res.api_response.SriovSettings.RxCountPerVf == 4
+        - sriov_template_res.api_response.SriovSettings.TxCountPerVf == 1
+        - sriov_template_res.api_response.SriovSettings.CompCountPerVf == 5
+        - sriov_template_res.api_response.SriovSettings.IntCountPerVf == 8
+
+  - name: Create vNIC template with iSCSI boot policy
+    cisco.intersight.intersight_vnic_template:
+      <<: *api_info
+      organization: "{{ organization }}"
+      name: test_vnic_template_iscsi
+      description: "Test vNIC template with iSCSI boot policy"
+      enable_override: true
+      switch_id: "B"
+      failover_enabled: true
+      cdn_source: "user"
+      cdn_value: "iscsi-boot-nic"
+      mac_pool_name: "mac_pool_for_vnic_template"
+      fabric_eth_network_group_policy_name: "eth_network_group_policy_for_vnic_template"
+      fabric_eth_network_control_policy_name: "eth_network_control_policy_for_vnic_template"
+      eth_qos_policy_name: "eth_qos_policy_for_vnic_template"
+      eth_adapter_policy_name: "eth_adapter_policy_for_vnic_template"
+      iscsi_boot_policy_name: "iscsi_boot_policy_for_vnic_template"
+      connection_type: "none"
+      tags:
+        - Key: "BootType"
+          Value: "iSCSI"
+    register: iscsi_template_res
+
+  - name: Verify iSCSI template creation
+    ansible.builtin.assert:
+      that:
+        - iscsi_template_res.changed
+        - iscsi_template_res.api_response.Name == 'test_vnic_template_iscsi'
+        - iscsi_template_res.api_response.EnableOverride == true
+        - iscsi_template_res.api_response.SwitchId == 'B'
+        - iscsi_template_res.api_response.FailoverEnabled == true
+        - iscsi_template_res.api_response.Cdn.Source == 'user'
+        - iscsi_template_res.api_response.Cdn.Value == 'iscsi-boot-nic'
+        - iscsi_template_res.api_response.IscsiBootPolicy is defined
+
+  # Test info module with various filters
+  - name: Test info module - fetch specific template
+    cisco.intersight.intersight_vnic_template_info:
+      <<: *api_info
+      organization: "{{ organization }}"
+      name: test_vnic_template
+    register: specific_template_info
+
+  - name: Verify specific template info
+    ansible.builtin.assert:
+      that:
+        - specific_template_info.api_response.Name == 'test_vnic_template'
+        - specific_template_info.api_response.Description == 'Comprehensive update test - operational changes'
+
+  - name: Test info module - fetch all templates
+    cisco.intersight.intersight_vnic_template_info:
+      <<: *api_info
+      organization: "{{ organization }}"
+    register: all_templates_info
+
+  - name: Verify all templates info
+    ansible.builtin.assert:
+      that:
+        - all_templates_info.api_response | length >= 7
+
+  always:
+  - name: Remove vNIC templates
+    cisco.intersight.intersight_vnic_template:
+      <<: *api_info
+      organization: "{{ organization }}"
+      name: "{{ item }}"
+      state: absent
+    loop:
+      - test_vnic_template
+      - test_vnic_template_2
+      - test_vnic_template_minimal
+      - test_vnic_template_custom_cdn
+      - test_vnic_template_usnic
+      - test_vnic_template_vmq
+      - test_vmq_multiqueue
+      - test_vnic_template_sriov
+      - test_vnic_template_iscsi
+
+  - name: Remove test policies
+    cisco.intersight.intersight_mac_pool:
+      <<: *api_info
+      organization: "{{ organization }}"
+      name: mac_pool_for_vnic_template
+      state: absent
+
+  - name: Remove test multicast policy
+    cisco.intersight.intersight_multicast_policy:
+      <<: *api_info
+      organization: "{{ organization }}"
+      name: multicast_policy_for_vnic_template
+      state: absent
+
+  - name: Remove test Ethernet Network Group policy
+    cisco.intersight.intersight_ethernet_network_group_policy:
+      <<: *api_info
+      organization: "{{ organization }}"
+      name: eth_network_group_policy_for_vnic_template
+      state: absent
+
+  - name: Remove test Ethernet Network Control policy
+    cisco.intersight.intersight_ethernet_network_control_policy:
+      <<: *api_info
+      organization: "{{ organization }}"
+      name: eth_network_control_policy_for_vnic_template
+      state: absent
+
+  - name: Remove test Ethernet QoS policy
+    cisco.intersight.intersight_ethernet_qos_policy:
+      <<: *api_info
+      organization: "{{ organization }}"
+      name: eth_qos_policy_for_vnic_template
+      state: absent
+
+  - name: Remove test Ethernet Adapter policy
+    cisco.intersight.intersight_ethernet_adapter_policy:
+      <<: *api_info
+      organization: "{{ organization }}"
+      name: eth_adapter_policy_for_vnic_template
+      state: absent
+
+  - name: Remove test iSCSI Boot policy
+    cisco.intersight.intersight_rest_api:
+      <<: *api_info
+      resource_path: /vnic/IscsiBootPolicies
+      query_params:
+        $filter: "Name eq 'iscsi_boot_policy_for_vnic_template'"
+      state: absent
