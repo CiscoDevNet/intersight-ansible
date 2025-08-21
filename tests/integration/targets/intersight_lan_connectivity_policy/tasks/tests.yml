@@ -187,7 +187,7 @@
       update_method: post
     register: iscsi_boot_policy_res
 
-  # STANDALONE TESTS
+  # STANDALONE TARGET TESTS
 
   - name: Create basic Standalone LAN connectivity policy
     cisco.intersight.intersight_lan_connectivity_policy:
@@ -668,7 +668,9 @@
           mac_address_type: static
           static_mac_address: "00:25:B5:AA:BB:CC"
           auto_slot_id: false
+          placement_slot_id: "5"
           auto_pci_link: false
+          pci_link_assignment_mode: "Load-Balanced"
           switch_id: B
           failover_enabled: true
           fabric_eth_network_group_policy_name: test-lan-fabric-network-group-policy
@@ -987,6 +989,99 @@
       - test_fi_validation_static_mac_result.failed == false
       - "'static_mac_address is required when mac_address_type is' not in test_fi_validation_static_mac_result.msg"
 
+  - name: Test auto placement enabled - simplified API body
+    cisco.intersight.intersight_lan_connectivity_policy:
+      <<: *api_info
+      organization: "{{ organization }}"
+      name: test_auto_placement_api_body
+      description: "Test auto placement API body structure"
+      target_platform: "attached"
+      vnics:
+        - name: "auto-api-vnic"
+          mac_address_type: "pool"
+          mac_pool_name: "test-lan-mac-pool"
+          auto_vnic_placement_enabled: true
+          switch_id: "A"
+          fabric_eth_network_group_policy_name: "test-lan-fabric-network-group-policy"
+          fabric_eth_network_control_policy_name: "test-lan-fabric-network-control-policy"
+          eth_qos_policy_name: "test-lan-eth-qos-policy"
+          eth_adapter_policy_name: "test-lan-eth-adapter-policy"
+    register: auto_placement_api_res
+
+  - name: Verify auto placement API body structure
+    ansible.builtin.assert:
+      that:
+        - auto_placement_api_res.changed
+        - auto_placement_api_res.api_response.vNICs[0].Placement.SwitchId == 'A'
+        - auto_placement_api_res.api_response.vNICs[0].Placement.AutoSlotId == true
+        - auto_placement_api_res.api_response.vNICs[0].Placement.AutoPciLink == true
+
+  - name: Test advanced PCI configuration - Custom mode
+    cisco.intersight.intersight_lan_connectivity_policy:
+      <<: *api_info
+      organization: "{{ organization }}"
+      name: test_advanced_pci_custom
+      description: "Test advanced PCI Custom configuration"
+      target_platform: "attached"
+      vnics:
+        - name: "custom-pci-vnic"
+          order: 1
+          mac_address_type: "pool"
+          mac_pool_name: "test-lan-mac-pool"
+          auto_slot_id: false
+          placement_slot_id: "MLOM"
+          auto_pci_link: false
+          pci_link_assignment_mode: "Custom"
+          pci_link: 1
+          auto_vnic_placement_enabled: false
+          switch_id: "A"
+          fabric_eth_network_group_policy_name: "test-lan-fabric-network-group-policy"
+          fabric_eth_network_control_policy_name: "test-lan-fabric-network-control-policy"
+          eth_qos_policy_name: "test-lan-eth-qos-policy"
+          eth_adapter_policy_name: "test-lan-eth-adapter-policy"
+    register: custom_pci_res
+
+  - name: Verify Custom PCI mode configuration
+    ansible.builtin.assert:
+      that:
+        - custom_pci_res.changed
+        - custom_pci_res.api_response.vNICs | length == 1
+        - custom_pci_res.api_response.vNICs[0].Placement.PciLinkAssignmentMode == 'Custom'
+        - custom_pci_res.api_response.vNICs[0].Placement.PciLink == 1
+        - custom_pci_res.api_response.vNICs[0].Placement.Id == 'MLOM'
+
+  - name: Test advanced PCI configuration - Load-Balanced mode
+    cisco.intersight.intersight_lan_connectivity_policy:
+      <<: *api_info
+      organization: "{{ organization }}"
+      name: test_advanced_pci_load_balanced
+      description: "Test advanced PCI Load-Balanced configuration"
+      target_platform: "attached"
+      vnics:
+        - name: "load-balanced-pci-vnic"
+          order: 1
+          mac_address_type: "pool"
+          mac_pool_name: "test-lan-mac-pool"
+          auto_slot_id: false
+          placement_slot_id: "1"
+          auto_pci_link: false
+          pci_link_assignment_mode: "Load-Balanced"
+          auto_vnic_placement_enabled: false
+          switch_id: "A"
+          fabric_eth_network_group_policy_name: "test-lan-fabric-network-group-policy"
+          fabric_eth_network_control_policy_name: "test-lan-fabric-network-control-policy"
+          eth_qos_policy_name: "test-lan-eth-qos-policy"
+          eth_adapter_policy_name: "test-lan-eth-adapter-policy"
+    register: load_balanced_pci_res
+
+  - name: Verify Load-Balanced PCI mode configuration
+    ansible.builtin.assert:
+      that:
+        - load_balanced_pci_res.changed
+        - load_balanced_pci_res.api_response.vNICs | length == 1
+        - load_balanced_pci_res.api_response.vNICs[0].Placement.PciLinkAssignmentMode == 'Load-Balanced'
+        - load_balanced_pci_res.api_response.vNICs[0].Placement.Id == '1'
+
   always:
     - name: Clean up test policies
       cisco.intersight.intersight_lan_connectivity_policy:
@@ -1012,6 +1107,9 @@
         - test-fi-attached-sriov
         - test-fi-attached-mixed
         - test-fi-attached-idempotency
+        - test_auto_placement_api_body
+        - test_advanced_pci_custom
+        - test_advanced_pci_load_balanced
 
     # Clean up prerequisite policies
     - name: Clean up Ethernet Network policies

@@ -1,3 +1,2 @@
----
 dependencies:
-  - role: prepare_test_run
+  - prepare_test_run

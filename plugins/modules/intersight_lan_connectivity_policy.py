@@ -114,14 +114,6 @@ options:
           - Supported values are (1-15) and MLOM.
           - Required when vNIC state is 'present'.
         type: str
-      pci_link:
-        description:
-          - The PCI Link used as transport for the virtual interface.
-          - PCI Link is only applicable for select Cisco UCS VIC 1300 models (UCSC-PCIE-C40Q-03, UCSB-MLOM-40G-03, UCSB-VIC-M83-8P) that support two PCI links.
-          - The value, if specified, for any other VIC model will be ignored.
-        type: int
-        choices: [0, 1]
-        default: 0
       uplink_port:
         description:
           - Adapter port on which the virtual interface will be created.
@@ -188,12 +180,22 @@ options:
           - Required when mac_address_type is 'static' and target platform is attached.
           - Only applicable for attached target platform.
         type: str
+      pci_link:
+        description:
+          - The PCI Link used as transport for the virtual interface.
+          - PCI Link is only applicable for select Cisco UCS VIC 1300 models (UCSC-PCIE-C40Q-03, UCSB-MLOM-40G-03, UCSB-VIC-M83-8P) that support two PCI links.
+          - The value, if specified, for any other VIC model will be ignored.
+          - For attached required when pci_link_assignment_mode is 'Custom'.
+        type: int
+        choices: [0, 1]
+        default: 0
       auto_slot_id:
         description:
           - Enable or disable automatic assignment of the VIC slot ID.
           - If enabled and the server has only one VIC, the same VIC is chosen for all the vNICs.
           - If enabled and the server has multiple VICs, the vNIC/vHBA are deployed on the first VIC.
-          - Only applicable for attached target platform.
+          - If disabled, placement_slot_id must be specified.
+          - Only applicable for attached target platform when auto_vnic_placement_enabled is false.
         type: bool
         default: true
       auto_pci_link:
@@ -201,9 +203,27 @@ options:
           - Enable or disable automatic assignment of the PCI Link in a dual-link adapter.
           - This option applies only to 13xx series VICs that support dual-link.
           - If enabled, the system determines the placement of the vNIC/vHBA on either of the PCI Links.
-          - Only applicable for attached target platform.
+          - If disabled, pci_link_assignment_mode must be specified.
+          - Only applicable for attached target platform when auto_vnic_placement_enabled is false.
         type: bool
         default: true
+      pci_link_assignment_mode:
+        description:
+          - PCI Link assignment mode when auto_pci_link is disabled.
+          - Custom allows manual selection of PCI link via pci_link parameter.
+          - Load-Balanced automatically distributes vNICs across available PCI links.
+          - Required when auto_pci_link is false and auto_vnic_placement_enabled is false.
+          - Only applicable for attached target platform.
+        type: str
+        choices: ['Custom', 'Load-Balanced']
+      auto_vnic_placement_enabled:
+        description:
+          - Enable automatic vNIC placement for FI-attached servers.
+          - When enabled, the vNIC placement is simplified to only specify the switch ID.
+          - When disabled, full placement control is available including order, auto_slot_id, and auto_pci_link.
+          - Only applicable for attached target platform.
+        type: bool
+        default: false
       switch_id:
         description:
           - The fabric port to which the vNICs will be associated.
@@ -402,8 +422,101 @@ EXAMPLES = r'''
         mac_pool_name: "default-mac-pool"
         auto_slot_id: true
         auto_pci_link: true
+        auto_vnic_placement_enabled: false
         switch_id: "A"
         failover_enabled: false
+        fabric_eth_network_group_policy_name: "default-network-group"
+        fabric_eth_network_control_policy_name: "default-network-control"
+        eth_qos_policy_name: "default-qos-policy"
+        eth_adapter_policy_name: "default-adapter-policy"
+        connection_type: "none"
+        state: present
+    state: present
+
+- name: Create a LAN Connectivity Policy with automatic vNIC placement
+  cisco.intersight.intersight_lan_connectivity_policy:
+    api_private_key: "{{ api_private_key }}"
+    api_key_id: "{{ api_key_id }}"
+    organization: "default"
+    name: "fi-attached-auto-placement-policy"
+    description: "LAN connectivity policy with automatic vNIC placement"
+    target_platform: "attached"
+    azure_qos_enabled: false
+    iqn_allocation_type: "None"
+    placement_mode: "auto"
+    vnics:
+      - name: "auto-placed-vnic"
+        cdn_source: "vnic"
+        mac_address_type: "pool"
+        mac_pool_name: "default-mac-pool"
+        auto_vnic_placement_enabled: true
+        switch_id: "A"
+        failover_enabled: false
+        fabric_eth_network_group_policy_name: "default-network-group"
+        fabric_eth_network_control_policy_name: "default-network-control"
+        eth_qos_policy_name: "default-qos-policy"
+        eth_adapter_policy_name: "default-adapter-policy"
+        connection_type: "none"
+        state: present
+    state: present
+
+- name: Create a LAN Connectivity Policy with advanced placement control
+  cisco.intersight.intersight_lan_connectivity_policy:
+    api_private_key: "{{ api_private_key }}"
+    api_key_id: "{{ api_key_id }}"
+    organization: "default"
+    name: "fi-attached-advanced-placement-policy"
+    description: "LAN connectivity policy with advanced placement control"
+    target_platform: "attached"
+    azure_qos_enabled: false
+    iqn_allocation_type: "None"
+    placement_mode: "custom"
+    vnics:
+      - name: "advanced-placed-vnic"
+        order: 9
+        cdn_source: "vnic"
+        mac_address_type: "pool"
+        mac_pool_name: "default-mac-pool"
+        auto_slot_id: false
+        placement_slot_id: "5"
+        auto_pci_link: false
+        pci_link_assignment_mode: "Custom"
+        pci_link: 0
+        auto_vnic_placement_enabled: false
+        switch_id: "A"
+        failover_enabled: false
+        fabric_eth_network_group_policy_name: "default-network-group"
+        fabric_eth_network_control_policy_name: "default-network-control"
+        eth_qos_policy_name: "default-qos-policy"
+        eth_adapter_policy_name: "default-adapter-policy"
+        connection_type: "none"
+        state: present
+    state: present
+
+- name: Create a LAN Connectivity Policy with load-balanced PCI assignment
+  cisco.intersight.intersight_lan_connectivity_policy:
+    api_private_key: "{{ api_private_key }}"
+    api_key_id: "{{ api_key_id }}"
+    organization: "default"
+    name: "fi-attached-load-balanced-policy"
+    description: "LAN connectivity policy with load-balanced PCI assignment"
+    target_platform: "attached"
+    azure_qos_enabled: false
+    iqn_allocation_type: "None"
+    placement_mode: "custom"
+    vnics:
+      - name: "load-balanced-vnic"
+        order: 5
+        cdn_source: "vnic"
+        mac_address_type: "pool"
+        mac_pool_name: "default-mac-pool"
+        auto_slot_id: false
+        placement_slot_id: "MLOM"
+        auto_pci_link: false
+        pci_link_assignment_mode: "Load-Balanced"
+        auto_vnic_placement_enabled: false
+        switch_id: "B"
+        failover_enabled: true
         fabric_eth_network_group_policy_name: "default-network-group"
         fabric_eth_network_control_policy_name: "default-network-control"
         eth_qos_policy_name: "default-qos-policy"
@@ -608,6 +721,12 @@ api_response:
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible_collections.cisco.intersight.plugins.module_utils.intersight import IntersightModule, intersight_argument_spec
+from ansible_collections.cisco.intersight.plugins.module_utils.intersight_vnic_utils import (
+    validate_cdn_config, validate_usnic_settings, validate_vmq_settings, validate_sriov_settings,
+    build_cdn_config, build_connection_settings, resolve_policy_moids_from_mappings,
+    get_common_policy_mappings, get_iscsi_boot_policy_mapping, get_fabric_network_policy_mappings,
+    get_mac_pool_policy_mapping, get_common_settings_argument_spec
+)
 
 
 def validate_fi_attached_params(module):
@@ -664,6 +783,48 @@ def validate_fi_attached_vnic_config(module, vnic_config):
     if not fabric_eth_network_control_policy_name:
         module.fail_json(msg=f"fabric_eth_network_control_policy_name is required for attached vNIC '{vnic_name}'")
 
+    # Validate advanced placement configuration
+    validate_fi_attached_placement_config(module, vnic_config)
+
+
+def validate_fi_attached_placement_config(module, vnic_config):
+    """
+    Validate FIAttached placement configuration
+    """
+    vnic_name = vnic_config.get('name', 'unknown')
+    auto_vnic_placement_enabled = vnic_config.get('auto_vnic_placement_enabled', False)
+
+    # Skip advanced placement validation if auto placement is enabled
+    if auto_vnic_placement_enabled:
+        return
+
+    auto_slot_id = vnic_config.get('auto_slot_id', True)
+    placement_slot_id = vnic_config.get('placement_slot_id')
+    auto_pci_link = vnic_config.get('auto_pci_link', True)
+    pci_link_assignment_mode = vnic_config.get('pci_link_assignment_mode')
+    pci_link = vnic_config.get('pci_link')
+
+    # Validate slot ID configuration
+    if not auto_slot_id and not placement_slot_id:
+        module.fail_json(msg=f"placement_slot_id is required when auto_slot_id is false for vNIC '{vnic_name}'")
+
+    if auto_slot_id and placement_slot_id:
+        module.fail_json(msg=f"placement_slot_id should not be specified when auto_slot_id is true for vNIC '{vnic_name}'")
+
+    # Validate PCI link configuration
+    if not auto_pci_link and not pci_link_assignment_mode:
+        module.fail_json(msg=f"pci_link_assignment_mode is required when auto_pci_link is false for vNIC '{vnic_name}'")
+
+    if auto_pci_link and pci_link_assignment_mode:
+        module.fail_json(msg=f"pci_link_assignment_mode should not be specified when auto_pci_link is true for vNIC '{vnic_name}'")
+
+    # Validate PCI link when using Custom mode
+    if pci_link_assignment_mode == 'Custom' and pci_link is None:
+        module.fail_json(msg=f"pci_link is required when pci_link_assignment_mode is 'Custom' for vNIC '{vnic_name}'")
+
+    if pci_link_assignment_mode != 'Custom' and pci_link is not None and pci_link != 0:
+        module.fail_json(msg=f"pci_link should only be specified when pci_link_assignment_mode is 'Custom' for vNIC '{vnic_name}'")
+
 
 def validate_standalone_vnic_config(module, vnic_config):
     """
@@ -682,254 +843,38 @@ def validate_standalone_vnic_config(module, vnic_config):
         module.fail_json(msg=f"eth_network_policy_name is required for standalone vNIC '{vnic_name}'")
 
 
-def validate_vnic_cdn_config(module, vnic_config):
+def get_vnic_policy_mappings(target_platform, vnic_config):
     """
-    Validate vNIC CDN configuration
+    Get policy mappings for vNIC configuration based on target platform.
     """
-    cdn_source = vnic_config.get('cdn_source', 'vnic')
-    cdn_value = vnic_config.get('cdn_value')
-    vnic_name = vnic_config.get('name', 'unknown')
+    # Start with common policies
+    policy_mappings = get_common_policy_mappings()
 
-    if cdn_source == 'user' and not cdn_value:
-        module.fail_json(msg=f"cdn_value is required when cdn_source is set to 'user' for vNIC '{vnic_name}'")
+    # Platform-specific policies
+    if target_platform == 'attached':
+        # Add fabric network policies
+        policy_mappings.update(get_fabric_network_policy_mappings())
 
-    if cdn_source == 'vnic' and cdn_value:
-        module.fail_json(msg=f"cdn_value should not be provided when cdn_source is set to 'vnic' for vNIC '{vnic_name}'")
+        # MAC pool for FIAttached when using pool type
+        if vnic_config.get('mac_address_type', 'pool') == 'pool':
+            policy_mappings.update(get_mac_pool_policy_mapping())
 
+        # iSCSI boot policy
+        if vnic_config.get('iscsi_boot_policy_name'):
+            policy_mappings.update(get_iscsi_boot_policy_mapping())
 
-def validate_usnic_settings(module, vnic_config, usnic_settings):
-    """
-    Validate USNIC connection type settings
-    """
-    vnic_name = vnic_config.get('name', 'unknown')
+    else:  # standalone server
+        policy_mappings['eth_network_policy_name'] = ('/vnic/EthNetworkPolicies', 'EthNetworkPolicy', 'Ethernet Network Policy')
 
-    if not usnic_settings:
-        module.fail_json(msg=f"usnic_settings is required when connection_type is 'usnic' for vNIC '{vnic_name}'")
-
-    usnic_adapter_policy_name = usnic_settings.get('usnic_adapter_policy_name')
-    if not usnic_adapter_policy_name:
-        module.fail_json(msg=f"usnic_adapter_policy_name is required in usnic_settings for vNIC '{vnic_name}'")
-
-    count = usnic_settings.get('count', 0)
-    cos = usnic_settings.get('cos', 5)
-
-    if count < 0 or count > 225:
-        module.fail_json(msg="USNIC count must be between 0 and 225")
-    if cos < 0 or cos > 6:
-        module.fail_json(msg="USNIC CoS must be between 0 and 6")
-
-
-def validate_vmq_settings(module, vmq_settings):
-    """
-    Validate VMQ connection type settings
-    """
-    multi_queue_support = vmq_settings.get('multi_queue_support', False)
-
-    if not multi_queue_support:
-        num_interrupts = vmq_settings.get('num_interrupts', 16)
-        num_vmqs = vmq_settings.get('num_vmqs', 4)
-
-        if num_interrupts < 1 or num_interrupts > 514:
-            module.fail_json(msg="VMQ num_interrupts must be between 1 and 514")
-        if num_vmqs < 1 or num_vmqs > 128:
-            module.fail_json(msg="VMQ num_vmqs must be between 1 and 128")
-    else:
-        num_sub_vnics = vmq_settings.get('num_sub_vnics', 64)
-        if num_sub_vnics < 0 or num_sub_vnics > 64:
-            module.fail_json(msg="VMQ num_sub_vnics must be between 0 and 64")
-
-        if not vmq_settings.get('vmmq_adapter_policy_name'):
-            module.fail_json(msg="vmmq_adapter_policy_name is required when multi_queue_support is true")
-
-
-def validate_sriov_settings(module, sriov_settings):
-    """
-    Validate SR-IOV connection type settings
-    """
-    vf_count = sriov_settings.get('vf_count', 64)
-    rx_count_per_vf = sriov_settings.get('rx_count_per_vf', 4)
-    tx_count_per_vf = sriov_settings.get('tx_count_per_vf', 1)
-    comp_count_per_vf = sriov_settings.get('comp_count_per_vf', 5)
-    int_count_per_vf = sriov_settings.get('int_count_per_vf', 8)
-
-    if vf_count < 1 or vf_count > 64:
-        module.fail_json(msg="SR-IOV vf_count must be between 1 and 64")
-    if rx_count_per_vf < 1 or rx_count_per_vf > 8:
-        module.fail_json(msg="SR-IOV rx_count_per_vf must be between 1 and 8")
-    if tx_count_per_vf < 1 or tx_count_per_vf > 8:
-        module.fail_json(msg="SR-IOV tx_count_per_vf must be between 1 and 8")
-    if comp_count_per_vf < 1 or comp_count_per_vf > 16:
-        module.fail_json(msg="SR-IOV comp_count_per_vf must be between 1 and 16")
-    if int_count_per_vf < 1 or int_count_per_vf > 16:
-        module.fail_json(msg="SR-IOV int_count_per_vf must be between 1 and 16")
-
-
-def get_policy_moid(intersight, policy_cache, module, resource_path, policy_name, policy_type="Policy"):
-    """
-    Get policy MOID with caching
-    """
-    if not policy_name:
-        return None
-
-    cache_key = f"{resource_path}:{policy_name}"
-    if cache_key in policy_cache:
-        return policy_cache[cache_key]
-
-    policy_moid = intersight.get_moid_by_name(resource_path=resource_path, resource_name=policy_name)
-    if not policy_moid:
-        module.fail_json(msg=f"{policy_type} '{policy_name}' not found")
-
-    policy_cache[cache_key] = policy_moid
-    return policy_moid
+    return policy_mappings
 
 
 def resolve_vnic_policy_moids(intersight, policy_cache, module, vnic_config, target_platform):
     """
-    Resolve all policy MOIDs for a vNIC configuration based on target platform
+    Resolve all policy MOIDs for a vNIC configuration based on target platform.
     """
-    policy_moids = {}
-
-    # Common policies for both platforms
-    common_policy_mappings = {
-        'eth_qos_policy_name': ('/vnic/EthQosPolicies', 'EthQosPolicy', 'Ethernet QoS Policy'),
-        'eth_adapter_policy_name': ('/vnic/EthAdapterPolicies', 'EthAdapterPolicy', 'Ethernet Adapter Policy')
-    }
-
-    # Platform-specific policies
-    if target_platform == 'attached':
-        platform_policy_mappings = {
-            'fabric_eth_network_group_policy_name': (
-                '/fabric/EthNetworkGroupPolicies', 'FabricEthNetworkGroupPolicy', 'Fabric Ethernet Network Group Policy'
-            ),
-            'fabric_eth_network_control_policy_name': (
-                '/fabric/EthNetworkControlPolicies', 'FabricEthNetworkControlPolicy', 'Fabric Ethernet Network Control Policy'
-            )
-        }
-
-        # MAC pool for FIAttached when using pool type
-        if vnic_config.get('mac_address_type', 'pool') == 'pool':
-            platform_policy_mappings['mac_pool_name'] = ('/macpool/Pools', 'MacPool', 'MAC Pool')
-
-        # iSCSI boot policy is optional - only add if specified
-        if vnic_config.get('iscsi_boot_policy_name'):
-            platform_policy_mappings['iscsi_boot_policy_name'] = ('/vnic/IscsiBootPolicies', 'IscsiBootPolicy', 'iSCSI Boot Policy')
-
-    else:  # standalone
-        platform_policy_mappings = {
-            'eth_network_policy_name': ('/vnic/EthNetworkPolicies', 'EthNetworkPolicy', 'Ethernet Network Policy')
-        }
-
-    all_policy_mappings = {}
-    all_policy_mappings.update(common_policy_mappings)
-    all_policy_mappings.update(platform_policy_mappings)
-
-    for param_name, (resource_path, api_field, policy_type) in all_policy_mappings.items():
-        policy_name = vnic_config.get(param_name)
-        if policy_name:
-            policy_moid = get_policy_moid(
-                intersight, policy_cache, module, resource_path, policy_name, policy_type
-            )
-            # Special handling for FabricEthNetworkGroupPolicy which needs to be an array for the API
-            if api_field == 'FabricEthNetworkGroupPolicy':
-                policy_moids[api_field] = [policy_moid]
-            else:
-                policy_moids[api_field] = policy_moid
-
-    return policy_moids
-
-
-def build_usnic_settings(intersight, policy_cache, module, usnic_settings):
-    """
-    Build USNIC settings for vNIC API body
-    """
-    usnic_adapter_policy_name = usnic_settings.get('usnic_adapter_policy_name')
-    usnic_adapter_policy_moid = get_policy_moid(
-        intersight, policy_cache, module, '/vnic/EthAdapterPolicies',
-        usnic_adapter_policy_name, 'USNIC Adapter Policy'
-    )
-
-    return {
-        'Count': usnic_settings.get('count', 0),
-        'UsnicAdapterPolicy': usnic_adapter_policy_moid,
-        'Cos': usnic_settings.get('cos', 5)
-    }
-
-
-def build_vmq_settings(intersight, policy_cache, module, vmq_settings):
-    """
-    Build VMQ settings for vNIC API body
-    """
-    multi_queue_support = vmq_settings.get('multi_queue_support', False)
-
-    if multi_queue_support:
-        vmmq_adapter_policy_name = vmq_settings.get('vmmq_adapter_policy_name')
-        vmmq_adapter_policy_moid = get_policy_moid(
-            intersight, policy_cache, module, '/vnic/EthAdapterPolicies',
-            vmmq_adapter_policy_name, 'VMMQ Adapter Policy'
-        )
-
-        return {
-            'Enabled': vmq_settings.get('enabled', True),
-            'MultiQueueSupport': True,
-            'NumSubVnics': vmq_settings.get('num_sub_vnics', 64),
-            'VmmqAdapterPolicy': vmmq_adapter_policy_moid
-        }
-    else:
-        return {
-            'Enabled': vmq_settings.get('enabled', True),
-            'MultiQueueSupport': False,
-            'NumInterrupts': vmq_settings.get('num_interrupts', 16),
-            'NumVmqs': vmq_settings.get('num_vmqs', 4)
-        }
-
-
-def build_sriov_settings(sriov_settings):
-    """
-    Build SR-IOV settings for vNIC API body
-    """
-    return {
-        'VfCount': sriov_settings.get('vf_count', 64),
-        'RxCountPerVf': sriov_settings.get('rx_count_per_vf', 4),
-        'TxCountPerVf': sriov_settings.get('tx_count_per_vf', 1),
-        'CompCountPerVf': sriov_settings.get('comp_count_per_vf', 5),
-        'IntCountPerVf': sriov_settings.get('int_count_per_vf', 8),
-        'Enabled': sriov_settings.get('enabled', True)
-    }
-
-
-def build_vnic_cdn_config(vnic_config):
-    """
-    Build CDN configuration for vNIC API body
-    """
-    cdn_config = {
-        'Source': vnic_config.get('cdn_source', 'vnic')
-    }
-
-    # Add CDN value if specified
-    if vnic_config.get('cdn_value'):
-        cdn_config['Value'] = vnic_config['cdn_value']
-
-    return cdn_config
-
-
-def build_vnic_connection_settings(intersight, policy_cache, module, vnic_config):
-    """
-    Build connection type specific settings for vNIC API body
-    """
-    connection_settings = {}
-    connection_type = vnic_config.get('connection_type', 'none')
-
-    if connection_type == 'usnic':
-        usnic_settings = vnic_config.get('usnic_settings', {})
-        connection_settings['UsnicSettings'] = build_usnic_settings(intersight, policy_cache, module, usnic_settings)
-    elif connection_type == 'vmq':
-        vmq_settings = vnic_config.get('vmq_settings', {})
-        connection_settings['VmqSettings'] = build_vmq_settings(intersight, policy_cache, module, vmq_settings)
-    elif connection_type == 'sriov':
-        sriov_settings = vnic_config.get('sriov_settings', {})
-        connection_settings['SriovSettings'] = build_sriov_settings(sriov_settings)
-
-    return connection_settings
+    policy_mappings = get_vnic_policy_mappings(target_platform, vnic_config)
+    return resolve_policy_moids_from_mappings(intersight, policy_cache, module, vnic_config, policy_mappings)
 
 
 def build_vnic_api_body(intersight, policy_cache, module, vnic_config, lan_connectivity_policy_moid):
@@ -961,14 +906,14 @@ def build_standalone_vnic_api_body(intersight, policy_cache, module, vnic_config
     }
 
     # Add common CDN configuration
-    vnic_api_body['Cdn'] = build_vnic_cdn_config(vnic_config)
+    vnic_api_body['Cdn'] = build_cdn_config(vnic_config)
 
     # Resolve and add policy MOIDs
     policy_moids = resolve_vnic_policy_moids(intersight, policy_cache, module, vnic_config, 'standalone')
     vnic_api_body.update(policy_moids)
 
     # Add common connection type settings
-    connection_settings = build_vnic_connection_settings(intersight, policy_cache, module, vnic_config)
+    connection_settings = build_connection_settings(intersight, policy_cache, module, vnic_config)
     vnic_api_body.update(connection_settings)
 
     return vnic_api_body
@@ -982,22 +927,45 @@ def build_fi_attached_vnic_api_body(intersight, policy_cache, module, vnic_confi
     # Map lowercase user input to API format
     mac_address_type = vnic_config.get('mac_address_type', 'pool')
     api_mac_address_type = 'STATIC' if mac_address_type == 'static' else 'POOL'
+    auto_vnic_placement_enabled = vnic_config.get('auto_vnic_placement_enabled', False)
 
     vnic_api_body = {
         'Name': vnic_config['name'],
         'MacAddressType': api_mac_address_type,
-        'Placement': {
-            'SwitchId': vnic_config.get('switch_id', 'A'),
-            'AutoSlotId': vnic_config.get('auto_slot_id', True),
-            'AutoPciLink': vnic_config.get('auto_pci_link', True)
-        },
-        'Order': vnic_config.get('order', 0),
         'FailoverEnabled': vnic_config.get('failover_enabled', False),
         'LanConnectivityPolicy': lan_connectivity_policy_moid
     }
 
+    # Handle placement based on auto_vnic_placement_enabled
+    if auto_vnic_placement_enabled:
+        vnic_api_body['Placement'] = {
+            'SwitchId': vnic_config.get('switch_id', 'A'),
+            'AutoSlotId': True,
+            'AutoPciLink': True
+        }
+    else:
+        # Full placement control
+        placement = {
+            'SwitchId': vnic_config.get('switch_id', 'A'),
+            'AutoSlotId': vnic_config.get('auto_slot_id', True),
+            'AutoPciLink': vnic_config.get('auto_pci_link', True)
+        }
+
+        # Add slot ID if auto_slot_id is disabled
+        if not vnic_config.get('auto_slot_id', True):
+            placement['Id'] = vnic_config['placement_slot_id']
+
+        # Add PCI link configuration if auto_pci_link is disabled
+        if not vnic_config.get('auto_pci_link', True):
+            placement['PciLinkAssignmentMode'] = vnic_config['pci_link_assignment_mode']
+            if vnic_config['pci_link_assignment_mode'] == 'Custom':
+                placement['PciLink'] = vnic_config.get('pci_link', 0)
+
+        vnic_api_body['Placement'] = placement
+        vnic_api_body['Order'] = vnic_config.get('order', 0)
+
     # Add common CDN configuration
-    vnic_api_body['Cdn'] = build_vnic_cdn_config(vnic_config)
+    vnic_api_body['Cdn'] = build_cdn_config(vnic_config)
 
     # Add static MAC address if using static type
     if mac_address_type == 'static':
@@ -1008,7 +976,7 @@ def build_fi_attached_vnic_api_body(intersight, policy_cache, module, vnic_confi
     vnic_api_body.update(policy_moids)
 
     # Add common connection type settings
-    connection_settings = build_vnic_connection_settings(intersight, policy_cache, module, vnic_config)
+    connection_settings = build_connection_settings(intersight, policy_cache, module, vnic_config)
     vnic_api_body.update(connection_settings)
 
     return vnic_api_body
@@ -1045,23 +1013,45 @@ def validate_input(module):
                 validate_standalone_vnic_config(module, vnic_config)
 
             # Validate CDN configuration
-            validate_vnic_cdn_config(module, vnic_config)
+            validate_cdn_config(module, vnic_config)
 
             connection_type = vnic_config.get('connection_type', 'none')
 
             # Validate connection type specific settings
+            vnic_name = vnic_config.get('name', 'unknown')
             if connection_type == 'usnic':
                 usnic_settings = vnic_config.get('usnic_settings')
-                validate_usnic_settings(module, vnic_config, usnic_settings)
+                validate_usnic_settings(module, usnic_settings, vnic_name)
             elif connection_type == 'vmq':
                 vmq_settings = vnic_config.get('vmq_settings', {})
-                validate_vmq_settings(module, vmq_settings)
+                validate_vmq_settings(module, vmq_settings, vnic_name)
             elif connection_type == 'sriov':
                 sriov_settings = vnic_config.get('sriov_settings', {})
-                validate_sriov_settings(module, sriov_settings)
+                validate_sriov_settings(module, sriov_settings, vnic_name)
 
 
 def main():
+    # Define vNIC options
+    vnic_options = dict(
+        name=dict(type='str', required=True),
+        state=dict(type='str', choices=['present', 'absent'], default='present'),
+        placement_slot_id=dict(type='str'),
+        pci_link=dict(type='int', choices=[0, 1], default=0),
+        uplink_port=dict(type='int', choices=[0, 1, 2, 3], default=0),
+        order=dict(type='int', default=0),
+        eth_network_policy_name=dict(type='str'),
+        eth_qos_policy_name=dict(type='str'),
+        eth_adapter_policy_name=dict(type='str'),
+        mac_address_type=dict(type='str', choices=['pool', 'static'], default='pool'),
+        static_mac_address=dict(type='str'),
+        auto_slot_id=dict(type='bool', default=True),
+        auto_pci_link=dict(type='bool', default=True),
+        pci_link_assignment_mode=dict(type='str', choices=['Custom', 'Load-Balanced']),
+        auto_vnic_placement_enabled=dict(type='bool', default=False),
+    )
+    # Add connection settings argument specs
+    vnic_options.update(get_common_settings_argument_spec())
+
     argument_spec = intersight_argument_spec.copy()
     argument_spec.update(
         state=dict(type='str', choices=['present', 'absent'], default='present'),
@@ -1075,51 +1065,7 @@ def main():
         placement_mode=dict(type='str', choices=['custom', 'auto'], default='custom'),
         iqn_pool_name=dict(type='str'),
         static_iqn_name=dict(type='str'),
-        vnics=dict(type='list', elements='dict', options=dict(
-            name=dict(type='str', required=True),
-            state=dict(type='str', choices=['present', 'absent'], default='present'),
-            placement_slot_id=dict(type='str'),
-            pci_link=dict(type='int', choices=[0, 1], default=0),
-            uplink_port=dict(type='int', choices=[0, 1, 2, 3], default=0),
-            order=dict(type='int', default=0),
-            cdn_source=dict(type='str', choices=['vnic', 'user'], default='vnic'),
-            cdn_value=dict(type='str'),
-            eth_network_policy_name=dict(type='str'),
-            eth_qos_policy_name=dict(type='str'),
-            eth_adapter_policy_name=dict(type='str'),
-            mac_address_type=dict(type='str', choices=['pool', 'static'], default='pool'),
-            mac_pool_name=dict(type='str'),
-            static_mac_address=dict(type='str'),
-            auto_slot_id=dict(type='bool', default=True),
-            auto_pci_link=dict(type='bool', default=True),
-            switch_id=dict(type='str', choices=['A', 'B'], default='A'),
-            failover_enabled=dict(type='bool', default=False),
-            fabric_eth_network_group_policy_name=dict(type='str'),
-            fabric_eth_network_control_policy_name=dict(type='str'),
-            iscsi_boot_policy_name=dict(type='str'),
-            connection_type=dict(type='str', choices=['none', 'usnic', 'vmq', 'sriov'], default='none'),
-            usnic_settings=dict(type='dict', options=dict(
-                count=dict(type='int', default=0),
-                cos=dict(type='int', choices=[0, 1, 2, 3, 4, 5, 6], default=5),
-                usnic_adapter_policy_name=dict(type='str')
-            )),
-            vmq_settings=dict(type='dict', options=dict(
-                enabled=dict(type='bool', default=True),
-                multi_queue_support=dict(type='bool', default=False),
-                num_interrupts=dict(type='int', default=16),
-                num_vmqs=dict(type='int', default=4),
-                num_sub_vnics=dict(type='int', default=64),
-                vmmq_adapter_policy_name=dict(type='str')
-            )),
-            sriov_settings=dict(type='dict', options=dict(
-                enabled=dict(type='bool', default=True),
-                vf_count=dict(type='int', default=64),
-                rx_count_per_vf=dict(type='int', default=4),
-                tx_count_per_vf=dict(type='int', default=1),
-                comp_count_per_vf=dict(type='int', default=5),
-                int_count_per_vf=dict(type='int', default=8)
-            ))
-        ))
+        vnics=dict(type='list', elements='dict', options=vnic_options)
     )
 
     required_if = [
