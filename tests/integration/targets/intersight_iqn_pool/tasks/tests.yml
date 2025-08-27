@@ -1,0 +1,191 @@
+---
+- block:
+  - name: Define anchor for Intersight API login info
+    ansible.builtin.set_fact:
+      api_info: &api_info
+        api_private_key: "{{ api_private_key }}"
+        api_key_id: "{{ api_key_id }}"
+        api_uri: "{{ api_uri | default(omit) }}"
+        validate_certs: "{{ validate_certs | default(omit) }}"
+        organization: "{{ organization }}"
+
+  - name: Make sure Env is clean
+    cisco.intersight.intersight_iqn_pool:
+      <<: *api_info
+      name: "{{ item }}"
+      state: absent
+    loop:
+      - test_iqn_pool
+      - test_iqn_pool_2
+
+  - name: Create iqn pool - check-mode
+    cisco.intersight.intersight_iqn_pool:
+      <<: *api_info
+      name: test_iqn_pool
+      description: "Test iqn pool description"
+      tags:
+        - "Key": "Site"
+          "Value": "Test"
+        - "Key": "Site2"
+          "Value": "Test3"
+      prefix: "iqn.2025-08.com.cisco"
+      iqn_suffix_blocks:
+        - "suffix": "iqn"
+          "iqn_from": 2
+          "size": 20
+        - "suffix": "iscsi"
+          "iqn_from": 21
+          "size": 40
+    check_mode: true
+    register: creation_res_check_mode
+
+  - name: Verify iqn pool was not created - check-mode
+    ansible.builtin.assert:
+      that:
+        - creation_res_check_mode is changed
+        - creation_res_check_mode.api_response == {}
+
+  - name: Create iqn pool
+    cisco.intersight.intersight_iqn_pool:
+      <<: *api_info
+      name: test_iqn_pool
+      description: "Test iqn pool description"
+      tags:
+        - "Key": "Site"
+          "Value": "Test"
+        - "Key": "Site2"
+          "Value": "Test3"
+      prefix: "iqn.2025-08.com.cisco"
+      iqn_suffix_blocks:
+        - "suffix": "iqn"
+          "iqn_from": 1
+          "size": 20
+        - "suffix": "iscsi"
+          "iqn_from": 51
+          "size": 40
+    register: creation_res
+
+  - name: Fetch info after creation
+    cisco.intersight.intersight_iqn_pool_info:
+      <<: *api_info
+      name: test_iqn_pool
+    register: creation_info_res
+
+  - name: Verify iqn pool creation by info
+    ansible.builtin.assert:
+      that:
+        - creation_res.changed
+        - creation_info_res.api_response[0].Name == 'test_iqn_pool'
+        - creation_info_res.api_response[0].Prefix == 'iqn.2025-08.com.cisco'
+        - creation_info_res.api_response[0].IqnSuffixBlocks[0]["Size"] == 20
+        - creation_info_res.api_response[0].IqnSuffixBlocks[0]["From"] == 1
+        - creation_info_res.api_response[0].IqnSuffixBlocks[1]["Size"] == 40
+        - creation_info_res.api_response[0].IqnSuffixBlocks[1]["From"] == 51
+
+  - name: Verify iqn pool creation response aligns with info response
+    ansible.builtin.assert:
+      that:
+        - creation_res.api_response.Name == creation_info_res.api_response[0].Name
+        - creation_res.api_response.Prefix == creation_info_res.api_response[0].Prefix
+        - creation_res.api_response.IqnSuffixBlocks[0]["Size"] == creation_info_res.api_response[0].IqnSuffixBlocks[0]["Size"]
+        - creation_res.api_response.IqnSuffixBlocks[0]["From"] == creation_info_res.api_response[0].IqnSuffixBlocks[0]["From"]
+
+  - name: Create iqn pool (idempotency check)
+    cisco.intersight.intersight_iqn_pool:
+      <<: *api_info
+      name: test_iqn_pool
+      description: "Test iqn pool description"
+      tags:
+        - "Key": "Site"
+          "Value": "Test"
+        - "Key": "Site2"
+          "Value": "Test3"
+      prefix: "iqn.2025-08.com.cisco"
+      iqn_suffix_blocks:
+        - "suffix": "iqn"
+          "iqn_from": 1
+          "size": 20
+        - "suffix": "iscsi"
+          "iqn_from": 51
+          "size": 40
+    register: creation_res_ide
+
+  - name: Verify iqn pool creation (idempotency check)
+    ansible.builtin.assert:
+      that:
+        - not creation_res_ide.changed
+
+  - name: Validate failure due to missing iqn_suffix_blocks
+    cisco.intersight.intersight_iqn_pool:
+      <<: *api_info
+      name: test_iqn_pool_validate
+      description: "Test iqn pool description"
+      tags:
+        - "Key": "Site"
+          "Value": "Test"
+        - "Key": "Site2"
+          "Value": "Test3"
+      state: present
+      prefix: "iqn.2025-08.com.cisco"
+    register: failure_res
+    failed_when:
+      - "'iqn_suffix_blocks parameter must be provided and contain at least one block' not in failure_res.msg"
+
+  - name: Validate failure due to missing prefix
+    cisco.intersight.intersight_iqn_pool:
+      <<: *api_info
+      name: test_iqn_pool_validate
+      description: "Test iqn pool description"
+      tags:
+        - "Key": "Site"
+          "Value": "Test"
+        - "Key": "Site2"
+          "Value": "Test3"
+      state: present
+      iqn_suffix_blocks:
+        - "suffix": "iqn"
+          "iqn_from": 1
+          "size": 20
+        - "suffix": "iscsi"
+          "iqn_from": 51
+          "size": 40
+    register: failure_res
+    failed_when:
+      - "'prefix parameter must be provided' not in failure_res.msg"
+
+  - name: Create another iqn pool
+    cisco.intersight.intersight_iqn_pool:
+      <<: *api_info
+      name: test_iqn_pool_2
+      description: "Test iqn pool description"
+      tags:
+        - "Key": "Site"
+          "Value": "Test"
+        - "Key": "Site2"
+          "Value": "Test3"
+      prefix: "iqn.2025-08.net.cisco"
+      iqn_suffix_blocks:
+        - "suffix": "dev"
+          "iqn_from": 101
+          "size": 80
+    register: creation_res_b
+
+  - name: Fetch all iqn pools under default organization
+    cisco.intersight.intersight_iqn_pool_info:
+      <<: *api_info
+    register: creation_info_res_b
+
+  - name: Check that there are at least 2 iqn pools under this organization
+    ansible.builtin.assert:
+      that:
+        - creation_info_res_b.api_response | length > 1
+
+  always:
+  - name: Remove iqn pools
+    cisco.intersight.intersight_iqn_pool:
+      <<: *api_info
+      name: "{{ item }}"
+      state: absent
+    loop:
+      - test_iqn_pool
+      - test_iqn_pool_2
