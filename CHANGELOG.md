@@ -1,5 +1,8 @@
 # cisco.intersight Ansible Collection Changelog
 
+## Version 2.3.0
+- New Policy (Storage, Link Control, KVM, IPMI, Firmware, Ethernet Adapter/Network Control/Network Group), Pool (IQN, WWxN), and Template modules
+
 ## Version 2.2.0
 - New Policy (VLAN, Thermal, Syslog, SNMP, Power, Network Conn., Multicast) and Pool (UUID, MAC, IP) modules
 
