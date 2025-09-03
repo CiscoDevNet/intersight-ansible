@@ -1,0 +1,41 @@
+---
+# The alarm_moid should be passed as a variable on the command line (e.g., ansible-playbook alarm_suppression.yml -e "alarm_moid=<ALARM_MOID>")
+- name: Disable alarm suppression
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  vars:
+    # Create an anchor for api_info that can be used throughout the file
+    api_info: &api_info
+      # if api_key vars are omitted, INTERSIGHT_API_KEY_ID, INTERSIGHT_API_PRIVATE_KEY,
+      # and INTERSIGHT_API_URI environment variables used for API key data
+      api_private_key: "{{ api_private_key | default(omit) }}"
+      api_key_id: "{{ api_key_id | default(omit) }}"
+      api_uri: "{{ api_uri | default(omit) }}"
+      validate_certs: "{{ validate_certs | default(omit) }}"
+  tasks:
+    - name: "Retrieve alarm suppression"
+      cisco.intersight.intersight_rest_api:
+        <<: *api_info
+        resource_path: /cond/AlarmSuppressions
+        query_params:
+          $filter: "Moid eq '{{ alarm_moid }}'"
+        state: present
+      register: "alarm_sup_retrieval"
+
+    - name: Debug Alarm Suppression Removal Results
+      ansible.builtin.debug:
+        msg: "{{ alarm_sup_retrieval }}"
+
+    - name: "Removing alarm suppression"
+      cisco.intersight.intersight_rest_api:
+        <<: *api_info
+        resource_path: /cond/AlarmSuppressions
+        query_params:
+          $filter: "Moid eq '{{ alarm_moid }}'"
+        state: absent
+      register: "alarm_sup_removal"
+
+    - name: Debug Alarm Suppression Removal Results
+      ansible.builtin.debug:
+        msg: "{{ alarm_sup_removal }}"

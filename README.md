@@ -12,11 +12,6 @@ Ansible collection for managing and automating Cisco Intersight environments.  M
 
 ## Installation
 
-Ansible must be installed
-```
-sudo pip install ansible
-```
-
 Before using this collection, you need to install it with the Ansible Galaxy command-line tool:
 ```
 ansible-galaxy collection install cisco.intersight
@@ -122,7 +117,7 @@ To contribute to this collection, please see the [Development Guide](./Developme
 
 ## Support
 
-Please files Issues in this repository for any defects, feature requests, or questions on usage.
+Use the Create issue link in the upper-right corner of the [Automation Hub Collection page](https://console.redhat.com/ansible/automation-hub/repo/published/cisco/intersight/) for any defects, feature requests, or questions on usage.
 
 ## Release Notes
 
