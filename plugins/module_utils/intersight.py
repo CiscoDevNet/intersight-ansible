@@ -416,13 +416,15 @@ class IntersightModule():
             self.result['trace_id'] = resp.get('trace_id')
         self.result['changed'] = True
 
-    def configure_policy_or_profile(self, resource_path):
+    def configure_policy_or_profile(self, resource_path, filter_key=None, filter_value=None):
         # Configure (create, update, or delete) the policy or profile
         organization_moid = self.get_moid_by_name(resource_path='/organization/Organizations', resource_name=self.module.params['organization'])
 
         self.result['api_response'] = {}
         # Get the current state of the resource
         filter_str = "Name eq '" + self.module.params['name'] + "'"
+        if filter_value and filter_key:
+            filter_str += " and " + filter_key + " eq '" + filter_value + "'"
         filter_str += "and Organization.Moid eq '" + organization_moid + "'"
         self.get_resource(
             resource_path=resource_path,
@@ -529,18 +531,19 @@ class IntersightModule():
             return self.result['api_response']['Moid']
         return None
 
-    def set_query_params(self) -> dict:
+    def set_query_params(self, filter_key=None, filter_value=None) -> dict:
         filter_conditions = []
-
         name_to_filter = self.module.params.get('name')
         org_to_filter = self.module.params.get('organization')
-
         if name_to_filter:
             filter_conditions.append(f"Name eq '{name_to_filter}'")
 
         if org_to_filter:
             org_moid = self.get_moid_by_name(resource_path='/organization/Organizations', resource_name=org_to_filter)
             filter_conditions.append(f"Organization.Moid eq '{org_moid}'")
+
+        if filter_value and filter_key:
+            filter_conditions.append(f"'{filter_key}' eq '{filter_value}'")
 
         query_params = {}
         if filter_conditions:
