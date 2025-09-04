@@ -1,0 +1,3 @@
+---
+- name: Run intersight_port_policy integration tests
+  ansible.builtin.include_tasks: tests.yml

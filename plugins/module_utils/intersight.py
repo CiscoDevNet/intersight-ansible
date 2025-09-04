@@ -360,7 +360,13 @@ class IntersightModule():
                     self.module.warn('More than 1 resource found, returning the 1st one')
                 # return the 1st list element
                 self.result['api_response'] = response['Results'][0]
-        self.result['count'] = response.get('Count')
+        else:
+            # Clear api_response when no results found to prevent returning stale data
+            if return_list:
+                self.result['api_response'] = []
+            else:
+                self.result['api_response'] = {}
+        self.result['count'] = response.get('Count', 0)
         self.result['trace_id'] = response.get('trace_id')
 
     def configure_resource(self, moid, resource_path, body, query_params, update_method=''):
@@ -470,13 +476,18 @@ class IntersightModule():
 
         return moid
 
-    def configure_secondary_resource(self, resource_path, resource_name, state):
+    def configure_secondary_resource(self, resource_path, resource_name=None, state='present', custom_filter=None):
         # Configure (create, update, or delete) resources
         # This method is used to configure secondery resources that are part of a policy or profile (e.g. VLANs)
 
         self.result['api_response'] = {}
         # Get the current state of the resource
-        filter_str = "Name eq '" + resource_name + "'"
+        if custom_filter:
+            filter_str = custom_filter
+        elif resource_name:
+            filter_str = "Name eq '" + resource_name + "'"
+        else:
+            raise ValueError("Either resource_name or custom_filter must be provided")
         self.get_resource(
             resource_path=resource_path,
             query_params={
