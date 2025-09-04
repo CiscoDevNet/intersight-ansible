@@ -1,0 +1,660 @@
+---
+- block:
+  - name: Define anchor for Intersight API login info
+    ansible.builtin.set_fact:
+      api_info: &api_info
+        api_private_key: "{{ api_private_key }}"
+        api_key_id: "{{ api_key_id }}"
+        api_uri: "{{ api_uri | default(omit) }}"
+        validate_certs: "{{ validate_certs | default(omit) }}"
+        organization: "{{ organization }}"
+
+  # Clean up environment before testing
+  - name: Make sure environment is clean - remove test port policies
+    cisco.intersight.intersight_port_policy:
+      <<: *api_info
+      name: "{{ item }}"
+      state: absent
+    loop:
+      - "test-port-policy-basic"
+      - "test-port-policy-6454"
+      - "test-port-policy-6536"
+      - "test-port-policy-complex"
+      - "test-port-policy-minimal"
+      - "test-port-policy-fc"
+      - "test-port-policy-lan-pin-groups"
+      - "test-port-policy-san-pin-groups"
+
+  # Clean up prerequisite policies
+  - name: Clean up prerequisite policies
+    cisco.intersight.intersight_ethernet_network_group_policy:
+      <<: *api_info
+      name: "test-eth-network-group-for-port-policy"
+      state: absent
+
+  - name: Clean up prerequisite network control policy
+    cisco.intersight.intersight_ethernet_network_control_policy:
+      <<: *api_info
+      name: "test-eth-network-control-for-port-policy"
+      state: absent
+
+  # Create prerequisite policies for testing
+  - name: Create prerequisite Ethernet Network Group Policy
+    cisco.intersight.intersight_ethernet_network_group_policy:
+      <<: *api_info
+      name: "test-eth-network-group-for-port-policy"
+      description: "Test network group policy for port policy testing"
+      qinq_enabled: false
+      allowed_vlans: "100-110"
+    register: prereq_eth_network_group
+
+  - name: Create prerequisite Ethernet Network Control Policy
+    cisco.intersight.intersight_ethernet_network_control_policy:
+      <<: *api_info
+      name: "test-eth-network-control-for-port-policy"
+      description: "Test network control policy for port policy testing"
+      cdp_enabled: true
+      lldp_receive_enabled: true
+      lldp_transmit_enabled: true
+    register: prereq_eth_network_control
+
+  - name: "Create basic port policy for UCS-FI-6454 - check mode"
+    cisco.intersight.intersight_port_policy:
+      <<: *api_info
+      name: "test-port-policy-basic"
+      description: "Basic test port policy for UCS-FI-6454"
+      device_model: "UCS-FI-6454"
+      tags:
+        - Key: Environment
+          Value: Test
+        - Key: Module
+          Value: PortPolicy
+    check_mode: true
+    register: basic_policy_check_mode
+
+  - name: Verify basic port policy check mode
+    ansible.builtin.assert:
+      that:
+        - basic_policy_check_mode is changed
+        - basic_policy_check_mode.api_response == {}
+
+  - name: "Create basic port policy for UCS-FI-6454"
+    cisco.intersight.intersight_port_policy:
+      <<: *api_info
+      name: "test-port-policy-basic"
+      description: "Basic test port policy for UCS-FI-6454"
+      device_model: "UCS-FI-6454"
+      tags:
+        - Key: Environment
+          Value: Test
+        - Key: Module
+          Value: PortPolicy
+    register: basic_policy_result
+
+  - name: Fetch info for basic port policy
+    cisco.intersight.intersight_port_policy_info:
+      <<: *api_info
+      name: "test-port-policy-basic"
+    register: basic_policy_info
+
+  - name: Verify basic port policy creation
+    ansible.builtin.assert:
+      that:
+        - basic_policy_result is changed
+        - basic_policy_result.api_response.Name == "test-port-policy-basic"
+        - basic_policy_result.api_response.DeviceModel == "UCS-FI-6454"
+        - basic_policy_result.api_response.ObjectType == "fabric.PortPolicy"
+        - basic_policy_info.api_response | length == 1
+        - basic_policy_info.api_response[0].Name == "test-port-policy-basic"
+        - basic_policy_info.api_response[0].DeviceModel == "UCS-FI-6454"
+
+  - name: "Create same basic port policy (idempotency check)"
+    cisco.intersight.intersight_port_policy:
+      <<: *api_info
+      name: "test-port-policy-basic"
+      description: "Basic test port policy for UCS-FI-6454"
+      device_model: "UCS-FI-6454"
+      tags:
+        - Key: Environment
+          Value: Test
+        - Key: Module
+          Value: PortPolicy
+    register: basic_policy_idempotency
+
+  - name: Verify basic port policy idempotency
+    ansible.builtin.assert:
+      that:
+        - basic_policy_idempotency is not changed
+
+  - name: "Create UCS-FI-6454 port policy with server ports and breakout"
+    cisco.intersight.intersight_port_policy:
+      <<: *api_info
+      name: "test-port-policy-6454"
+      description: "UCS-FI-6454 with server ports and breakout configuration"
+      device_model: "UCS-FI-6454"
+      breakout_ports:
+        - port_id: 49
+          custom_mode: "BreakoutEthernet25G"
+          state: present
+        - port_id: 50
+          custom_mode: "BreakoutEthernet10G"
+          state: present
+      server_ports:
+        - port_id: "1"
+          fec: "Auto"
+          user_label: "Server Port 1"
+          state: present
+        - port_id: "2"
+          fec: "Auto"
+          manual_numbering: true
+          preferred_device_type: "RackServer"
+          preferred_device_id: 1
+          user_label: "Server Port 2 Manual"
+          state: present
+        - port_id: "49/1"
+          fec: "Auto"
+          user_label: "Server Aggregate Port"
+          state: present
+    register: policy_6454_result
+
+  - name: Fetch info for UCS-FI-6454 port policy
+    cisco.intersight.intersight_port_policy_info:
+      <<: *api_info
+      name: "test-port-policy-6454"
+    register: policy_6454_info
+
+  - name: Verify UCS-FI-6454 port policy creation
+    ansible.builtin.assert:
+      that:
+        - policy_6454_result is changed
+        - policy_6454_result.api_response.Name == "test-port-policy-6454"
+        - policy_6454_result.api_response.DeviceModel == "UCS-FI-6454"
+        - policy_6454_info.api_response | length == 1
+        - policy_6454_info.api_response[0].Name == "test-port-policy-6454"
+
+  - name: "Create UCS-FI-6536 port policy with FC breakout"
+    cisco.intersight.intersight_port_policy:
+      <<: *api_info
+      name: "test-port-policy-6536"
+      description: "UCS-FI-6536 with FC breakout configuration"
+      device_model: "UCS-FI-6536"
+      breakout_ports:
+        - port_id: 36
+          custom_mode: "BreakoutFibreChannel16G"
+          state: present
+        - port_id: 35
+          custom_mode: "BreakoutFibreChannel32G"
+          state: present
+        - port_id: 1
+          custom_mode: "BreakoutEthernet25G"
+          state: present
+      server_ports:
+        - port_id: "2"
+          fec: "Auto"
+          user_label: "Server Port 2"
+          state: present
+      ethernet_uplink_ports:
+        - port_id: "9"
+          admin_speed: "1Gbps"
+          fec: "Auto"
+          user_label: "Uplink Port 9"
+          state: present
+      fc_uplink_ports:
+        - port_id: "35/1"
+          admin_speed: "32Gbps"
+          vsan_id: 100
+          user_label: "FC Uplink 35/1"
+          state: present
+      fc_storage_ports:
+        - port_id: "36/2"
+          admin_speed: "16Gbps"
+          vsan_id: 200
+          user_label: "FC Storage 36/2"
+          state: present
+    register: policy_6536_result
+
+  - name: Fetch info for UCS-FI-6536 port policy
+    cisco.intersight.intersight_port_policy_info:
+      <<: *api_info
+      name: "test-port-policy-6536"
+    register: policy_6536_info
+
+  - name: Verify UCS-FI-6536 port policy creation
+    ansible.builtin.assert:
+      that:
+        - policy_6536_result is changed
+        - policy_6536_result.api_response.Name == "test-port-policy-6536"
+        - policy_6536_result.api_response.DeviceModel == "UCS-FI-6536"
+        - policy_6536_info.api_response | length == 1
+        - policy_6536_info.api_response[0].Name == "test-port-policy-6536"
+        - policy_6536_info.api_response[0].FcStorageRoles[0].PortId == 2
+        - policy_6536_info.api_response[0].FcStorageRoles[0].AggregatePortId == 36
+
+
+  - name: "Create complex port policy with port channels"
+    cisco.intersight.intersight_port_policy:
+      <<: *api_info
+      name: "test-port-policy-complex"
+      description: "Complex port policy with various port channel configurations"
+      device_model: "UCS-FI-6454"
+      breakout_ports:
+        - port_id: 49
+          custom_mode: "BreakoutEthernet25G"
+          state: present
+      ethernet_uplink_port_channels:
+        - pc_id: 1
+          admin_speed: "25Gbps"
+          fec: "Auto"
+          user_label: "Ethernet Uplink PC 1"
+          ports:
+            - port_id: "36"
+            - port_id: "37"
+            - port_id: "49/1"
+            - port_id: "49/2"
+          eth_network_group_policy_names:
+            - "test-eth-network-group-for-port-policy"
+          state: present
+      appliance_ports:
+        - port_id: "10"
+          admin_speed: "10Gbps"
+          fec: "Auto"
+          priority: "Best Effort"
+          mode: "trunk"
+          eth_network_group_policy_name: "test-eth-network-group-for-port-policy"
+          eth_network_control_policy_name: "test-eth-network-control-for-port-policy"
+          user_label: "Appliance Port 10"
+          state: present
+      appliance_port_channels:
+        - pc_id: 10
+          admin_speed: "Auto"
+          fec: "Auto"
+          priority: "Best Effort"
+          mode: "trunk"
+          user_label: "Appliance PC 10"
+          ports:
+            - port_id: "11"
+            - port_id: "12"
+          eth_network_group_policy_name: "test-eth-network-group-for-port-policy"
+          eth_network_control_policy_name: "test-eth-network-control-for-port-policy"
+          state: present
+      pin_groups:
+        - name: "pin-group-1"
+          pin_group_type: "lan"
+          target_interface_type: "pc"
+          target_interface_name: "1"
+          state: present
+    register: complex_policy_result
+
+  - name: Fetch info for complex port policy
+    cisco.intersight.intersight_port_policy_info:
+      <<: *api_info
+      name: "test-port-policy-complex"
+    register: complex_policy_info
+
+  - name: Verify complex port policy creation
+    ansible.builtin.assert:
+      that:
+        - complex_policy_result is changed
+        - complex_policy_result.api_response.Name == "test-port-policy-complex"
+        - complex_policy_result.api_response.DeviceModel == "UCS-FI-6454"
+        - complex_policy_info.api_response | length == 1
+        - complex_policy_info.api_response[0].Name == "test-port-policy-complex"
+        - complex_policy_info.api_response[0].AppliancePcRoles[0].PcId == 10
+        - complex_policy_info.api_response[0].LanPinGroups[0].Name == "pin-group-1"
+       
+  - name: "Create port policy with FC port mode"
+    cisco.intersight.intersight_port_policy:
+      <<: *api_info
+      name: "test-port-policy-fc"
+      description: "Port policy with FC port mode configuration"
+      device_model: "UCS-FI-6454"
+      fc_port_mode:
+        port_id_start: 1
+        port_id_end: 8
+        state: present
+      fc_uplink_ports:
+        - port_id: "1"
+          admin_speed: "16Gbps"
+          vsan_id: 100
+          user_label: "FC Uplink 1"
+          state: present
+        - port_id: "2"
+          admin_speed: "32Gbps"
+          vsan_id: 100
+          user_label: "FC Uplink 2"
+          state: present
+      fc_storage_ports:
+        - port_id: "3"
+          admin_speed: "16Gbps"
+          vsan_id: 200
+          user_label: "FC Storage 3"
+          state: present
+      fc_uplink_port_channels:
+        - pc_id: 1
+          admin_speed: "16Gbps"
+          vsan_id: 100
+          user_label: "FC Uplink PC 1"
+          ports:
+            - port_id: "5"
+            - port_id: "6"
+          state: present
+    register: fc_policy_result
+
+  - name: Fetch info for FC port policy
+    cisco.intersight.intersight_port_policy_info:
+      <<: *api_info
+      name: "test-port-policy-fc"
+    register: fc_policy_info
+
+  - name: Verify FC port policy creation
+    ansible.builtin.assert:
+      that:
+        - fc_policy_result is changed
+        - fc_policy_result.api_response.Name == "test-port-policy-fc"
+        - fc_policy_result.api_response.DeviceModel == "UCS-FI-6454"
+        - fc_policy_info.api_response | length == 1
+        - fc_policy_info.api_response[0].Name == "test-port-policy-fc"
+        - fc_policy_info.api_response[0].FcPortModes[0].PortIdStart == 1
+        - fc_policy_info.api_response[0].FcPortModes[0].PortIdEnd == 8
+        - fc_policy_info.api_response[0].FcUplinkPortChannels[0].PcId == 1
+        - fc_policy_info.api_response[0].FcStorageRoles[0].PortId == 3
+
+  - name: "Create port policy with LAN pin groups"
+    cisco.intersight.intersight_port_policy:
+      <<: *api_info
+      name: "test-port-policy-lan-pin-groups"
+      description: "Port policy with LAN pin groups for testing"
+      device_model: "UCS-FI-6454"
+      ethernet_uplink_ports:
+        - port_id: "15"
+          admin_speed: "Auto"
+          state: present
+      ethernet_uplink_port_channels:
+        - pc_id: 1
+          admin_speed: "Auto"
+          ports:
+            - port_id: "16"
+            - port_id: "17"
+          state: present
+      pin_groups:
+        - name: "lan-pin-port-test"
+          pin_group_type: "lan"
+          target_interface_type: "port"
+          target_interface_name: "15"
+          state: present
+        - name: "lan-pin-pc-test"
+          pin_group_type: "lan"
+          target_interface_type: "pc"
+          target_interface_name: "1"
+          state: present
+    register: lan_pin_groups_result
+
+  - name: Fetch info for LAN pin groups port policy
+    cisco.intersight.intersight_port_policy_info:
+      <<: *api_info
+      name: "test-port-policy-lan-pin-groups"
+    register: lan_pin_groups_info
+
+  - name: Verify LAN pin groups port policy creation
+    ansible.builtin.assert:
+      that:
+        - lan_pin_groups_result is changed
+        - lan_pin_groups_result.api_response.Name == "test-port-policy-lan-pin-groups"
+        - lan_pin_groups_result.api_response.DeviceModel == "UCS-FI-6454"
+        - lan_pin_groups_info.api_response | length == 1
+        - lan_pin_groups_info.api_response[0].Name == "test-port-policy-lan-pin-groups"
+        - lan_pin_groups_info.api_response[0].LanPinGroups | length == 2
+        - lan_pin_groups_info.api_response[0].LanPinGroups | selectattr('Name', 'equalto', 'lan-pin-port-test') | list | length == 1
+        - lan_pin_groups_info.api_response[0].LanPinGroups | selectattr('Name', 'equalto', 'lan-pin-pc-test') | list | length == 1
+
+  - name: "Create port policy with SAN pin groups"
+    cisco.intersight.intersight_port_policy:
+      <<: *api_info
+      name: "test-port-policy-san-pin-groups"
+      description: "Port policy with SAN pin groups using FCoE for testing"
+      device_model: "UCS-FI-6454"
+      breakout_ports:
+        - port_id: 52
+          custom_mode: "BreakoutEthernet25G"
+          state: present
+        - port_id: 53
+          custom_mode: "BreakoutEthernet25G"
+          state: present
+      fcoe_uplink_ports:
+        - port_id: "52/1"
+          admin_speed: "Auto"
+          state: present
+      fcoe_uplink_port_channels:
+        - pc_id: 2
+          admin_speed: "Auto"
+          ports:
+            - port_id: "53/1"
+            - port_id: "53/2"
+          state: present
+      pin_groups:
+        - name: "san-pin-fcoe-port-test"
+          pin_group_type: "san"
+          target_interface_type: "port"
+          target_interface_name: "52/1"
+          state: present
+        - name: "san-pin-fcoe-pc-test"
+          pin_group_type: "san"
+          target_interface_type: "pc"
+          target_interface_name: "2"
+          state: present
+    register: san_pin_groups_result
+
+  - name: Fetch info for SAN pin groups port policy
+    cisco.intersight.intersight_port_policy_info:
+      <<: *api_info
+      name: "test-port-policy-san-pin-groups"
+    register: san_pin_groups_info
+
+  - name: Verify SAN pin groups port policy creation
+    ansible.builtin.assert:
+      that:
+        - san_pin_groups_result is changed
+        - san_pin_groups_result.api_response.Name == "test-port-policy-san-pin-groups"
+        - san_pin_groups_result.api_response.DeviceModel == "UCS-FI-6454"
+        - san_pin_groups_info.api_response | length == 1
+        - san_pin_groups_info.api_response[0].Name == "test-port-policy-san-pin-groups"
+        - san_pin_groups_info.api_response[0].SanPinGroups is defined
+        - san_pin_groups_info.api_response[0].SanPinGroups | length == 2
+        - san_pin_groups_info.api_response[0].SanPinGroups | selectattr('Name', 'equalto', 'san-pin-fcoe-port-test') | list | length == 1
+        - san_pin_groups_info.api_response[0].SanPinGroups | selectattr('Name', 'equalto', 'san-pin-fcoe-pc-test') | list | length == 1
+
+  - name: "Create minimal port policy"
+    cisco.intersight.intersight_port_policy:
+      <<: *api_info
+      name: "test-port-policy-minimal"
+      device_model: "UCS-FI-6454"
+    register: minimal_policy_result
+
+  - name: Fetch info for minimal port policy
+    cisco.intersight.intersight_port_policy_info:
+      <<: *api_info
+      name: "test-port-policy-minimal"
+    register: minimal_policy_info
+
+  - name: Verify minimal port policy creation
+    ansible.builtin.assert:
+      that:
+        - minimal_policy_result is changed
+        - minimal_policy_result.api_response.Name == "test-port-policy-minimal"
+        - minimal_policy_result.api_response.DeviceModel == "UCS-FI-6454"
+        - minimal_policy_info.api_response | length == 1
+        - minimal_policy_info.api_response[0].Name == "test-port-policy-minimal"
+
+  - name: "Update port policy - add server ports"
+    cisco.intersight.intersight_port_policy:
+      <<: *api_info
+      name: "test-port-policy-minimal"
+      device_model: "UCS-FI-6454"
+      description: "Updated minimal policy with server ports"
+      server_ports:
+        - port_id: "5"
+          fec: "Auto"
+          user_label: "New Server Port 5"
+          state: present
+        - port_id: "6"
+          fec: "Auto"
+          user_label: "New Server Port 6"
+          state: present
+    register: update_policy_result
+
+  - name: Verify port policy update
+    ansible.builtin.assert:
+      that:
+        - update_policy_result is changed
+        - update_policy_result.api_response.Description == "Updated minimal policy with server ports"
+
+  - name: "Update port policy - remove one server port"
+    cisco.intersight.intersight_port_policy:
+      <<: *api_info
+      name: "test-port-policy-minimal"
+      device_model: "UCS-FI-6454"
+      description: "Updated minimal policy with server ports"
+      server_ports:
+        - port_id: "5"
+          fec: "Auto"
+          user_label: "New Server Port 5"
+          state: present
+        - port_id: "6"
+          state: absent
+    register: remove_port_result
+
+  - name: Verify port removal
+    ansible.builtin.assert:
+      that:
+        - remove_port_result is changed
+
+  - name: "Test invalid breakout port for UCS-FI-6664 (no breakout support)"
+    cisco.intersight.intersight_port_policy:
+      <<: *api_info
+      name: "test-invalid-breakout"
+      device_model: "UCS-FI-6664"
+      breakout_ports:
+        - port_id: 1
+          custom_mode: "BreakoutEthernet25G"
+          state: present
+    register: invalid_breakout_result
+    failed_when:
+      - "'Breakout ports are not supported on UCS-FI-6664' not in invalid_breakout_result.msg"
+
+  - name: "Test invalid port ID for device model"
+    cisco.intersight.intersight_port_policy:
+      <<: *api_info
+      name: "test-invalid-port-id"
+      device_model: "UCS-FI-6454"
+      server_ports:
+        - port_id: "100"  # Outside valid range for UCS-FI-6454 (1-54)
+          state: present
+    register: invalid_port_id_result
+    failed_when:
+      - invalid_port_id_result.failed == false
+      - "'outside valid range for UCS-FI-6454' not in invalid_port_id_result.msg"
+
+  - name: "Test duplicate port IDs"
+    cisco.intersight.intersight_port_policy:
+      <<: *api_info
+      name: "test-duplicate-ports"
+      device_model: "UCS-FI-6454"
+      server_ports:
+        - port_id: "10"
+          state: present
+      ethernet_uplink_ports:
+        - port_id: "10"  # Same port ID used twice
+          state: present
+    register: duplicate_port_result
+    failed_when:
+      - duplicate_port_result.failed == false
+      - "'Port ID conflicts detected' not in duplicate_port_result.msg"
+
+  - name: "Fetch all port policies"
+    cisco.intersight.intersight_port_policy_info:
+      <<: *api_info
+    register: all_policies_info
+
+  - name: Verify multiple policies exist
+    ansible.builtin.assert:
+      that:
+        - all_policies_info.api_response | length >= 6
+        - all_policies_info.api_response | selectattr('Name', 'equalto', 'test-port-policy-basic') | list | length == 1
+        - all_policies_info.api_response | selectattr('Name', 'equalto', 'test-port-policy-6454') | list | length == 1
+
+  - name: "Delete port policy - check mode"
+    cisco.intersight.intersight_port_policy:
+      <<: *api_info
+      name: "test-port-policy-basic"
+      state: absent
+    check_mode: true
+    register: delete_check_mode_result
+
+  - name: Verify delete check mode
+    ansible.builtin.assert:
+      that:
+        - delete_check_mode_result is changed
+
+  - name: "Delete port policy"
+    cisco.intersight.intersight_port_policy:
+      <<: *api_info
+      name: "test-port-policy-basic"
+      state: absent
+    register: delete_result
+
+  - name: Verify port policy deletion
+    ansible.builtin.assert:
+      that:
+        - delete_result is changed
+
+  - name: "Verify policy is deleted"
+    cisco.intersight.intersight_port_policy_info:
+      <<: *api_info
+      name: "test-port-policy-basic"
+    register: deleted_policy_info
+
+  - name: Verify policy no longer exists
+    ansible.builtin.assert:
+      that:
+        - deleted_policy_info.api_response | length == 0
+
+  - name: "Delete same policy again (idempotency)"
+    cisco.intersight.intersight_port_policy:
+      <<: *api_info
+      name: "test-port-policy-basic"
+      state: absent
+    register: delete_idempotency_result
+
+  - name: Verify delete idempotency
+    ansible.builtin.assert:
+      that:
+        - delete_idempotency_result is not changed
+
+  always:
+  # Clean up all test resources
+  - name: Clean up test port policies
+    cisco.intersight.intersight_port_policy:
+      <<: *api_info
+      name: "{{ item }}"
+      state: absent
+    loop:
+      - "test-port-policy-basic"
+      - "test-port-policy-6454"
+      - "test-port-policy-6536"
+      - "test-port-policy-complex"
+      - "test-port-policy-minimal"
+      - "test-port-policy-fc"
+      - "test-port-policy-lan-pin-groups"
+      - "test-port-policy-san-pin-groups"
+
+  - name: Clean up prerequisite policies
+    cisco.intersight.intersight_ethernet_network_group_policy:
+      <<: *api_info
+      name: "test-eth-network-group-for-port-policy"
+      state: absent
+
+  - name: Clean up prerequisite network control policy
+    cisco.intersight.intersight_ethernet_network_control_policy:
+      <<: *api_info
+      name: "test-eth-network-control-for-port-policy"
+      state: absent
