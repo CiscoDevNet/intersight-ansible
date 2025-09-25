@@ -1,5 +1,8 @@
 # cisco.intersight Ansible Collection Changelog
 
+## Version 2.4.0
+- New Port Policy
+
 ## Version 2.3.0
 - New Policy (Storage, Link Control, KVM, IPMI, Firmware, Ethernet Adapter/Network Control/Network Group), Pool (IQN, WWxN), and Template modules
 
