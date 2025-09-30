@@ -55,13 +55,13 @@ class TestIntersightModuleUtilKeyHandling(unittest.TestCase):
         pass
 
     def with_key(self, key_id, secret_key):
-        am=SimpleNamespace(params={
+        am = SimpleNamespace(params={
             "api_key_id": key_id,
             "api_private_key": secret_key,
             "api_uri": "https://intersight.com",
         })
-        i=IntersightModule(am)
-        sig=i.get_sig_b64encode('')
+        i = IntersightModule(am)
+        sig = i.get_sig_b64encode('')
         return sig
 
     def test_with_v3_key(self):
@@ -70,7 +70,9 @@ class TestIntersightModuleUtilKeyHandling(unittest.TestCase):
         # For v3 (ECDSA) authentication, the signature is not deterministic (includes a random nonce) so we can't just use known-good examples.
         # Instead, we can verify that the signed string is correct and verify against the signature
         priv_key = serialization.load_pem_private_key(
-            v3_secret_key.encode("utf-8").replace(b"-----BEGIN EC PRIVATE KEY-----", b"-----BEGIN PRIVATE KEY-----").replace(b"-----END EC PRIVATE KEY-----", b"-----END PRIVATE KEY-----"),
+            v3_secret_key.encode("utf-8")
+            .replace(b"-----BEGIN EC PRIVATE KEY-----", b"-----BEGIN PRIVATE KEY-----")
+            .replace(b"-----END EC PRIVATE KEY-----", b"-----END PRIVATE KEY-----"),
             password=None,
             backend=default_backend(),
         )
@@ -84,7 +86,14 @@ class TestIntersightModuleUtilKeyHandling(unittest.TestCase):
 
     def test_with_v2_key(self):
         sig = self.with_key(v2_key_id, v2_secret_key)
-        assert sig == b"QuBlJiYPGIxqzrkUqbQLqkp0N9d5Bki4921YuoV32SFzDjwePAqYFL80My3InHrx61RO0yNr4MVYmuHMihvWGLkNt3z7/7VA4dyS9B9pCGrT78b69upSM05A6x09fc+AHVwy3emex8OJJ6SXGXdnbSoIa4FjtlejACMVd+5rydrFZ0c0d8uGqLcWdiRWUJY60u7a8SDPo8E1mPzvUrW8IJt3wjrLRnNSKH3qzmdKbyosed2+OtwrR22nubRx8qGHon/xrZ5EWrGfdR3V3YU6JaB30WVbiKQZ/ZOW775hvn9ub8NH6Z0n88b50h3D6Ua0mSgZfDaJnugGAE56f+Ultg=="
+        expected_sig = (b"QuBlJiYPGIxqzrkUqbQLqkp0N9d5Bki4921YuoV32SFzDjwePAqY"
+                        b"FL80My3InHrx61RO0yNr4MVYmuHMihvWGLkNt3z7/7VA4dyS9B9p"
+                        b"CGrT78b69upSM05A6x09fc+AHVwy3emex8OJJ6SXGXdnbSoIa4Fj"
+                        b"tlejACMVd+5rydrFZ0c0d8uGqLcWdiRWUJY60u7a8SDPo8E1mPzv"
+                        b"UrW8IJt3wjrLRnNSKH3qzmdKbyosed2+OtwrR22nubRx8qGHon/x"
+                        b"rZ5EWrGfdR3V3YU6JaB30WVbiKQZ/ZOW775hvn9ub8NH6Z0n88b5"
+                        b"0h3D6Ua0mSgZfDaJnugGAE56f+Ultg==")
+        assert sig == expected_sig
 
     def test_with_broken_key(self):
         with self.assertRaises(ValueError):

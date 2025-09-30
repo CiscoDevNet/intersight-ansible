@@ -152,6 +152,7 @@ def compare_values(expected, actual):
             return False
         return True
 
+
 # This will fix the format of a v3 secret key, if needed.
 # Some v3 keys PEM files are incorrectly formatted with
 # "BEGIN EC PRIVATE KEY" instead of "BEGIN PRIVATE KEY"
@@ -159,6 +160,7 @@ def _fix_v3_key_format(secret_key: bytes):
     return secret_key.replace(
         b"-----BEGIN EC PRIVATE KEY-----", b"-----BEGIN PRIVATE KEY-----"
     ).replace(b"-----END EC PRIVATE KEY-----", b"-----END PRIVATE KEY-----")
+
 
 class IntersightModule():
 
@@ -187,7 +189,7 @@ class IntersightModule():
         """
         try:
             key = serialization.load_pem_private_key(self.private_key.encode(), None, default_backend())
-        except(ValueError):
+        except (ValueError):
             key = serialization.load_pem_private_key(_fix_v3_key_format(self.private_key.encode()), None, default_backend())
 
         if isinstance(key, rsa.RSAPrivateKey):
