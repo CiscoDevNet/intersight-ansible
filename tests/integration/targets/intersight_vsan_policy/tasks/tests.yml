@@ -1,0 +1,325 @@
+---
+- block:
+  - name: Define anchor for Intersight API login info
+    ansible.builtin.set_fact:
+      api_info: &api_info
+        api_private_key: "{{ api_private_key }}"
+        api_key_id: "{{ api_key_id }}"
+        api_uri: "{{ api_uri | default(omit) }}"
+        validate_certs: "{{ validate_certs | default(omit) }}"
+        organization: "{{ organization }}"
+
+  - name: Make sure Env is clean
+    cisco.intersight.intersight_vsan_policy:
+      <<: *api_info
+      name: "{{ item }}"
+      state: absent
+    loop:
+      - test_vsan_policy
+      - test_vsan_policy_2
+      - test_vsan_policy_minimal
+      - test_vsan_policy_with_vsans
+      - test_vsan_policy_trunking
+
+  - name: Create vsan policy - check-mode
+    cisco.intersight.intersight_vsan_policy:
+      <<: *api_info
+      name: test_vsan_policy
+      description: "Test VSAN policy description"
+      enable_trunking: false
+      tags:
+        - Key: Site
+          Value: Test
+        - Key: Site2
+          Value: Test2
+    check_mode: true
+    register: creation_res_check_mode
+
+  - name: Verify vsan policy was not created - check-mode
+    ansible.builtin.assert:
+      that:
+        - creation_res_check_mode is changed
+        - creation_res_check_mode.api_response == {}
+
+  - name: Create vsan policy
+    cisco.intersight.intersight_vsan_policy:
+      <<: *api_info
+      name: test_vsan_policy
+      description: "Test VSAN policy description"
+      enable_trunking: false
+      tags:
+        - Key: Site
+          Value: Test
+        - Key: Site2
+          Value: Test2
+    register: creation_res
+
+  - name: Fetch info after creation
+    cisco.intersight.intersight_vsan_policy_info:
+      <<: *api_info
+      name: test_vsan_policy
+    register: creation_info_res
+
+  - name: Verify vsan policy creation by info
+    ansible.builtin.assert:
+      that:
+        - creation_res.changed
+        - creation_info_res.api_response.Name == 'test_vsan_policy'
+
+  - name: Create vsan policy (idempotency check)
+    cisco.intersight.intersight_vsan_policy:
+      <<: *api_info
+      name: test_vsan_policy
+      description: "Test VSAN policy description"
+      enable_trunking: false
+      tags:
+        - Key: Site
+          Value: Test
+        - Key: Site2
+          Value: Test2
+    register: creation_res_ide
+
+  - name: Fetch info after idempotency check
+    cisco.intersight.intersight_vsan_policy_info:
+      <<: *api_info
+      name: test_vsan_policy
+    register: idempotency_info_res
+
+  - name: Verify vsan policy creation (idempotency check)
+    ansible.builtin.assert:
+      that:
+        - not creation_res_ide.changed
+        - idempotency_info_res.api_response.Name == 'test_vsan_policy'
+        - idempotency_info_res.api_response.Description == 'Test VSAN policy description'
+
+  - name: Update description of an existing vsan policy
+    cisco.intersight.intersight_vsan_policy:
+      <<: *api_info
+      name: test_vsan_policy
+      description: "Updated VSAN policy description"
+      enable_trunking: false
+      tags:
+        - Key: Site
+          Value: Test
+        - Key: Site2
+          Value: Test2
+    register: changed_res
+
+  - name: Fetch info after change
+    cisco.intersight.intersight_vsan_policy_info:
+      <<: *api_info
+      name: test_vsan_policy
+    register: change_info_res
+
+  - name: Verify vsan policy change by info
+    ansible.builtin.assert:
+      that:
+        - changed_res.changed
+        - change_info_res.api_response.Name == 'test_vsan_policy'
+        - change_info_res.api_response.Description == 'Updated VSAN policy description'
+
+  - name: Create another vsan policy
+    cisco.intersight.intersight_vsan_policy:
+      <<: *api_info
+      name: test_vsan_policy_2
+      description: "Test another VSAN policy description"
+      enable_trunking: false
+    register: creation_res_b
+
+  - name: Fetch all vsan policies under selected organization
+    cisco.intersight.intersight_vsan_policy_info:
+      <<: *api_info
+    register: creation_info_res_b
+
+  - name: Check that there are at least 2 vsan policies under this organization
+    ansible.builtin.assert:
+      that:
+        - creation_info_res_b.api_response | length > 1
+
+  - name: Test creation without optional parameters
+    cisco.intersight.intersight_vsan_policy:
+      <<: *api_info
+      name: test_vsan_policy_minimal
+    register: creation_res_minimal
+
+  - name: Fetch info after minimal creation
+    cisco.intersight.intersight_vsan_policy_info:
+      <<: *api_info
+      name: test_vsan_policy_minimal
+    register: minimal_info_res
+
+  - name: Verify minimal vsan policy creation
+    ansible.builtin.assert:
+      that:
+        - creation_res_minimal.changed
+        - minimal_info_res.api_response.Name == 'test_vsan_policy_minimal'
+
+  - name: Create VSAN policy with multiple VSANs and different scopes
+    cisco.intersight.intersight_vsan_policy:
+      <<: *api_info
+      name: test_vsan_policy_with_vsans
+      description: "Policy with VSANs for different scopes"
+      enable_trunking: false
+      vsans:
+        - name: "vsan_uplink_100"
+          vsan_id: 100
+          fcoe_vlan_id: 100
+          vsan_scope: "uplink"
+          state: present
+        - name: "vsan_storage_200"
+          vsan_id: 200
+          fcoe_vlan_id: 200
+          vsan_scope: "storage"
+          state: present
+        - name: "vsan_common_300"
+          vsan_id: 300
+          fcoe_vlan_id: 300
+          vsan_scope: "common"
+          state: present
+    register: vsan_policy_with_vsans
+
+  - name: Fetch info after creating policy with VSANs
+    cisco.intersight.intersight_vsan_policy_info:
+      <<: *api_info
+      name: test_vsan_policy_with_vsans
+    register: vsans_creation_info_res
+
+  - name: Verify VSAN policy with VSANs creation
+    ansible.builtin.assert:
+      that:
+        - vsan_policy_with_vsans.changed
+        - vsans_creation_info_res.api_response.Name == 'test_vsan_policy_with_vsans'
+        - vsans_creation_info_res.api_response.vsans | length == 3
+        - vsans_creation_info_res.api_response.vsans[0].Name == 'vsan_uplink_100'
+        - vsans_creation_info_res.api_response.vsans[1].Name == 'vsan_storage_200'
+        - vsans_creation_info_res.api_response.vsans[2].Name == 'vsan_common_300'
+        - vsans_creation_info_res.api_response.vsans[0].VsanId == 100
+        - vsans_creation_info_res.api_response.vsans[1].VsanId == 200
+        - vsans_creation_info_res.api_response.vsans[2].VsanId == 300
+        - vsans_creation_info_res.api_response.vsans[0].FcoeVlan == 100
+        - vsans_creation_info_res.api_response.vsans[1].FcoeVlan == 200
+        - vsans_creation_info_res.api_response.vsans[2].FcoeVlan == 300
+        - vsans_creation_info_res.api_response.vsans[0].VsanScope == 'Uplink'
+        - vsans_creation_info_res.api_response.vsans[1].VsanScope == 'Storage'
+        - vsans_creation_info_res.api_response.vsans[2].VsanScope == 'Common'
+
+  - name: Create VSAN policy with trunking enabled
+    cisco.intersight.intersight_vsan_policy:
+      <<: *api_info
+      name: test_vsan_policy_trunking
+      description: "Policy with trunking enabled"
+      enable_trunking: true
+      vsans:
+        - name: "vsan_fabric_a"
+          vsan_id: 10
+          fcoe_vlan_id: 10
+          vsan_scope: "common"
+        - name: "vsan_fabric_b"
+          vsan_id: 20
+          fcoe_vlan_id: 20
+          vsan_scope: "common"
+    register: vsan_policy_trunking
+
+  - name: Fetch info after creating policy with trunking
+    cisco.intersight.intersight_vsan_policy_info:
+      <<: *api_info
+      name: test_vsan_policy_trunking
+    register: trunking_info_res
+
+  - name: Verify VSAN policy with trunking
+    ansible.builtin.assert:
+      that:
+        - vsan_policy_trunking.changed
+        - trunking_info_res.api_response.Name == 'test_vsan_policy_trunking'
+        - trunking_info_res.api_response.EnableTrunking == true
+        - trunking_info_res.api_response.vsans | length == 2
+        - trunking_info_res.api_response.vsans[0].Name == 'vsan_fabric_a'
+        - trunking_info_res.api_response.vsans[1].Name == 'vsan_fabric_b'
+
+  - name: Test info module - fetch specific policy with VSANs
+    cisco.intersight.intersight_vsan_policy_info:
+      <<: *api_info
+      name: test_vsan_policy_with_vsans
+    register: specific_policy_info
+
+  - name: Verify specific policy info
+    ansible.builtin.assert:
+      that:
+        - specific_policy_info.api_response.Name == 'test_vsan_policy_with_vsans'
+        - specific_policy_info.api_response.vsans | length == 3
+
+  - name: Test info module - fetch all policies
+    cisco.intersight.intersight_vsan_policy_info:
+      <<: *api_info
+    register: all_policies_info
+
+  - name: Verify all policies info
+    ansible.builtin.assert:
+      that:
+        - all_policies_info.api_response | length >= 4
+
+  - name: Test info module - filter by VSAN name
+    cisco.intersight.intersight_vsan_policy_info:
+      <<: *api_info
+      vsan_name: "vsan_uplink_100"
+      name: test_vsan_policy_with_vsans
+    register: vsan_filtered_info
+
+  - name: Verify VSAN filtered info
+    ansible.builtin.assert:
+      that:
+        - vsan_filtered_info.api_response.vsans | length == 1
+        - vsan_filtered_info.api_response.Name == 'test_vsan_policy_with_vsans'
+        - vsan_filtered_info.api_response.vsans[0].Name == 'vsan_uplink_100'
+        - vsan_filtered_info.api_response.vsans[0].VsanId == 100
+        - vsan_filtered_info.api_response.vsans[0].VsanScope == 'Uplink'
+
+  - name: Update VSAN policy - remove one VSAN
+    cisco.intersight.intersight_vsan_policy:
+      <<: *api_info
+      name: test_vsan_policy_with_vsans
+      description: "Policy with reduced VSANs"
+      enable_trunking: false
+      vsans:
+        - name: "vsan_uplink_100"
+          vsan_id: 100
+          fcoe_vlan_id: 100
+          vsan_scope: "uplink"
+        - name: "vsan_storage_200"
+          vsan_id: 200
+          fcoe_vlan_id: 200
+          vsan_scope: "storage"
+          state: absent
+        - name: "vsan_common_300"
+          vsan_id: 300
+          fcoe_vlan_id: 300
+          vsan_scope: "common"
+    register: vsan_removal_result
+
+  - name: Fetch info after VSAN removal
+    cisco.intersight.intersight_vsan_policy_info:
+      <<: *api_info
+      name: test_vsan_policy_with_vsans
+    register: vsan_removal_info_res
+
+  - name: Verify VSAN removal
+    ansible.builtin.assert:
+      that:
+        - vsan_removal_result.changed
+        - vsan_removal_info_res.api_response.Name == 'test_vsan_policy_with_vsans'
+        - vsan_removal_info_res.api_response.vsans | length == 2
+        - vsan_removal_info_res.api_response.vsans[0].Name == 'vsan_uplink_100'
+        - vsan_removal_info_res.api_response.vsans[1].Name == 'vsan_common_300'
+
+  always:
+  - name: Remove vsan policies
+    cisco.intersight.intersight_vsan_policy:
+      <<: *api_info
+      name: "{{ item }}"
+      state: absent
+    loop:
+      - test_vsan_policy
+      - test_vsan_policy_2
+      - test_vsan_policy_minimal
+      - test_vsan_policy_with_vsans
+      - test_vsan_policy_trunking
