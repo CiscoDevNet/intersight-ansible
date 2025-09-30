@@ -1,0 +1,301 @@
+---
+- block:
+  - name: Define anchor for Intersight API login info
+    ansible.builtin.set_fact:
+      api_info: &api_info
+        api_private_key: "{{ api_private_key }}"
+        api_key_id: "{{ api_key_id }}"
+        api_uri: "{{ api_uri | default(omit) }}"
+        validate_certs: "{{ validate_certs | default(omit) }}"
+        organization: "{{ organization }}"
+
+  - name: Make sure Env is clean
+    cisco.intersight.intersight_iscsi_static_target_policy:
+      <<: *api_info
+      name: "{{ item }}"
+      state: absent
+    loop:
+      - test_iscsi_policy
+      - test_iscsi_policy_2
+      - test_iscsi_policy_minimal
+      - test_iscsi_policy_ipv6
+      - test_iscsi_policy_updated
+
+  - name: Create iSCSI Static Target Policy - check-mode
+    cisco.intersight.intersight_iscsi_static_target_policy:
+      <<: *api_info
+      name: test_iscsi_policy
+      description: "Test iSCSI static target policy description"
+      target_name: "iqn.1991-05.com.microsoft:winclient1"
+      port: 3260
+      lun_id: 0
+      ip_protocol: "IPv4"
+      ipv4_address: "192.168.10.100"
+      tags:
+        - Key: Environment
+          Value: Test
+        - Key: Owner
+          Value: Automation
+    check_mode: true
+    register: creation_res_check_mode
+
+  - name: Verify iSCSI policy was not created - check-mode
+    ansible.builtin.assert:
+      that:
+        - creation_res_check_mode is changed
+        - creation_res_check_mode.api_response == {}
+
+  - name: Create iSCSI Static Target Policy
+    cisco.intersight.intersight_iscsi_static_target_policy:
+      <<: *api_info
+      name: test_iscsi_policy
+      description: "Test iSCSI static target policy description"
+      target_name: "iqn.1991-05.com.microsoft:winclient1"
+      port: 3260
+      lun_id: 0
+      ip_protocol: "IPv4"
+      ipv4_address: "192.168.10.100"
+      tags:
+        - Key: Environment
+          Value: Test
+        - Key: Owner
+          Value: Automation
+    register: creation_res
+
+  - name: Fetch info after creation
+    cisco.intersight.intersight_iscsi_static_target_policy_info:
+      <<: *api_info
+      name: test_iscsi_policy
+    register: creation_info_res
+
+  - name: Verify iSCSI policy creation by info
+    ansible.builtin.assert:
+      that:
+        - creation_res.changed
+        - creation_info_res.api_response.Name == 'test_iscsi_policy'
+        - creation_info_res.api_response.TargetName == 'iqn.1991-05.com.microsoft:winclient1'
+        - creation_info_res.api_response.Port == 3260
+        - creation_info_res.api_response.Lun.LunId == 0
+        - creation_info_res.api_response.IscsiIpType == 'IPv4'
+        - creation_info_res.api_response.IpAddress == '192.168.10.100'
+
+  - name: Create iSCSI Static Target Policy (idempotency check)
+    cisco.intersight.intersight_iscsi_static_target_policy:
+      <<: *api_info
+      name: test_iscsi_policy
+      description: "Test iSCSI static target policy description"
+      target_name: "iqn.1991-05.com.microsoft:winclient1"
+      port: 3260
+      lun_id: 0
+      ip_protocol: "IPv4"
+      ipv4_address: "192.168.10.100"
+      tags:
+        - Key: Environment
+          Value: Test
+        - Key: Owner
+          Value: Automation
+    register: creation_res_ide
+
+  - name: Fetch info after idempotency check
+    cisco.intersight.intersight_iscsi_static_target_policy_info:
+      <<: *api_info
+      name: test_iscsi_policy
+    register: idempotency_info_res
+
+  - name: Verify iSCSI policy creation (idempotency check)
+    ansible.builtin.assert:
+      that:
+        - not creation_res_ide.changed
+        - idempotency_info_res.api_response.Name == 'test_iscsi_policy'
+        - idempotency_info_res.api_response.Description == 'Test iSCSI static target policy description'
+
+  - name: Update description and LUN ID of an existing iSCSI policy
+    cisco.intersight.intersight_iscsi_static_target_policy:
+      <<: *api_info
+      name: test_iscsi_policy
+      description: "Updated iSCSI static target policy description"
+      target_name: "iqn.1991-05.com.microsoft:winclient1"
+      port: 3260
+      lun_id: 2
+      ip_protocol: "IPv4"
+      ipv4_address: "192.168.10.100"
+      tags:
+        - Key: Environment
+          Value: Test
+        - Key: Owner
+          Value: Automation
+    register: changed_res
+
+  - name: Fetch info after change
+    cisco.intersight.intersight_iscsi_static_target_policy_info:
+      <<: *api_info
+      name: test_iscsi_policy
+    register: change_info_res
+
+  - name: Verify iSCSI policy change by info
+    ansible.builtin.assert:
+      that:
+        - changed_res.changed
+        - change_info_res.api_response.Name == 'test_iscsi_policy'
+        - change_info_res.api_response.Description == 'Updated iSCSI static target policy description'
+        - change_info_res.api_response.Lun.LunId == 2
+
+  - name: Create another iSCSI Static Target Policy
+    cisco.intersight.intersight_iscsi_static_target_policy:
+      <<: *api_info
+      name: test_iscsi_policy_2
+      description: "Test another iSCSI static target policy"
+      target_name: "iqn.2001-04.com.example:storage.disk2"
+      port: 3260
+      lun_id: 1
+      ip_protocol: "IPv4"
+      ipv4_address: "192.168.10.101"
+    register: creation_res_b
+
+  - name: Fetch all iSCSI policies under selected organization
+    cisco.intersight.intersight_iscsi_static_target_policy_info:
+      <<: *api_info
+    register: creation_info_res_b
+
+  - name: Check that there are at least 2 iSCSI policies under this organization
+    ansible.builtin.assert:
+      that:
+        - creation_info_res_b.api_response | length > 1
+
+  - name: Test creation without optional parameters
+    cisco.intersight.intersight_iscsi_static_target_policy:
+      <<: *api_info
+      name: test_iscsi_policy_minimal
+      target_name: "iqn.1991-05.com.microsoft:winclient2"
+      port: 3260
+      lun_id: 0
+      ip_protocol: "IPv4"
+      ipv4_address: "192.168.10.102"
+    register: creation_res_minimal
+
+  - name: Fetch info after minimal creation
+    cisco.intersight.intersight_iscsi_static_target_policy_info:
+      <<: *api_info
+      name: test_iscsi_policy_minimal
+    register: minimal_info_res
+
+  - name: Verify minimal iSCSI policy creation
+    ansible.builtin.assert:
+      that:
+        - creation_res_minimal.changed
+        - minimal_info_res.api_response.Name == 'test_iscsi_policy_minimal'
+        - minimal_info_res.api_response.TargetName == 'iqn.1991-05.com.microsoft:winclient2'
+        - minimal_info_res.api_response.Port == 3260
+
+  - name: Create iSCSI Static Target Policy with IPv6
+    cisco.intersight.intersight_iscsi_static_target_policy:
+      <<: *api_info
+      name: test_iscsi_policy_ipv6
+      description: "iSCSI policy with IPv6 addressing"
+      target_name: "iqn.2001-04.com.example:storage.ipv6disk"
+      port: 3260
+      lun_id: 5
+      ip_protocol: "IPv6"
+      ipv6_address: "2001:0db8:85a3:0000:0000:8a2e:0370:7334"
+      tags:
+        - Key: IPType
+          Value: IPv6
+    register: ipv6_creation_res
+
+  - name: Fetch info after IPv6 policy creation
+    cisco.intersight.intersight_iscsi_static_target_policy_info:
+      <<: *api_info
+      name: test_iscsi_policy_ipv6
+    register: ipv6_info_res
+
+  - name: Verify IPv6 iSCSI policy creation
+    ansible.builtin.assert:
+      that:
+        - ipv6_creation_res.changed
+        - ipv6_info_res.api_response.Name == 'test_iscsi_policy_ipv6'
+        - ipv6_info_res.api_response.IscsiIpType == 'IPv6'
+        - ipv6_info_res.api_response.IpAddress == '2001:0db8:85a3:0000:0000:8a2e:0370:7334'
+        - ipv6_info_res.api_response.Lun.LunId == 5
+
+  - name: Test info module - fetch specific policy
+    cisco.intersight.intersight_iscsi_static_target_policy_info:
+      <<: *api_info
+      name: test_iscsi_policy
+    register: specific_policy_info
+
+  - name: Verify specific policy info
+    ansible.builtin.assert:
+      that:
+        - specific_policy_info.api_response.Name == 'test_iscsi_policy'
+        - specific_policy_info.api_response.TargetName is defined
+
+  - name: Test info module - fetch all policies
+    cisco.intersight.intersight_iscsi_static_target_policy_info:
+      <<: *api_info
+    register: all_policies_info
+
+  - name: Verify all policies info
+    ansible.builtin.assert:
+      that:
+        - all_policies_info.api_response | length >= 4
+
+  - name: Update iSCSI policy - change IP address and port
+    cisco.intersight.intersight_iscsi_static_target_policy:
+      <<: *api_info
+      name: test_iscsi_policy_2
+      description: "Updated iSCSI policy with new IP and port"
+      target_name: "iqn.2001-04.com.example:storage.disk2"
+      port: 8080
+      lun_id: 1
+      ip_protocol: "IPv4"
+      ipv4_address: "192.168.10.200"
+    register: update_result
+
+  - name: Fetch info after update
+    cisco.intersight.intersight_iscsi_static_target_policy_info:
+      <<: *api_info
+      name: test_iscsi_policy_2
+    register: update_info_res
+
+  - name: Verify iSCSI policy update
+    ansible.builtin.assert:
+      that:
+        - update_result.changed
+        - update_info_res.api_response.Port == 8080
+        - update_info_res.api_response.IpAddress == '192.168.10.200'
+
+  - name: Test deletion of iSCSI policy
+    cisco.intersight.intersight_iscsi_static_target_policy:
+      <<: *api_info
+      name: test_iscsi_policy_minimal
+      state: absent
+    register: deletion_result
+
+  - name: Verify deletion result
+    ansible.builtin.assert:
+      that:
+        - deletion_result.changed
+
+  - name: Verify policy is deleted by fetching info
+    cisco.intersight.intersight_iscsi_static_target_policy_info:
+      <<: *api_info
+      name: test_iscsi_policy_minimal
+    register: deleted_policy_info
+
+  - name: Verify policy no longer exists
+    ansible.builtin.assert:
+      that:
+        - deleted_policy_info.api_response == {}
+
+  always:
+  - name: Remove iSCSI Static Target policies
+    cisco.intersight.intersight_iscsi_static_target_policy:
+      <<: *api_info
+      name: "{{ item }}"
+      state: absent
+    loop:
+      - test_iscsi_policy
+      - test_iscsi_policy_2
+      - test_iscsi_policy_minimal
+      - test_iscsi_policy_ipv6
+      - test_iscsi_policy_updated
