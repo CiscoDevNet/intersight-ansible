@@ -70,7 +70,52 @@ jobs:
           else
             python3 .github/workflows/scripts/map_changes_to_tests.py
           fi
-
+  units:
+    name: Run unit tests
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      max-parallel: 1
+      matrix:
+        ansible:
+          - stable-2.16
+          - stable-2.17
+          - stable-2.18
+          - stable-2.19
+    steps:
+      - name: Get User Permission
+        id: checkAccess
+        uses: actions-cool/check-user-permission@v2
+        with:
+          require: write
+          username: ${{ github.triggering_actor }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # Run integration tests inside a Docker container.
+      # The docker container has all the pinned dependencies that are
+      # required and all Python versions Ansible supports.
+      - name: Perform unit testing
+        id: unit-test
+        # See the documentation for the following GitHub action on
+        # https://github.com/ansible-community/ansible-test-gh-action/blob/main/README.md
+        uses: ansible-community/ansible-test-gh-action@release/v1
+        with:
+          ansible-core-version: ${{ matrix.ansible }}
+          testing-type: units
+          git-checkout-ref: ${{ github.event.pull_request.head.sha }}
+      - name: Record unit test result
+        id: test-results
+        if: always()
+        run: |
+          TEST_TYPE="Unit Tests"
+          if [ "${{ steps.unit-test.outcome }}" = "success" ]; then
+            echo "$TEST_TYPE test for ${{ matrix.ansible }}: ✅ PASSED" >> $GITHUB_STEP_SUMMARY
+            echo "results=${{ matrix.ansible }}:success" >> $GITHUB_OUTPUT
+          else
+            echo "$TEST_TYPE test for ${{ matrix.ansible }}: ❌ FAILED" >> $GITHUB_STEP_SUMMARY
+            echo "results=${{ matrix.ansible }}:failure" >> $GITHUB_OUTPUT
+            echo "$TEST_TYPE test failed for ${{ matrix.ansible }}" >&2
+          fi
   integration:
     name: >-
       ${{ (github.event_name == 'schedule' || github.event.inputs.run_all_tests == 'true') && 
@@ -153,6 +198,7 @@ jobs:
     if: always()
 
     needs:
+      - units
       - detect-changes
       - integration
       - integration-skipped

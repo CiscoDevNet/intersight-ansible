@@ -48,7 +48,7 @@ from ansible.module_utils.basic import env_fallback
 
 try:
     from cryptography.hazmat.primitives import serialization, hashes
-    from cryptography.hazmat.primitives.asymmetric import padding, ec
+    from cryptography.hazmat.primitives.asymmetric import padding, ec, rsa
     from cryptography.hazmat.backends import default_backend
 
     HAS_CRYPTOGRAPHY = True
@@ -153,6 +153,15 @@ def compare_values(expected, actual):
         return True
 
 
+# This will fix the format of a v3 secret key, if needed.
+# Some v3 keys PEM files are incorrectly formatted with
+# "BEGIN EC PRIVATE KEY" instead of "BEGIN PRIVATE KEY"
+def _fix_v3_key_format(secret_key: bytes):
+    return secret_key.replace(
+        b"-----BEGIN EC PRIVATE KEY-----", b"-----BEGIN PRIVATE KEY-----"
+    ).replace(b"-----END EC PRIVATE KEY-----", b"-----END PRIVATE KEY-----")
+
+
 class IntersightModule():
 
     def __init__(self, module):
@@ -178,21 +187,19 @@ class IntersightModule():
         :param digest: string to be signed & hashed
         :return: instance of digest object
         """
-        # Python SDK code: Verify PEM Pre-Encapsulation Boundary
-        r = re.compile(r"\s*-----BEGIN (.*)-----\s+")
-        m = r.match(self.private_key)
-        if not m:
-            raise ValueError("Not a valid PEM pre boundary")
-        pem_header = m.group(1)
-        key = serialization.load_pem_private_key(self.private_key.encode(), None, default_backend())
-        if pem_header == 'RSA PRIVATE KEY':
+        try:
+            key = serialization.load_pem_private_key(self.private_key.encode(), None, default_backend())
+        except (ValueError):
+            key = serialization.load_pem_private_key(_fix_v3_key_format(self.private_key.encode()), None, default_backend())
+
+        if isinstance(key, rsa.RSAPrivateKey):
             sign = key.sign(data.encode(), padding.PKCS1v15(), hashes.SHA256())
             self.digest_algorithm = 'rsa-sha256'
-        elif pem_header == 'EC PRIVATE KEY':
+        elif isinstance(key, ec.EllipticCurvePrivateKey):
             sign = key.sign(data.encode(), ec.ECDSA(hashes.SHA256()))
             self.digest_algorithm = 'hs2019'
         else:
-            raise Exception("Unsupported key: {0}".format(pem_header))
+            raise Exception("Unsupported key: {0}".format(type(key).__name__))
 
         return b64encode(sign)
 
