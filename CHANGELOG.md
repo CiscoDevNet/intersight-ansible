@@ -1,5 +1,8 @@
 # cisco.intersight Ansible Collection Changelog
 
+## Version 2.5.0
+- New iSCSI Policy and support cryptography >= 45.0 for v3 API keys
+
 ## Version 2.4.0
 - New Port Policy
 
