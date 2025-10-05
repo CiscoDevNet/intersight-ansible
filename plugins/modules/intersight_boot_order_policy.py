@@ -142,8 +142,8 @@ options:
         default: name
       interface_name:
         description:
-          - The name of the underlying virtual ethernet interface used by the PXE boot device.
-          - Option is used when device_type is pxe and interface_source is name.
+          - The name of the underlying virtual ethernet interface used by the PXE boot device and SAN boot device.
+          - Option is used when device_type is pxe interface_source is name or san.
         type: str
       mac_address:
         description:
@@ -163,6 +163,12 @@ options:
           - Option is used when device_type is pch, san and sd_card.
           - The LUN need to be an integer from 0 to 255.
         type: int
+      wwpn:
+        description:
+          - The WWPN Address of the underlying fibre channel interface used by the SAN boot device.
+          - Value must be in hexadecimal format xx:xx:xx:xx:xx:xx:xx:xx.
+          - Option is required when device_type is san.
+        type: str
       usb_subtype:
         description:
           - The subtype for the selected device type.
@@ -197,6 +203,22 @@ EXAMPLES = r'''
       - device_type: Local Disk
         device_name: Boot-Lun
         controller_slot: MRAID
+
+- name: Configure Boot Order Policy with SAN Boot
+  cisco.intersight.intersight_boot_order_policy:
+    api_private_key: "{{ api_private_key }}"
+    api_key_id: "{{ api_key_id }}"
+    organization: DevNet
+    name: SAN-Boot
+    description: Boot Order policy with SAN boot device
+    configured_boot_mode: Uefi
+    boot_devices:
+      - device_type: SAN
+        device_name: SAN-Primary
+        interface_name: fc0
+        network_slot: MLOM
+        lun: 0
+        wwpn: "50:00:00:25:B5:00:00:01"
 
 - name: Delete Boot Order Policy
   cisco.intersight.intersight_boot_policy:
@@ -294,6 +316,8 @@ def main():
         ),
         # lun for pch, san, sd_card
         lun=dict(type='int'),
+        # san options
+        wwpn=dict(type='str'),
         # usb options
         usb_subtype=dict(
             type='str',
@@ -450,8 +474,10 @@ def main():
                         "ObjectType": "boot.San",
                         "Enabled": device['enabled'],
                         "Name": device['device_name'],
+                        "InterfaceName": device['interface_name'],
                         "Lun": device['lun'],
                         "Slot": device['network_slot'],
+                        "Wwpn": device['wwpn'],
                         "Bootloader": {
                             "ClassId": "boot.Bootloader",
                             "ObjectType": "boot.Bootloader",
