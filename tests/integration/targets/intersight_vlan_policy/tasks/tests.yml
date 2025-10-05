@@ -20,7 +20,7 @@
       - test_vlan_policy_minimal
       - test_vlan_policy_with_vlans
       - test_private_vlan_policy
-   
+      - test_vlan_policy_with_ranges
 
   - name: Create vlan policy - check-mode
     cisco.intersight.intersight_vlan_policy:
@@ -237,6 +237,76 @@
         - private_vlan_policy.api_response.vlans[1].PrimaryVlanId == 79
         - private_vlan_policy.api_response.vlans[2].PrimaryVlanId == 79
 
+  - name: Create VLAN policy with VLAN ranges
+    cisco.intersight.intersight_vlan_policy:
+      <<: *api_info
+      name: test_vlan_policy_with_ranges
+      description: "Policy with VLAN ranges"
+      vlans:
+        - prefix: "range1"
+          vlan_id: "30-35"
+          auto_allow_on_uplinks: true
+          enable_sharing: false
+          multicast_policy_name: "multicast_policy_for_vlan_policy"
+        - prefix: "range2"
+          vlan_id: "40-42"
+          auto_allow_on_uplinks: false
+          enable_sharing: false
+          multicast_policy_name: "multicast_policy_for_vlan_policy"
+        - prefix: "single"
+          vlan_id: 50
+          auto_allow_on_uplinks: true
+          enable_sharing: false
+          multicast_policy_name: "multicast_policy_for_vlan_policy"
+    register: vlan_policy_with_ranges
+
+  - name: Verify VLAN policy with ranges creation
+    ansible.builtin.assert:
+      that:
+        - vlan_policy_with_ranges.changed
+        - vlan_policy_with_ranges.api_response.vlan_policy.Name == 'test_vlan_policy_with_ranges'
+        - vlan_policy_with_ranges.api_response.vlans | length == 10
+        - vlan_policy_with_ranges.api_response.vlans[0].Name == 'range1_30'
+        - vlan_policy_with_ranges.api_response.vlans[0].VlanId == 30
+        - vlan_policy_with_ranges.api_response.vlans[5].Name == 'range1_35'
+        - vlan_policy_with_ranges.api_response.vlans[5].VlanId == 35
+        - vlan_policy_with_ranges.api_response.vlans[6].Name == 'range2_40'
+        - vlan_policy_with_ranges.api_response.vlans[6].VlanId == 40
+        - vlan_policy_with_ranges.api_response.vlans[8].Name == 'range2_42'
+        - vlan_policy_with_ranges.api_response.vlans[8].VlanId == 42
+        - vlan_policy_with_ranges.api_response.vlans[9].Name == 'single_50'
+        - vlan_policy_with_ranges.api_response.vlans[9].VlanId == 50
+        - vlan_policy_with_ranges.api_response.vlans[0].AutoAllowOnUplinks == true
+        - vlan_policy_with_ranges.api_response.vlans[6].AutoAllowOnUplinks == false
+
+  - name: Create VLAN policy with ranges again (idempotency check)
+    cisco.intersight.intersight_vlan_policy:
+      <<: *api_info
+      name: test_vlan_policy_with_ranges
+      description: "Policy with VLAN ranges"
+      vlans:
+        - prefix: "range1"
+          vlan_id: "30-35"
+          auto_allow_on_uplinks: true
+          enable_sharing: false
+          multicast_policy_name: "multicast_policy_for_vlan_policy"
+        - prefix: "range2"
+          vlan_id: "40-42"
+          auto_allow_on_uplinks: false
+          enable_sharing: false
+          multicast_policy_name: "multicast_policy_for_vlan_policy"
+        - prefix: "single"
+          vlan_id: 50
+          auto_allow_on_uplinks: true
+          enable_sharing: false
+          multicast_policy_name: "multicast_policy_for_vlan_policy"
+    register: vlan_policy_with_ranges_idempotent
+
+  - name: Verify VLAN policy with ranges idempotency
+    ansible.builtin.assert:
+      that:
+        - not vlan_policy_with_ranges_idempotent.changed
+
   # Test info module with various filters
   - name: Test info module - fetch specific policy with VLANs
     cisco.intersight.intersight_vlan_policy_info:
@@ -322,3 +392,10 @@
       - test_vlan_policy_minimal
       - test_vlan_policy_with_vlans
       - test_private_vlan_policy
+      - test_vlan_policy_with_ranges
+
+  - name: Remove multicast policy
+    cisco.intersight.intersight_multicast_policy:
+      <<: *api_info
+      name: multicast_policy_for_vlan_policy
+      state: absent
