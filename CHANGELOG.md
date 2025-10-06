@@ -1,5 +1,8 @@
 # cisco.intersight Ansible Collection Changelog
 
+## Version 2.6.0
+- Added support for VLAN ranges
+
 ## Version 2.5.0
 - New iSCSI Policy and support cryptography >= 45.0 for v3 API keys
 
