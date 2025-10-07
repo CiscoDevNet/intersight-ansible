@@ -144,3 +144,27 @@
         }
       delegate_to: localhost
       register: install_resp
+    - name: Get OS install workflow info
+      cisco.intersight.intersight_rest_api:
+        <<: *api_info
+        resource_path: /os/Installs
+        query_params:
+          $filter: "Moid eq '{{ install_resp.api_response.Results[0].Body.Moid }}'"
+      delegate_to: localhost
+      register: install_status
+      until: install_status.api_response.WorkflowInfo.Moid is defined
+    - name: Wait until OS install completes
+      cisco.intersight.intersight_rest_api:
+        <<: *api_info
+        resource_path: /workflow/WorkflowInfos
+        query_params:
+          $filter: "Moid eq '{{ install_status.api_response.WorkflowInfo.Moid }}'"
+      delegate_to: localhost
+      register: workflow_status
+      until: workflow_status.api_response.Status in ['COMPLETED', 'FAILED', 'TIME_OUT']
+      retries: 30
+      delay: 60
+      ignore_errors: true
+    - name: Display OS install result
+      debug:
+        msg: "OS install {{ workflow_status.api_response.Status }}"
