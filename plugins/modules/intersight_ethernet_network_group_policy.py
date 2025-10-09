@@ -67,8 +67,9 @@ options:
     type: int
   native_vlan:
     description:
-      - Set native VLAN in case QinQ is enabled.
-      - Optional when C(qinq_enabled) is true.
+      - Set native VLAN for the Ethernet Network Group Policy.
+      - Can be used with QinQ (when C(qinq_enabled) is true) or with regular VLAN mode (when C(qinq_enabled) is false).
+      - When used with C(allowed_vlans), the native VLAN must be included in the allowed VLANs list.
       - Only one native VLAN can be specified.
       - Valid range is 1-4093.
     type: int
@@ -128,6 +129,17 @@ EXAMPLES = r'''
     description: "Policy with single VLAN"
     qinq_enabled: false
     allowed_vlans: "50"
+    state: present
+
+- name: Create an Ethernet Network Group Policy with native VLAN
+  cisco.intersight.intersight_ethernet_network_group_policy:
+    api_private_key: "{{ api_private_key }}"
+    api_key_id: "{{ api_key_id }}"
+    name: "native-vlan-policy"
+    description: "Policy with allowed VLANs and native VLAN"
+    qinq_enabled: false
+    allowed_vlans: "1-100,200-300"
+    native_vlan: 1
     state: present
 
 - name: Delete an Ethernet Network Group Policy
@@ -208,6 +220,27 @@ def validate_allowed_vlans_format(allowed_vlans):
     return True, None
 
 
+def is_vlan_in_allowed_vlans(vlan_id, allowed_vlans_str):
+    """Check if a VLAN ID is included in the allowed VLANs string"""
+    # Remove all whitespace
+    vlans_str = allowed_vlans_str.replace(' ', '')
+    vlan_parts = vlans_str.split(',')
+
+    for part in vlan_parts:
+        if '-' in part:
+            # VLAN range
+            start, end = part.split('-')
+            start_id, end_id = int(start), int(end)
+            if start_id <= vlan_id <= end_id:
+                return True
+        else:
+            # Single VLAN
+            if int(part) == vlan_id:
+                return True
+
+    return False
+
+
 def validate_vlan_ranges(module):
     """Validate VLAN range values and required parameters"""
     state = module.params.get('state')
@@ -240,6 +273,11 @@ def validate_vlan_ranges(module):
         # Store the cleaned version (whitespace removed) back to module.params
         module.params['allowed_vlans'] = allowed_vlans.replace(' ', '')
 
+    # Validate native_vlan is in allowed_vlans when both are specified
+    if native_vlan and allowed_vlans and not qinq_enabled:
+        if not is_vlan_in_allowed_vlans(native_vlan, allowed_vlans):
+            module.fail_json(msg=f'native_vlan {native_vlan} must be included in allowed_vlans: {allowed_vlans}')
+
 
 def main():
     argument_spec = intersight_argument_spec.copy()
@@ -259,7 +297,6 @@ def main():
         supports_check_mode=True,
         mutually_exclusive=[
             ['allowed_vlans', 'qinq_vlan'],
-            ['allowed_vlans', 'native_vlan'],
         ],
     )
 
@@ -294,6 +331,8 @@ def main():
         else:
             # Regular VLAN mode
             vlan_settings['AllowedVlans'] = module.params['allowed_vlans']
+            if module.params['native_vlan']:
+                vlan_settings['NativeVlan'] = module.params['native_vlan']
 
         intersight.api_body.update({
             'VlanSettings': vlan_settings

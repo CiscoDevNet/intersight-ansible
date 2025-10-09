@@ -22,6 +22,8 @@
       - test_ethernet_network_group_policy_defaults
       - test_ethernet_network_group_policy_complex_vlans
       - test_ethernet_network_group_policy_whitespace_vlans
+      - test_ethernet_network_group_policy_native_vlan_in_range
+      - test_ethernet_network_group_policy_native_vlan_out_of_range
 
   - name: Create ethernet network group policy with regular VLANs - check-mode
     cisco.intersight.intersight_ethernet_network_group_policy:
@@ -249,6 +251,31 @@
         - creation_info_res_whitespace_vlans.api_response[0].VlanSettings.QinqEnabled == false
         - creation_info_res_whitespace_vlans.api_response[0].VlanSettings.AllowedVlans == '1-5,10,15-20'
 
+  - name: Create ethernet network group policy with native VLAN in allowed VLANs range (success case)
+    cisco.intersight.intersight_ethernet_network_group_policy:
+      <<: *api_info
+      name: test_ethernet_network_group_policy_native_vlan_in_range
+      description: "Test ethernet network group policy with native VLAN in allowed VLANs"
+      qinq_enabled: false
+      allowed_vlans: "1-100,200-300"
+      native_vlan: 50
+    register: creation_res_native_vlan_in_range
+
+  - name: Fetch info after native VLAN in range policy creation
+    cisco.intersight.intersight_ethernet_network_group_policy_info:
+      <<: *api_info
+      name: test_ethernet_network_group_policy_native_vlan_in_range
+    register: creation_info_res_native_vlan_in_range
+
+  - name: Verify ethernet network group policy creation with native VLAN in range by info
+    ansible.builtin.assert:
+      that:
+        - creation_res_native_vlan_in_range.changed
+        - creation_info_res_native_vlan_in_range.api_response[0].Name == 'test_ethernet_network_group_policy_native_vlan_in_range'
+        - creation_info_res_native_vlan_in_range.api_response[0].VlanSettings.QinqEnabled == false
+        - creation_info_res_native_vlan_in_range.api_response[0].VlanSettings.AllowedVlans == '1-100,200-300'
+        - creation_info_res_native_vlan_in_range.api_response[0].VlanSettings.NativeVlan == 50
+
   - name: Fetch info for defaults policy
     cisco.intersight.intersight_ethernet_network_group_policy_info:
       <<: *api_info
@@ -268,10 +295,10 @@
       <<: *api_info
     register: creation_info_res_all
 
-  - name: Check that there are at least 7 ethernet network group policies under this organization
+  - name: Check that there are at least 8 ethernet network group policies under this organization
     ansible.builtin.assert:
       that:
-        - creation_info_res_all.api_response | length >= 7
+        - creation_info_res_all.api_response | length >= 8
 
   # Test parameter validation failures
   - name: Test parameter validation - QinQ enabled without QinQ VLAN
@@ -325,17 +352,6 @@
     register: invalid_qinq_vlan_high_res
     failed_when:
       - "'qinq_vlan must be between 2 and 4093' not in invalid_qinq_vlan_high_res.msg"
-
-  - name: Test parameter validation - Native VLAN with allowed VLANs
-    cisco.intersight.intersight_ethernet_network_group_policy:
-      <<: *api_info
-      name: test_native_vlan_with_allowed_vlans
-      qinq_enabled: false
-      native_vlan: 100
-      allowed_vlans: "1-10"
-    register: native_vlan_with_allowed_vlans_res
-    failed_when:
-      - "'parameters are mutually exclusive: allowed_vlans|native_vlan' not in native_vlan_with_allowed_vlans_res.msg"
 
   - name: Test parameter validation - Invalid allowed VLANs format (incomplete range)
     cisco.intersight.intersight_ethernet_network_group_policy:
@@ -407,6 +423,17 @@
     failed_when:
       - "'missing required arguments: allowed_vlans' not in invalid_allowed_vlans_empty_res.msg"
 
+  - name: Test parameter validation - Native VLAN not in allowed VLANs range (failure case)
+    cisco.intersight.intersight_ethernet_network_group_policy:
+      <<: *api_info
+      name: test_ethernet_network_group_policy_native_vlan_out_of_range
+      qinq_enabled: false
+      allowed_vlans: "1-100,200-300"
+      native_vlan: 150
+    register: native_vlan_out_of_range_res
+    failed_when:
+      - "'native_vlan 150 must be included in allowed_vlans' not in native_vlan_out_of_range_res.msg"
+
   always:
   - name: Remove ethernet network group policies
     cisco.intersight.intersight_ethernet_network_group_policy:
@@ -421,3 +448,5 @@
       - test_ethernet_network_group_policy_defaults
       - test_ethernet_network_group_policy_complex_vlans
       - test_ethernet_network_group_policy_whitespace_vlans
+      - test_ethernet_network_group_policy_native_vlan_in_range
+      - test_ethernet_network_group_policy_native_vlan_out_of_range
