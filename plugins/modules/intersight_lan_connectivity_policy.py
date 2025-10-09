@@ -874,7 +874,8 @@ def resolve_vnic_policy_moids(intersight, policy_cache, module, vnic_config, tar
     Resolve all policy MOIDs for a vNIC configuration based on target platform.
     """
     policy_mappings = get_vnic_policy_mappings(target_platform, vnic_config)
-    return resolve_policy_moids_from_mappings(intersight, policy_cache, module, vnic_config, policy_mappings)
+    organization_name = module.params['organization']
+    return resolve_policy_moids_from_mappings(intersight, policy_cache, module, vnic_config, policy_mappings, organization_name)
 
 
 def build_vnic_api_body(intersight, policy_cache, module, vnic_config, lan_connectivity_policy_moid):
@@ -913,7 +914,8 @@ def build_standalone_vnic_api_body(intersight, policy_cache, module, vnic_config
     vnic_api_body.update(policy_moids)
 
     # Add common connection type settings
-    connection_settings = build_connection_settings(intersight, policy_cache, module, vnic_config)
+    organization_name = module.params['organization']
+    connection_settings = build_connection_settings(intersight, policy_cache, module, vnic_config, organization_name)
     vnic_api_body.update(connection_settings)
 
     return vnic_api_body
@@ -976,7 +978,8 @@ def build_fi_attached_vnic_api_body(intersight, policy_cache, module, vnic_confi
     vnic_api_body.update(policy_moids)
 
     # Add common connection type settings
-    connection_settings = build_connection_settings(intersight, policy_cache, module, vnic_config)
+    organization_name = module.params['organization']
+    connection_settings = build_connection_settings(intersight, policy_cache, module, vnic_config, organization_name)
     vnic_api_body.update(connection_settings)
 
     return vnic_api_body
@@ -1110,12 +1113,14 @@ def main():
 
             # Resolve IQN pool MOID if specified
             if intersight.module.params['iqn_pool_name']:
-                iqn_pool_moid = intersight.get_moid_by_name(
+                iqn_pool_moid = intersight.get_moid_by_name_and_org(
                     resource_path='/iqnpool/Pools',
-                    resource_name=intersight.module.params['iqn_pool_name']
+                    resource_name=intersight.module.params['iqn_pool_name'],
+                    organization_name=intersight.module.params['organization']
                 )
                 if not iqn_pool_moid:
-                    intersight.module.fail_json(msg=f"IQN Pool '{intersight.module.params['iqn_pool_name']}' not found")
+                    intersight.module.fail_json(msg=f"IQN Pool '{intersight.module.params['iqn_pool_name']}' not found in organization ' \
+                    {intersight.module.params['organization']}'")
                 intersight.api_body['IqnPool'] = iqn_pool_moid
 
             if intersight.module.params['static_iqn_name']:

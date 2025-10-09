@@ -1845,7 +1845,7 @@ def validate_input(module):
 
 def resolve_policy_moid(intersight, policy_cache, resource_path, policy_name, policy_type):
     """
-    Resolve policy name to MOID with caching.
+    Resolve policy name to MOID with caching and organization scoping.
 
     Args:
         intersight: IntersightModule instance
@@ -1862,13 +1862,15 @@ def resolve_policy_moid(intersight, policy_cache, resource_path, policy_name, po
     if cache_key in policy_cache:
         return policy_cache[cache_key]
 
-    moid = intersight.get_moid_by_name(
+    organization_name = intersight.module.params['organization']
+    moid = intersight.get_moid_by_name_and_org(
         resource_path=resource_path,
-        resource_name=policy_name
+        resource_name=policy_name,
+        organization_name=organization_name
     )
 
     if not moid:
-        intersight.module.fail_json(msg=f"{policy_type} '{policy_name}' not found")
+        intersight.module.fail_json(msg=f"{policy_type} '{policy_name}' not found in organization '{organization_name}'")
 
     policy_cache[cache_key] = moid
     return moid

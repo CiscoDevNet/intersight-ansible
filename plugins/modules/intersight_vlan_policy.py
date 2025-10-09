@@ -488,9 +488,18 @@ def main():
                         multicast_policy_moid = multicast_policy_cache[multicast_policy_name]
                     else:
                         # Fetch multicast policy MOID and cache it
-                        multicast_policy_moid = intersight.get_moid_by_name(resource_path='/fabric/MulticastPolicies', resource_name=multicast_policy_name)
+                        multicast_policy_moid = intersight.get_moid_by_name_and_org(
+                            resource_path='/fabric/MulticastPolicies',
+                            resource_name=multicast_policy_name,
+                            organization_name=intersight.module.params['organization']
+                        )
+                        if not multicast_policy_moid:
+                            module.fail_json(
+                                msg=f"Multicast policy '{multicast_policy_name}' not found in organization '{intersight.module.params['organization']}'"
+                            )
                         multicast_policy_cache[multicast_policy_name] = multicast_policy_moid
                     vlan_attach_api_body['MulticastPolicy'] = multicast_policy_moid
+
                 # Create the VLAN
                 resource_path = '/fabric/Vlans'
                 intersight.api_body = vlan_attach_api_body
