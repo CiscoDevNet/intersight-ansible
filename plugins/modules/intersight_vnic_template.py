@@ -422,7 +422,8 @@ def resolve_policy_moids(intersight, policy_cache, module):
     Resolve all policy MOIDs for vNIC Template configuration.
     """
     policy_mappings = get_template_policy_mappings(module)
-    return resolve_policy_moids_from_mappings(intersight, policy_cache, module, module.params, policy_mappings)
+    organization_name = module.params['organization']
+    return resolve_policy_moids_from_mappings(intersight, policy_cache, module, module.params, policy_mappings, organization_name)
 
 
 def validate_input(module):
@@ -516,7 +517,8 @@ def main():
         intersight.api_body.update(policy_moids)
 
         # Add connection type specific settings
-        connection_settings = build_connection_settings(intersight, policy_cache, intersight.module, intersight.module.params)
+        organization_name = intersight.module.params['organization']
+        connection_settings = build_connection_settings(intersight, policy_cache, intersight.module, intersight.module.params, organization_name)
         intersight.api_body.update(connection_settings)
 
     intersight.configure_policy_or_profile(resource_path=resource_path)

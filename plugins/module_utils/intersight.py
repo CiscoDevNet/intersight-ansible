@@ -549,6 +549,39 @@ class IntersightModule():
             return self.result['api_response']['Moid']
         return None
 
+    def get_moid_by_name_and_org(self, resource_path, resource_name, organization_name) -> Optional[str]:
+        '''
+        Get the moid of an organization-scoped resource by name and organization.
+
+        This function is used for resources that belong to a specific organization
+        to avoid conflicts when multiple organizations have resources with the same name.
+        '''
+        # Get the organization MOID
+        org_moid = self.get_moid_by_name(
+            resource_path='/organization/Organizations',
+            resource_name=organization_name
+        )
+
+        if not org_moid:
+            self.module.fail_json(msg=f"Organization '{organization_name}' not found")
+
+        # Build filter with both name and organization
+        filter_str = f"Name eq '{resource_name}' and Organization.Moid eq '{org_moid}'"
+
+        # GET Moid of the resource
+        self.get_resource(
+            resource_path=resource_path,
+            query_params={
+                '$filter': filter_str,
+                '$select': 'Moid',
+            },
+        )
+
+        if self.result['api_response'].get('Moid'):
+            # resource exists and moid was returned
+            return self.result['api_response']['Moid']
+        return None
+
     def set_query_params(self, filter_key=None, filter_value=None) -> dict:
         filter_conditions = []
         name_to_filter = self.module.params.get('name')

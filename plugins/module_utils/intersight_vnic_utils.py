@@ -13,9 +13,24 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-def get_policy_moid(intersight, policy_cache, module, resource_path, policy_name, policy_type="Policy"):
+def get_policy_moid_with_org(intersight, policy_cache, module, resource_path, policy_name, organization_name, policy_type="Policy"):
     """
-    Get policy MOID with caching to avoid redundant API calls.
+    Get policy MOID with caching and organization scoping to avoid redundant API calls.
+
+    This function scopes the policy lookup to a specific organization, preventing
+    conflicts when multiple organizations have policies with the same name.
+
+    Args:
+        intersight: IntersightModule instance
+        policy_cache: Dictionary for caching policy MOIDs
+        module: AnsibleModule instance
+        resource_path: API resource path for the policy
+        policy_name: Name of the policy to resolve
+        organization_name: Name of the organization to scope the search to
+        policy_type: Type of policy for error messages (default: "Policy")
+
+    Returns:
+        MOID of the policy or fails with error message if not found
     """
 
     if not policy_name:
@@ -25,9 +40,13 @@ def get_policy_moid(intersight, policy_cache, module, resource_path, policy_name
     if cache_key in policy_cache:
         return policy_cache[cache_key]
 
-    policy_moid = intersight.get_moid_by_name(resource_path=resource_path, resource_name=policy_name)
+    policy_moid = intersight.get_moid_by_name_and_org(
+        resource_path=resource_path,
+        resource_name=policy_name,
+        organization_name=organization_name
+    )
     if not policy_moid:
-        module.fail_json(msg=f"{policy_type} '{policy_name}' not found")
+        module.fail_json(msg=f"{policy_type} '{policy_name}' not found in organization '{organization_name}'")
 
     policy_cache[cache_key] = policy_moid
     return policy_moid
@@ -117,14 +136,14 @@ def validate_sriov_settings(module, sriov_settings, name=None):
         module.fail_json(msg=f"SR-IOV int_count_per_vf must be between 1 and 16{error_suffix}")
 
 
-def build_usnic_settings(intersight, policy_cache, module, usnic_settings):
+def build_usnic_settings(intersight, policy_cache, module, usnic_settings, organization_name):
     """
     Build USNIC settings for API body.
     """
     usnic_adapter_policy_name = usnic_settings.get('usnic_adapter_policy_name')
-    usnic_adapter_policy_moid = get_policy_moid(
+    usnic_adapter_policy_moid = get_policy_moid_with_org(
         intersight, policy_cache, module, '/vnic/EthAdapterPolicies',
-        usnic_adapter_policy_name, 'USNIC Adapter Policy'
+        usnic_adapter_policy_name, organization_name, 'USNIC Adapter Policy'
     )
 
     return {
@@ -134,7 +153,7 @@ def build_usnic_settings(intersight, policy_cache, module, usnic_settings):
     }
 
 
-def build_vmq_settings(intersight, policy_cache, module, vmq_settings):
+def build_vmq_settings(intersight, policy_cache, module, vmq_settings, organization_name):
     """
     Build VMQ settings for API body.
     """
@@ -142,9 +161,9 @@ def build_vmq_settings(intersight, policy_cache, module, vmq_settings):
 
     if multi_queue_support:
         vmmq_adapter_policy_name = vmq_settings.get('vmmq_adapter_policy_name')
-        vmmq_adapter_policy_moid = get_policy_moid(
+        vmmq_adapter_policy_moid = get_policy_moid_with_org(
             intersight, policy_cache, module, '/vnic/EthAdapterPolicies',
-            vmmq_adapter_policy_name, 'VMMQ Adapter Policy'
+            vmmq_adapter_policy_name, organization_name, 'VMMQ Adapter Policy'
         )
 
         return {
@@ -271,7 +290,7 @@ def get_common_settings_argument_spec():
     }
 
 
-def resolve_policy_moids_from_mappings(intersight, policy_cache, module, config_source, policy_mappings):
+def resolve_policy_moids_from_mappings(intersight, policy_cache, module, config_source, policy_mappings, organization_name):
     """
     Resolve policy MOIDs from configuration using provided policy mappings.
     """
@@ -280,8 +299,8 @@ def resolve_policy_moids_from_mappings(intersight, policy_cache, module, config_
     for param_name, (resource_path, api_field, policy_type) in policy_mappings.items():
         policy_name = config_source.get(param_name)
         if policy_name:
-            policy_moid = get_policy_moid(
-                intersight, policy_cache, module, resource_path, policy_name, policy_type
+            policy_moid = get_policy_moid_with_org(
+                intersight, policy_cache, module, resource_path, policy_name, organization_name, policy_type
             )
             # Special handling for FabricEthNetworkGroupPolicy which needs to be an array for the API
             if api_field == 'FabricEthNetworkGroupPolicy':
@@ -292,7 +311,7 @@ def resolve_policy_moids_from_mappings(intersight, policy_cache, module, config_
     return policy_moids
 
 
-def build_connection_settings(intersight, policy_cache, module, config_source):
+def build_connection_settings(intersight, policy_cache, module, config_source, organization_name):
     """
     Build connection type specific settings for API body.
     """
@@ -301,10 +320,10 @@ def build_connection_settings(intersight, policy_cache, module, config_source):
 
     if connection_type == 'usnic':
         usnic_settings = config_source.get('usnic_settings', {})
-        connection_settings['UsnicSettings'] = build_usnic_settings(intersight, policy_cache, module, usnic_settings)
+        connection_settings['UsnicSettings'] = build_usnic_settings(intersight, policy_cache, module, usnic_settings, organization_name)
     elif connection_type == 'vmq':
         vmq_settings = config_source.get('vmq_settings', {})
-        connection_settings['VmqSettings'] = build_vmq_settings(intersight, policy_cache, module, vmq_settings)
+        connection_settings['VmqSettings'] = build_vmq_settings(intersight, policy_cache, module, vmq_settings, organization_name)
     elif connection_type == 'sriov':
         sriov_settings = config_source.get('sriov_settings', {})
         connection_settings['SriovSettings'] = build_sriov_settings(sriov_settings)
