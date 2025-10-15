@@ -1,0 +1,350 @@
+---
+- name: Define anchor for Intersight API login info
+  ansible.builtin.set_fact:
+    api_info: &api_info
+      api_private_key: "{{ api_private_key }}"
+      api_key_id: "{{ api_key_id }}"
+      api_uri: "{{ api_uri | default(omit) }}"
+      validate_certs: "{{ validate_certs | default(omit) }}"
+      organization: "{{ organization }}"
+
+- name: Make sure Environment is clean
+  cisco.intersight.intersight_iscsi_adapter_policy:
+    <<: *api_info
+    name: "{{ item }}"
+    state: absent
+  loop:
+    - test_iscsi_adapter_policy_minimal
+    - test_iscsi_adapter_policy_default
+    - test_iscsi_adapter_policy_custom
+    - test_iscsi_adapter_policy_extended
+    - test_iscsi_adapter_policy_edge_min
+    - test_iscsi_adapter_policy_edge_max
+    - test_iscsi_adapter_policy_check_mode
+
+- name: Create iSCSI Adapter Policy with minimal parameters
+  cisco.intersight.intersight_iscsi_adapter_policy:
+    <<: *api_info
+    name: test_iscsi_adapter_policy_minimal
+  register: result
+
+- name: Verify creation result
+  ansible.builtin.assert:
+    that:
+      - result is changed
+      - result.api_response.Name == 'test_iscsi_adapter_policy_minimal'
+      - result.api_response.Moid is defined
+      - result.api_response.ObjectType == 'vnic.IscsiAdapterPolicy'
+      - result.api_response.ConnectionTimeOut == 15
+      - result.api_response.DhcpTimeout == 60
+      - result.api_response.LunBusyRetryCount == 15
+
+- name: Create same iSCSI Adapter Policy again (idempotency)
+  cisco.intersight.intersight_iscsi_adapter_policy:
+    <<: *api_info
+    name: test_iscsi_adapter_policy_minimal
+  register: result
+
+- name: Verify idempotency
+  ansible.builtin.assert:
+    that:
+      - result is not changed
+      - result.api_response.Name == 'test_iscsi_adapter_policy_minimal'
+
+- name: Create iSCSI Adapter Policy with default values
+  cisco.intersight.intersight_iscsi_adapter_policy:
+    <<: *api_info
+    name: test_iscsi_adapter_policy_default
+    description: "Test iSCSI adapter policy with default values"
+    connection_time_out: 15
+    dhcp_timeout: 60
+    lun_busy_retry_count: 15
+  register: result
+
+- name: Verify default values policy
+  ansible.builtin.assert:
+    that:
+      - result is changed
+      - result.api_response.Name == 'test_iscsi_adapter_policy_default'
+      - result.api_response.Description == 'Test iSCSI adapter policy with default values'
+      - result.api_response.ConnectionTimeOut == 15
+      - result.api_response.DhcpTimeout == 60
+      - result.api_response.LunBusyRetryCount == 15
+
+- name: Create iSCSI Adapter Policy with custom timeouts
+  cisco.intersight.intersight_iscsi_adapter_policy:
+    <<: *api_info
+    name: test_iscsi_adapter_policy_custom
+    description: "Test iSCSI adapter policy with custom timeouts"
+    connection_time_out: 30
+    dhcp_timeout: 120
+    lun_busy_retry_count: 30
+    tags:
+      - Key: Environment
+        Value: Test
+      - Key: Owner
+        Value: Automation
+  register: result
+
+- name: Verify custom values policy
+  ansible.builtin.assert:
+    that:
+      - result is changed
+      - result.api_response.Name == 'test_iscsi_adapter_policy_custom'
+      - result.api_response.ConnectionTimeOut == 30
+      - result.api_response.DhcpTimeout == 120
+      - result.api_response.LunBusyRetryCount == 30
+      - result.api_response.Tags | length == 2
+
+- name: Update iSCSI Adapter Policy description
+  cisco.intersight.intersight_iscsi_adapter_policy:
+    <<: *api_info
+    name: test_iscsi_adapter_policy_custom
+    description: "Updated description for test policy"
+    connection_time_out: 30
+    dhcp_timeout: 120
+    lun_busy_retry_count: 30
+  register: result
+
+- name: Verify update
+  ansible.builtin.assert:
+    that:
+      - result is changed
+      - result.api_response.Description == 'Updated description for test policy'
+      - result.api_response.ConnectionTimeOut == 30
+
+- name: Update iSCSI Adapter Policy timeout values
+  cisco.intersight.intersight_iscsi_adapter_policy:
+    <<: *api_info
+    name: test_iscsi_adapter_policy_custom
+    description: "Updated description for test policy"
+    connection_time_out: 45
+    dhcp_timeout: 180
+    lun_busy_retry_count: 40
+  register: result
+
+- name: Verify timeout update
+  ansible.builtin.assert:
+    that:
+      - result is changed
+      - result.api_response.ConnectionTimeOut == 45
+      - result.api_response.DhcpTimeout == 180
+      - result.api_response.LunBusyRetryCount == 40
+
+- name: Create iSCSI Adapter Policy with extended timeouts
+  cisco.intersight.intersight_iscsi_adapter_policy:
+    <<: *api_info
+    name: test_iscsi_adapter_policy_extended
+    description: "Test policy with maximum timeout values"
+    connection_time_out: 60
+    dhcp_timeout: 300
+    lun_busy_retry_count: 60
+  register: result
+
+- name: Verify extended timeout policy
+  ansible.builtin.assert:
+    that:
+      - result is changed
+      - result.api_response.Name == 'test_iscsi_adapter_policy_extended'
+      - result.api_response.ConnectionTimeOut == 60
+      - result.api_response.DhcpTimeout == 300
+      - result.api_response.LunBusyRetryCount == 60
+
+- name: Create iSCSI Adapter Policy with minimum edge values
+  cisco.intersight.intersight_iscsi_adapter_policy:
+    <<: *api_info
+    name: test_iscsi_adapter_policy_edge_min
+    description: "Test policy with minimum timeout values"
+    connection_time_out: 0
+    dhcp_timeout: 60
+    lun_busy_retry_count: 0
+  register: result
+
+- name: Verify minimum edge values policy
+  ansible.builtin.assert:
+    that:
+      - result is changed
+      - result.api_response.Name == 'test_iscsi_adapter_policy_edge_min'
+      - result.api_response.ConnectionTimeOut == 0
+      - result.api_response.DhcpTimeout == 60
+      - result.api_response.LunBusyRetryCount == 0
+
+- name: Create iSCSI Adapter Policy with maximum edge values
+  cisco.intersight.intersight_iscsi_adapter_policy:
+    <<: *api_info
+    name: test_iscsi_adapter_policy_edge_max
+    description: "Test policy with maximum timeout values"
+    connection_time_out: 255
+    dhcp_timeout: 300
+    lun_busy_retry_count: 60
+  register: result
+
+- name: Verify maximum edge values policy
+  ansible.builtin.assert:
+    that:
+      - result is changed
+      - result.api_response.Name == 'test_iscsi_adapter_policy_edge_max'
+      - result.api_response.ConnectionTimeOut == 255
+      - result.api_response.DhcpTimeout == 300
+      - result.api_response.LunBusyRetryCount == 60
+
+- name: Test invalid connection_time_out value (too high)
+  cisco.intersight.intersight_iscsi_adapter_policy:
+    <<: *api_info
+    name: test_iscsi_adapter_policy_invalid
+    connection_time_out: 256
+  register: test_invalid_connection_timeout_result
+  failed_when:
+    - test_invalid_connection_timeout_result.failed == false
+    - "'connection_time_out' not in test_invalid_connection_timeout_result.msg"
+
+- name: Test invalid connection_time_out value (too low)
+  cisco.intersight.intersight_iscsi_adapter_policy:
+    <<: *api_info
+    name: test_iscsi_adapter_policy_invalid
+    connection_time_out: -1
+  register: test_invalid_connection_timeout_low_result
+  failed_when:
+    - test_invalid_connection_timeout_low_result.failed == false
+    - "'connection_time_out' not in test_invalid_connection_timeout_low_result.msg"
+
+- name: Test invalid dhcp_timeout value (too high)
+  cisco.intersight.intersight_iscsi_adapter_policy:
+    <<: *api_info
+    name: test_iscsi_adapter_policy_invalid
+    dhcp_timeout: 301
+  register: test_invalid_dhcp_timeout_result
+  failed_when:
+    - test_invalid_dhcp_timeout_result.failed == false
+    - "'dhcp_timeout' not in test_invalid_dhcp_timeout_result.msg"
+
+- name: Test invalid dhcp_timeout value (too low)
+  cisco.intersight.intersight_iscsi_adapter_policy:
+    <<: *api_info
+    name: test_iscsi_adapter_policy_invalid
+    dhcp_timeout: 59
+  register: test_invalid_dhcp_timeout_low_result
+  failed_when:
+    - test_invalid_dhcp_timeout_low_result.failed == false
+    - "'dhcp_timeout' not in test_invalid_dhcp_timeout_low_result.msg"
+
+- name: Test invalid lun_busy_retry_count value (too high)
+  cisco.intersight.intersight_iscsi_adapter_policy:
+    <<: *api_info
+    name: test_iscsi_adapter_policy_invalid
+    lun_busy_retry_count: 61
+  register: test_invalid_lun_retry_result
+  failed_when:
+    - test_invalid_lun_retry_result.failed == false
+    - "'lun_busy_retry_count' not in test_invalid_lun_retry_result.msg"
+
+- name: Test invalid lun_busy_retry_count value (too low)
+  cisco.intersight.intersight_iscsi_adapter_policy:
+    <<: *api_info
+    name: test_iscsi_adapter_policy_invalid
+    lun_busy_retry_count: -1
+  register: test_invalid_lun_retry_low_result
+  failed_when:
+    - test_invalid_lun_retry_low_result.failed == false
+    - "'lun_busy_retry_count' not in test_invalid_lun_retry_low_result.msg"
+
+- name: Test check mode - create
+  cisco.intersight.intersight_iscsi_adapter_policy:
+    <<: *api_info
+    name: test_iscsi_adapter_policy_check_mode
+    description: "Check mode test policy"
+    connection_time_out: 25
+  check_mode: true
+  register: result
+
+- name: Verify check mode behavior
+  ansible.builtin.assert:
+    that:
+      - result is changed
+      - result.api_response == {}
+
+- name: Get iSCSI Adapter Policy info to verify check mode
+  cisco.intersight.intersight_iscsi_adapter_policy_info:
+    <<: *api_info
+    name: test_iscsi_adapter_policy_check_mode
+  register: result
+
+- name: Verify policy was not created
+  ansible.builtin.assert:
+    that:
+      - result.api_response | length == 0
+
+- name: Get all iSCSI Adapter Policies
+  cisco.intersight.intersight_iscsi_adapter_policy_info:
+    <<: *api_info
+  register: result
+
+- name: Verify info module returns data
+  ansible.builtin.assert:
+    that:
+      - result.api_response is defined
+      - result.api_response | length >= 1
+
+- name: Get specific iSCSI Adapter Policy by name
+  cisco.intersight.intersight_iscsi_adapter_policy_info:
+    <<: *api_info
+    name: test_iscsi_adapter_policy_custom
+  register: result
+
+- name: Verify specific policy retrieval
+  ansible.builtin.assert:
+    that:
+      - result.api_response | length == 1
+      - result.api_response[0].Name == 'test_iscsi_adapter_policy_custom'
+      - result.api_response[0].ConnectionTimeOut == 45
+      - result.api_response[0].DhcpTimeout == 180
+      - result.api_response[0].LunBusyRetryCount == 40
+
+- name: Get iSCSI Adapter Policies by organization
+  cisco.intersight.intersight_iscsi_adapter_policy_info:
+    <<: *api_info
+    organization: "{{ organization }}"
+  register: result
+
+- name: Verify organization filtering
+  ansible.builtin.assert:
+    that:
+      - result.api_response is defined
+      - result.api_response | length >= 1
+
+- name: Delete iSCSI Adapter Policy
+  cisco.intersight.intersight_iscsi_adapter_policy:
+    <<: *api_info
+    name: test_iscsi_adapter_policy_minimal
+    state: absent
+  register: result
+
+- name: Verify deletion
+  ansible.builtin.assert:
+    that:
+      - result is changed
+
+- name: Delete same iSCSI Adapter Policy again (idempotency)
+  cisco.intersight.intersight_iscsi_adapter_policy:
+    <<: *api_info
+    name: test_iscsi_adapter_policy_minimal
+    state: absent
+  register: result
+
+- name: Verify deletion idempotency
+  ansible.builtin.assert:
+    that:
+      - result is not changed
+
+# Cleanup - Delete all test policies
+- name: Cleanup all test policies
+  cisco.intersight.intersight_iscsi_adapter_policy:
+    <<: *api_info
+    name: "{{ item }}"
+    state: absent
+  loop:
+    - test_iscsi_adapter_policy_default
+    - test_iscsi_adapter_policy_custom
+    - test_iscsi_adapter_policy_extended
+    - test_iscsi_adapter_policy_edge_min
+    - test_iscsi_adapter_policy_edge_max
