@@ -1,4 +1,3 @@
 ---
 - name: Run iSCSI Boot Policy tests
   ansible.builtin.include_tasks: tests.yml
-
