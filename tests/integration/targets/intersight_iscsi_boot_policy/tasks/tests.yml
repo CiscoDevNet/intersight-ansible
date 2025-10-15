@@ -1,0 +1,369 @@
+---
+- block:
+  - name: Define anchor for Intersight API login info
+    ansible.builtin.set_fact:
+      api_info: &api_info
+        api_private_key: "{{ api_private_key }}"
+        api_key_id: "{{ api_key_id }}"
+        api_uri: "{{ api_uri | default(omit) }}"
+        validate_certs: "{{ validate_certs | default(omit) }}"
+        organization: "{{ organization }}"
+
+  - name: Make sure Env is clean - iSCSI Boot Policies
+    cisco.intersight.intersight_iscsi_boot_policy:
+      <<: *api_info
+      name: "{{ item }}"
+      state: absent
+    loop:
+      - test_iscsi_boot_auto
+      - test_iscsi_boot_static_dhcp
+      - test_iscsi_boot_pool
+      - test_iscsi_boot_static_ipv4
+      - test_iscsi_boot_static_ipv6
+      - test_iscsi_boot_ipv6_dhcp
+      - test_iscsi_boot_ipv6_static
+      - test_iscsi_boot_minimal
+
+  - name: Make sure Env is clean - iSCSI Static Target Policies
+    cisco.intersight.intersight_iscsi_static_target_policy:
+      <<: *api_info
+      name: "{{ item }}"
+      state: absent
+    loop:
+      - primary-iscsi-target
+      - secondary-iscsi-target
+      - primary-iscsi-target-ipv6
+      - secondary-iscsi-target-ipv6
+
+  - name: Create primary iSCSI Static Target Policy
+    cisco.intersight.intersight_iscsi_static_target_policy:
+      <<: *api_info
+      name: primary-iscsi-target
+      description: "Primary iSCSI target for testing"
+      target_name: "iqn.2010-01.com.example:primary-target"
+      port: 3260
+      lun_id: 0
+      ip_protocol: "IPv4"
+      ipv4_address: "192.168.1.100"
+      tags:
+        - Key: Type
+          Value: Test
+    register: primary_target_result
+
+  - name: Verify primary target creation
+    ansible.builtin.assert:
+      that:
+        - primary_target_result.changed
+        - primary_target_result.api_response.Name == 'primary-iscsi-target'
+
+  - name: Create secondary iSCSI Static Target Policy
+    cisco.intersight.intersight_iscsi_static_target_policy:
+      <<: *api_info
+      name: secondary-iscsi-target
+      description: "Secondary iSCSI target for testing"
+      target_name: "iqn.2010-01.com.example:secondary-target"
+      port: 3260
+      lun_id: 1
+      ip_protocol: "IPv4"
+      ipv4_address: "192.168.1.101"
+    register: secondary_target_result
+
+  - name: Verify secondary target creation
+    ansible.builtin.assert:
+      that:
+        - secondary_target_result.changed
+        - secondary_target_result.api_response.Name == 'secondary-iscsi-target'
+
+  - name: Create primary iSCSI Static Target Policy for IPv6
+    cisco.intersight.intersight_iscsi_static_target_policy:
+      <<: *api_info
+      name: primary-iscsi-target-ipv6
+      description: "Primary IPv6 iSCSI target for testing"
+      target_name: "iqn.2010-01.com.example:primary-target-ipv6"
+      port: 3260
+      lun_id: 0
+      ip_protocol: "IPv6"
+      ipv6_address: "2001:db8::200"
+    register: primary_target_ipv6_result
+
+  - name: Verify primary IPv6 target creation
+    ansible.builtin.assert:
+      that:
+        - primary_target_ipv6_result.changed
+        - primary_target_ipv6_result.api_response.Name == 'primary-iscsi-target-ipv6'
+
+  - name: Create secondary iSCSI Static Target Policy for IPv6
+    cisco.intersight.intersight_iscsi_static_target_policy:
+      <<: *api_info
+      name: secondary-iscsi-target-ipv6
+      description: "Secondary IPv6 iSCSI target for testing"
+      target_name: "iqn.2010-01.com.example:secondary-target-ipv6"
+      port: 3260
+      lun_id: 1
+      ip_protocol: "IPv6"
+      ipv6_address: "2001:db8::201"
+    register: secondary_target_ipv6_result
+
+  - name: Verify secondary IPv6 target creation
+    ansible.builtin.assert:
+      that:
+        - secondary_target_ipv6_result.changed
+        - secondary_target_ipv6_result.api_response.Name == 'secondary-iscsi-target-ipv6'
+
+  - name: Create iSCSI Boot Policy with Static DHCP - check-mode
+    cisco.intersight.intersight_iscsi_boot_policy:
+      <<: *api_info
+      name: test_iscsi_boot_static_dhcp
+      description: "Test iSCSI boot policy with static targets and DHCP"
+      iscsi_ip_type: "ipv4"
+      target_source_type: "static"
+      primary_target_policy_name: "primary-iscsi-target"
+      initiator_ip_source: "dhcp"
+      tags:
+        - Key: Environment
+          Value: Test
+    check_mode: true
+    register: creation_res_check_mode
+
+  - name: Verify iSCSI boot policy was not created - check-mode
+    ansible.builtin.assert:
+      that:
+        - creation_res_check_mode is changed
+        - creation_res_check_mode.api_response == {}
+
+  - name: Create iSCSI Boot Policy with Static DHCP
+    cisco.intersight.intersight_iscsi_boot_policy:
+      <<: *api_info
+      name: test_iscsi_boot_static_dhcp
+      description: "Test iSCSI boot policy with static targets and DHCP"
+      iscsi_ip_type: "ipv4"
+      target_source_type: "static"
+      primary_target_policy_name: "primary-iscsi-target"
+      initiator_ip_source: "dhcp"
+      tags:
+        - Key: Environment
+          Value: Test
+    register: creation_res
+
+  - name: Fetch info after creation
+    cisco.intersight.intersight_iscsi_boot_policy_info:
+      <<: *api_info
+      name: test_iscsi_boot_static_dhcp
+    register: creation_info_res
+
+  - name: Verify iSCSI boot policy creation by info
+    ansible.builtin.assert:
+      that:
+        - creation_res.changed
+        - creation_info_res.api_response[0].Name == 'test_iscsi_boot_static_dhcp'
+        - creation_info_res.api_response[0].IscsiIpType == 'IPv4'
+        - creation_info_res.api_response[0].TargetSourceType == 'Static'
+        - creation_info_res.api_response[0].InitiatorIpSource == 'DHCP'
+
+  - name: Create iSCSI Boot Policy with Static DHCP (idempotency check)
+    cisco.intersight.intersight_iscsi_boot_policy:
+      <<: *api_info
+      name: test_iscsi_boot_static_dhcp
+      description: "Test iSCSI boot policy with static targets and DHCP"
+      iscsi_ip_type: "ipv4"
+      target_source_type: "static"
+      primary_target_policy_name: "primary-iscsi-target"
+      initiator_ip_source: "dhcp"
+      tags:
+        - Key: Environment
+          Value: Test
+    register: creation_res_ide
+
+  - name: Verify iSCSI boot policy creation (idempotency check)
+    ansible.builtin.assert:
+      that:
+        - not creation_res_ide.changed
+
+  - name: Update description of iSCSI boot policy
+    cisco.intersight.intersight_iscsi_boot_policy:
+      <<: *api_info
+      name: test_iscsi_boot_static_dhcp
+      description: "Updated iSCSI boot policy description"
+      iscsi_ip_type: "ipv4"
+      target_source_type: "static"
+      primary_target_policy_name: "primary-iscsi-target"
+      initiator_ip_source: "dhcp"
+      tags:
+        - Key: Environment
+          Value: Test
+    register: update_res
+
+  - name: Fetch info after update
+    cisco.intersight.intersight_iscsi_boot_policy_info:
+      <<: *api_info
+      name: test_iscsi_boot_static_dhcp
+    register: update_info_res
+
+  - name: Verify iSCSI boot policy update
+    ansible.builtin.assert:
+      that:
+        - update_res.changed
+        - update_info_res.api_response[0].Description == 'Updated iSCSI boot policy description'
+
+  - name: Create iSCSI Boot Policy with CHAP authentication
+    cisco.intersight.intersight_iscsi_boot_policy:
+      <<: *api_info
+      name: test_iscsi_boot_minimal
+      description: "iSCSI boot policy with CHAP"
+      iscsi_ip_type: "ipv4"
+      target_source_type: "static"
+      primary_target_policy_name: "primary-iscsi-target"
+      chap:
+        user_id: "testuser"
+        password: "testpassword123"
+      mutual_chap:
+        user_id: "mutualuser"
+        password: "mutualpass123"
+      initiator_ip_source: "dhcp"
+    register: chap_creation_res
+
+  - name: Fetch info after CHAP policy creation
+    cisco.intersight.intersight_iscsi_boot_policy_info:
+      <<: *api_info
+      name: test_iscsi_boot_minimal
+    register: chap_info_res
+
+  - name: Verify CHAP policy creation
+    ansible.builtin.assert:
+      that:
+        - chap_creation_res.changed
+        - chap_info_res.api_response[0].Name == 'test_iscsi_boot_minimal'
+        - chap_info_res.api_response[0].Chap.UserId == 'testuser'
+        - chap_info_res.api_response[0].MutualChap.UserId == 'mutualuser'
+
+  - name: Test info module - fetch specific policy
+    cisco.intersight.intersight_iscsi_boot_policy_info:
+      <<: *api_info
+      name: test_iscsi_boot_static_dhcp
+    register: specific_policy_info
+
+  - name: Verify specific policy info
+    ansible.builtin.assert:
+      that:
+        - specific_policy_info.api_response[0].Name == 'test_iscsi_boot_static_dhcp'
+        - specific_policy_info.api_response[0].TargetSourceType is defined
+
+  - name: Test info module - fetch all policies
+    cisco.intersight.intersight_iscsi_boot_policy_info:
+      <<: *api_info
+    register: all_policies_info
+
+  - name: Verify all policies info
+    ansible.builtin.assert:
+      that:
+        - all_policies_info.api_response | length >= 2
+
+  - name: Create iSCSI Boot Policy with IPv6 DHCP initiator
+    cisco.intersight.intersight_iscsi_boot_policy:
+      <<: *api_info
+      name: test_iscsi_boot_ipv6_dhcp
+      description: "IPv6 with DHCP initiator"
+      iscsi_ip_type: "ipv6"
+      target_source_type: "static"
+      primary_target_policy_name: "primary-iscsi-target-ipv6"
+      initiator_ip_source: "dhcp"
+    register: ipv6_dhcp_creation_res
+
+  - name: Fetch info after IPv6 DHCP policy creation
+    cisco.intersight.intersight_iscsi_boot_policy_info:
+      <<: *api_info
+      name: test_iscsi_boot_ipv6_dhcp
+    register: ipv6_dhcp_info_res
+
+  - name: Verify IPv6 DHCP policy creation
+    ansible.builtin.assert:
+      that:
+        - ipv6_dhcp_creation_res.changed
+        - ipv6_dhcp_info_res.api_response[0].Name == 'test_iscsi_boot_ipv6_dhcp'
+        - ipv6_dhcp_info_res.api_response[0].IscsiIpType == 'IPv6'
+        - ipv6_dhcp_info_res.api_response[0].TargetSourceType == 'Static'
+        - ipv6_dhcp_info_res.api_response[0].InitiatorIpSource == 'DHCP'
+
+  - name: Create iSCSI Boot Policy with IPv6 static configuration
+    cisco.intersight.intersight_iscsi_boot_policy:
+      <<: *api_info
+      name: test_iscsi_boot_ipv6_static
+      description: "IPv6 with static configuration"
+      iscsi_ip_type: "ipv6"
+      target_source_type: "static"
+      primary_target_policy_name: "primary-iscsi-target-ipv6"
+      initiator_ip_source: "static"
+      initiator_static_ipv6_address: "2001:db8::100"
+      initiator_static_ipv6_prefix: 64
+      initiator_static_ipv6_gateway: "2001:db8::1"
+      tags:
+        - Key: IPType
+          Value: IPv6
+    register: ipv6_static_creation_res
+
+  - name: Fetch info after IPv6 static policy creation
+    cisco.intersight.intersight_iscsi_boot_policy_info:
+      <<: *api_info
+      name: test_iscsi_boot_ipv6_static
+    register: ipv6_static_info_res
+
+  - name: Verify IPv6 static policy creation
+    ansible.builtin.assert:
+      that:
+        - ipv6_static_creation_res.changed
+        - ipv6_static_info_res.api_response[0].Name == 'test_iscsi_boot_ipv6_static'
+        - ipv6_static_info_res.api_response[0].IscsiIpType == 'IPv6'
+        - ipv6_static_info_res.api_response[0].InitiatorIpSource == 'Static'
+        - ipv6_static_info_res.api_response[0].InitiatorStaticIpV6Address == '2001:db8::100'
+        - ipv6_static_info_res.api_response[0].InitiatorStaticIpV6Config.Prefix == 64
+        - ipv6_static_info_res.api_response[0].InitiatorStaticIpV6Config.Gateway == '2001:db8::1'
+
+  - name: Test deletion of iSCSI boot policy
+    cisco.intersight.intersight_iscsi_boot_policy:
+      <<: *api_info
+      name: test_iscsi_boot_minimal
+      state: absent
+    register: deletion_result
+
+  - name: Verify deletion result
+    ansible.builtin.assert:
+      that:
+        - deletion_result.changed
+
+  - name: Verify policy is deleted by fetching info
+    cisco.intersight.intersight_iscsi_boot_policy_info:
+      <<: *api_info
+      name: test_iscsi_boot_minimal
+    register: deleted_policy_info
+
+  - name: Verify policy no longer exists
+    ansible.builtin.assert:
+      that:
+        - deleted_policy_info.api_response == []
+
+  always:
+  - name: Remove iSCSI Boot policies
+    cisco.intersight.intersight_iscsi_boot_policy:
+      <<: *api_info
+      name: "{{ item }}"
+      state: absent
+    loop:
+      - test_iscsi_boot_auto
+      - test_iscsi_boot_static_dhcp
+      - test_iscsi_boot_pool
+      - test_iscsi_boot_static_ipv4
+      - test_iscsi_boot_static_ipv6
+      - test_iscsi_boot_ipv6_dhcp
+      - test_iscsi_boot_ipv6_static
+      - test_iscsi_boot_minimal
+
+  - name: Remove iSCSI Static Target policies
+    cisco.intersight.intersight_iscsi_static_target_policy:
+      <<: *api_info
+      name: "{{ item }}"
+      state: absent
+    loop:
+      - primary-iscsi-target
+      - secondary-iscsi-target
+      - primary-iscsi-target-ipv6
+      - secondary-iscsi-target-ipv6
