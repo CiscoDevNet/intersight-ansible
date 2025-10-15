@@ -1,0 +1,385 @@
+---
+- name: Define anchor for Intersight API login info
+  ansible.builtin.set_fact:
+    api_info: &api_info
+      api_private_key: "{{ api_private_key }}"
+      api_key_id: "{{ api_key_id }}"
+      api_uri: "{{ api_uri | default(omit) }}"
+      validate_certs: "{{ validate_certs | default(omit) }}"
+      organization: "{{ organization }}"
+
+- name: Make sure Environment is clean
+  cisco.intersight.intersight_fibre_channel_qos_policy:
+    <<: *api_info
+    name: "{{ item }}"
+    state: absent
+  loop:
+    - test_fc_qos_policy_minimal
+    - test_fc_qos_policy_default
+    - test_fc_qos_policy_custom
+    - test_fc_qos_policy_high_bandwidth
+    - test_fc_qos_policy_edge_min
+    - test_fc_qos_policy_edge_max
+    - test_fc_qos_policy_check_mode
+
+- name: Create Fibre Channel QoS Policy with minimal parameters
+  cisco.intersight.intersight_fibre_channel_qos_policy:
+    <<: *api_info
+    name: test_fc_qos_policy_minimal
+  register: result
+
+- name: Verify creation result
+  ansible.builtin.assert:
+    that:
+      - result is changed
+      - result.api_response.Name == 'test_fc_qos_policy_minimal'
+      - result.api_response.Moid is defined
+      - result.api_response.ObjectType == 'vnic.FcQosPolicy'
+      - result.api_response.RateLimit == 0
+      - result.api_response.MaxDataFieldSize == 2112
+      - result.api_response.Cos == 3
+      - result.api_response.Burst == 10240
+
+- name: Create same Fibre Channel QoS Policy again (idempotency)
+  cisco.intersight.intersight_fibre_channel_qos_policy:
+    <<: *api_info
+    name: test_fc_qos_policy_minimal
+  register: result
+
+- name: Verify idempotency
+  ansible.builtin.assert:
+    that:
+      - result is not changed
+      - result.api_response.Name == 'test_fc_qos_policy_minimal'
+
+- name: Create Fibre Channel QoS Policy with default values
+  cisco.intersight.intersight_fibre_channel_qos_policy:
+    <<: *api_info
+    name: test_fc_qos_policy_default
+    description: "Test Fibre Channel QoS policy with default values"
+    rate_limit: 0
+    max_data_field_size: 2112
+    cos: 3
+    burst: 10240
+  register: result
+
+- name: Verify default values policy
+  ansible.builtin.assert:
+    that:
+      - result is changed
+      - result.api_response.Name == 'test_fc_qos_policy_default'
+      - result.api_response.Description == 'Test Fibre Channel QoS policy with default values'
+      - result.api_response.RateLimit == 0
+      - result.api_response.MaxDataFieldSize == 2112
+      - result.api_response.Cos == 3
+      - result.api_response.Burst == 10240
+
+- name: Create Fibre Channel QoS Policy with custom values
+  cisco.intersight.intersight_fibre_channel_qos_policy:
+    <<: *api_info
+    name: test_fc_qos_policy_custom
+    description: "Test Fibre Channel QoS policy with custom values"
+    rate_limit: 10000
+    max_data_field_size: 2048
+    cos: 5
+    burst: 20480
+    tags:
+      - Key: Environment
+        Value: Test
+      - Key: Owner
+        Value: Automation
+  register: result
+
+- name: Verify custom values policy
+  ansible.builtin.assert:
+    that:
+      - result is changed
+      - result.api_response.Name == 'test_fc_qos_policy_custom'
+      - result.api_response.RateLimit == 10000
+      - result.api_response.MaxDataFieldSize == 2048
+      - result.api_response.Cos == 5
+      - result.api_response.Burst == 20480
+      - result.api_response.Tags | length == 2
+
+- name: Update Fibre Channel QoS Policy description
+  cisco.intersight.intersight_fibre_channel_qos_policy:
+    <<: *api_info
+    name: test_fc_qos_policy_custom
+    description: "Updated description for test policy"
+    rate_limit: 10000
+    max_data_field_size: 2048
+    cos: 5
+    burst: 20480
+  register: result
+
+- name: Verify update
+  ansible.builtin.assert:
+    that:
+      - result is changed
+      - result.api_response.Description == 'Updated description for test policy'
+      - result.api_response.RateLimit == 10000
+
+- name: Update Fibre Channel QoS Policy values
+  cisco.intersight.intersight_fibre_channel_qos_policy:
+    <<: *api_info
+    name: test_fc_qos_policy_custom
+    description: "Updated description for test policy"
+    rate_limit: 15000
+    max_data_field_size: 1024
+    cos: 4
+    burst: 30000
+  register: result
+
+- name: Verify value update
+  ansible.builtin.assert:
+    that:
+      - result is changed
+      - result.api_response.RateLimit == 15000
+      - result.api_response.MaxDataFieldSize == 1024
+      - result.api_response.Cos == 4
+      - result.api_response.Burst == 30000
+
+- name: Create Fibre Channel QoS Policy with high bandwidth settings
+  cisco.intersight.intersight_fibre_channel_qos_policy:
+    <<: *api_info
+    name: test_fc_qos_policy_high_bandwidth
+    description: "Test policy with high bandwidth values"
+    rate_limit: 50000
+    max_data_field_size: 2112
+    cos: 6
+    burst: 500000
+  register: result
+
+- name: Verify high bandwidth policy
+  ansible.builtin.assert:
+    that:
+      - result is changed
+      - result.api_response.Name == 'test_fc_qos_policy_high_bandwidth'
+      - result.api_response.RateLimit == 50000
+      - result.api_response.MaxDataFieldSize == 2112
+      - result.api_response.Cos == 6
+      - result.api_response.Burst == 500000
+
+- name: Create Fibre Channel QoS Policy with minimum edge values
+  cisco.intersight.intersight_fibre_channel_qos_policy:
+    <<: *api_info
+    name: test_fc_qos_policy_edge_min
+    description: "Test policy with minimum values"
+    rate_limit: 0
+    max_data_field_size: 256
+    cos: 0
+    burst: 1
+  register: result
+
+- name: Verify minimum edge values policy
+  ansible.builtin.assert:
+    that:
+      - result is changed
+      - result.api_response.Name == 'test_fc_qos_policy_edge_min'
+      - result.api_response.RateLimit == 0
+      - result.api_response.MaxDataFieldSize == 256
+      - result.api_response.Cos == 0
+      - result.api_response.Burst == 1
+
+- name: Create Fibre Channel QoS Policy with maximum edge values
+  cisco.intersight.intersight_fibre_channel_qos_policy:
+    <<: *api_info
+    name: test_fc_qos_policy_edge_max
+    description: "Test policy with maximum values"
+    rate_limit: 100000
+    max_data_field_size: 2112
+    cos: 6
+    burst: 1000000
+  register: result
+
+- name: Verify maximum edge values policy
+  ansible.builtin.assert:
+    that:
+      - result is changed
+      - result.api_response.Name == 'test_fc_qos_policy_edge_max'
+      - result.api_response.RateLimit == 100000
+      - result.api_response.MaxDataFieldSize == 2112
+      - result.api_response.Cos == 6
+      - result.api_response.Burst == 1000000
+
+- name: Test invalid rate_limit value (too high)
+  cisco.intersight.intersight_fibre_channel_qos_policy:
+    <<: *api_info
+    name: test_fc_qos_policy_invalid
+    rate_limit: 100001
+  register: test_invalid_rate_limit_result
+  failed_when:
+    - test_invalid_rate_limit_result.failed == false
+    - "'rate_limit' not in test_invalid_rate_limit_result.msg"
+
+- name: Test invalid rate_limit value (too low)
+  cisco.intersight.intersight_fibre_channel_qos_policy:
+    <<: *api_info
+    name: test_fc_qos_policy_invalid
+    rate_limit: -1
+  register: test_invalid_rate_limit_low_result
+  failed_when:
+    - test_invalid_rate_limit_low_result.failed == false
+    - "'rate_limit' not in test_invalid_rate_limit_low_result.msg"
+
+- name: Test invalid max_data_field_size value (too high)
+  cisco.intersight.intersight_fibre_channel_qos_policy:
+    <<: *api_info
+    name: test_fc_qos_policy_invalid
+    max_data_field_size: 2113
+  register: test_invalid_max_data_field_size_result
+  failed_when:
+    - test_invalid_max_data_field_size_result.failed == false
+    - "'max_data_field_size' not in test_invalid_max_data_field_size_result.msg"
+
+- name: Test invalid max_data_field_size value (too low)
+  cisco.intersight.intersight_fibre_channel_qos_policy:
+    <<: *api_info
+    name: test_fc_qos_policy_invalid
+    max_data_field_size: 255
+  register: test_invalid_max_data_field_size_low_result
+  failed_when:
+    - test_invalid_max_data_field_size_low_result.failed == false
+    - "'max_data_field_size' not in test_invalid_max_data_field_size_low_result.msg"
+
+- name: Test invalid cos value (too high)
+  cisco.intersight.intersight_fibre_channel_qos_policy:
+    <<: *api_info
+    name: test_fc_qos_policy_invalid
+    cos: 7
+  register: test_invalid_cos_result
+  failed_when:
+    - test_invalid_cos_result.failed == false
+    - "'cos' not in test_invalid_cos_result.msg"
+
+- name: Test invalid cos value (too low)
+  cisco.intersight.intersight_fibre_channel_qos_policy:
+    <<: *api_info
+    name: test_fc_qos_policy_invalid
+    cos: -1
+  register: test_invalid_cos_low_result
+  failed_when:
+    - test_invalid_cos_low_result.failed == false
+    - "'cos' not in test_invalid_cos_low_result.msg"
+
+- name: Test invalid burst value (too high)
+  cisco.intersight.intersight_fibre_channel_qos_policy:
+    <<: *api_info
+    name: test_fc_qos_policy_invalid
+    burst: 1000001
+  register: test_invalid_burst_result
+  failed_when:
+    - test_invalid_burst_result.failed == false
+    - "'burst' not in test_invalid_burst_result.msg"
+
+- name: Test invalid burst value (too low)
+  cisco.intersight.intersight_fibre_channel_qos_policy:
+    <<: *api_info
+    name: test_fc_qos_policy_invalid
+    burst: 0
+  register: test_invalid_burst_low_result
+  failed_when:
+    - test_invalid_burst_low_result.failed == false
+    - "'burst' not in test_invalid_burst_low_result.msg"
+
+- name: Test check mode - create
+  cisco.intersight.intersight_fibre_channel_qos_policy:
+    <<: *api_info
+    name: test_fc_qos_policy_check_mode
+    description: "Check mode test policy"
+    rate_limit: 5000
+  check_mode: true
+  register: result
+
+- name: Verify check mode behavior
+  ansible.builtin.assert:
+    that:
+      - result is changed
+      - result.api_response == {}
+
+- name: Get Fibre Channel QoS Policy info to verify check mode
+  cisco.intersight.intersight_fibre_channel_qos_policy_info:
+    <<: *api_info
+    name: test_fc_qos_policy_check_mode
+  register: result
+
+- name: Verify policy was not created
+  ansible.builtin.assert:
+    that:
+      - result.api_response | length == 0
+
+- name: Get all Fibre Channel QoS Policies
+  cisco.intersight.intersight_fibre_channel_qos_policy_info:
+    <<: *api_info
+  register: result
+
+- name: Verify info module returns data
+  ansible.builtin.assert:
+    that:
+      - result.api_response is defined
+      - result.api_response | length >= 1
+
+- name: Get specific Fibre Channel QoS Policy by name
+  cisco.intersight.intersight_fibre_channel_qos_policy_info:
+    <<: *api_info
+    name: test_fc_qos_policy_custom
+  register: result
+
+- name: Verify specific policy retrieval
+  ansible.builtin.assert:
+    that:
+      - result.api_response | length == 1
+      - result.api_response[0].Name == 'test_fc_qos_policy_custom'
+      - result.api_response[0].RateLimit == 15000
+      - result.api_response[0].MaxDataFieldSize == 1024
+      - result.api_response[0].Cos == 4
+      - result.api_response[0].Burst == 30000
+
+- name: Get Fibre Channel QoS Policies by organization
+  cisco.intersight.intersight_fibre_channel_qos_policy_info:
+    <<: *api_info
+    organization: "{{ organization }}"
+  register: result
+
+- name: Verify organization filtering
+  ansible.builtin.assert:
+    that:
+      - result.api_response is defined
+      - result.api_response | length >= 1
+
+- name: Delete Fibre Channel QoS Policy
+  cisco.intersight.intersight_fibre_channel_qos_policy:
+    <<: *api_info
+    name: test_fc_qos_policy_minimal
+    state: absent
+  register: result
+
+- name: Verify deletion
+  ansible.builtin.assert:
+    that:
+      - result is changed
+
+- name: Delete same Fibre Channel QoS Policy again (idempotency)
+  cisco.intersight.intersight_fibre_channel_qos_policy:
+    <<: *api_info
+    name: test_fc_qos_policy_minimal
+    state: absent
+  register: result
+
+- name: Verify deletion idempotency
+  ansible.builtin.assert:
+    that:
+      - result is not changed
+
+# Cleanup - Delete all test policies
+- name: Cleanup all test policies
+  cisco.intersight.intersight_fibre_channel_qos_policy:
+    <<: *api_info
+    name: "{{ item }}"
+    state: absent
+  loop:
+    - test_fc_qos_policy_default
+    - test_fc_qos_policy_custom
+    - test_fc_qos_policy_high_bandwidth
+    - test_fc_qos_policy_edge_min
+    - test_fc_qos_policy_edge_max
