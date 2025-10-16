@@ -1,0 +1,3 @@
+---
+- name: Run Fibre Channel Network Policy tests
+  ansible.builtin.import_tasks: tests.yml
