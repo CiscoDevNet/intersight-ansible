@@ -1,0 +1,2 @@
+---
+- ansible.builtin.import_tasks: tests.yml
