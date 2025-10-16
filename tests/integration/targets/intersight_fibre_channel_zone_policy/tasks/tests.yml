@@ -1,0 +1,380 @@
+---
+- block:
+  - name: Define anchor for Intersight API login info
+    ansible.builtin.set_fact:
+      api_info: &api_info
+        api_private_key: "{{ api_private_key }}"
+        api_key_id: "{{ api_key_id }}"
+        api_uri: "{{ api_uri | default(omit) }}"
+        validate_certs: "{{ validate_certs | default(omit) }}"
+        organization: "{{ organization }}"
+
+  - name: Make sure Env is clean
+    cisco.intersight.intersight_fibre_channel_zone_policy:
+      <<: *api_info
+      name: "{{ item }}"
+      state: absent
+    loop:
+      - test_fc_zone_policy
+      - test_fc_zone_policy_2
+      - test_fc_zone_policy_minimal
+      - test_fc_zone_policy_simt
+      - test_fc_zone_policy_sist
+      - test_fc_zone_policy_none
+      - test_fc_zone_policy_with_targets
+
+  - name: Create FC zone policy - check-mode
+    cisco.intersight.intersight_fibre_channel_zone_policy:
+      <<: *api_info
+      name: test_fc_zone_policy
+      description: "Test FC Zone policy description"
+      fc_target_zoning_type: None
+      tags:
+        - Key: Site
+          Value: Test
+        - Key: Site2
+          Value: Test2
+    check_mode: true
+    register: creation_res_check_mode
+
+  - name: Verify FC zone policy was not created - check-mode
+    ansible.builtin.assert:
+      that:
+        - creation_res_check_mode is changed
+        - creation_res_check_mode.api_response == {}
+
+  - name: Create FC zone policy
+    cisco.intersight.intersight_fibre_channel_zone_policy:
+      <<: *api_info
+      name: test_fc_zone_policy
+      description: "Test FC Zone policy description"
+      fc_target_zoning_type: None
+      tags:
+        - Key: Site
+          Value: Test
+        - Key: Site2
+          Value: Test2
+    register: creation_res
+
+  - name: Fetch info after creation
+    cisco.intersight.intersight_fibre_channel_zone_policy_info:
+      <<: *api_info
+      name: test_fc_zone_policy
+    register: creation_info_res
+
+  - name: Verify FC zone policy creation by info
+    ansible.builtin.assert:
+      that:
+        - creation_res.changed
+        - creation_info_res.api_response[0].Name == 'test_fc_zone_policy'
+
+  - name: Verify FC zone policy creation response aligns with info response
+    ansible.builtin.assert:
+      that:
+        - creation_res.api_response.Name == creation_info_res.api_response[0].Name
+
+  - name: Create FC zone policy (idempotency check)
+    cisco.intersight.intersight_fibre_channel_zone_policy:
+      <<: *api_info
+      name: test_fc_zone_policy
+      description: "Test FC Zone policy description"
+      fc_target_zoning_type: None
+      tags:
+        - Key: Site
+          Value: Test
+        - Key: Site2
+          Value: Test2
+    register: creation_res_ide
+
+  - name: Verify FC zone policy creation (idempotency check)
+    ansible.builtin.assert:
+      that:
+        - not creation_res_ide.changed
+
+  - name: Update description of an existing FC zone policy
+    cisco.intersight.intersight_fibre_channel_zone_policy:
+      <<: *api_info
+      name: test_fc_zone_policy
+      description: "Updated FC Zone policy description"
+      fc_target_zoning_type: None
+      tags:
+        - Key: Site
+          Value: Test
+        - Key: Site2
+          Value: Test2
+    register: changed_res
+
+  - name: Fetch info after change
+    cisco.intersight.intersight_fibre_channel_zone_policy_info:
+      <<: *api_info
+      name: test_fc_zone_policy
+    register: change_info_res
+
+  - name: Verify FC zone policy change by info
+    ansible.builtin.assert:
+      that:
+        - changed_res.changed
+        - change_info_res.api_response[0].Name == 'test_fc_zone_policy'
+        - change_info_res.api_response[0].Description == 'Updated FC Zone policy description'
+
+  - name: Create another FC zone policy
+    cisco.intersight.intersight_fibre_channel_zone_policy:
+      <<: *api_info
+      name: test_fc_zone_policy_2
+      description: "Test another FC Zone policy description"
+      fc_target_zoning_type: None
+    register: creation_res_b
+
+  - name: Fetch all FC zone policies under selected organization
+    cisco.intersight.intersight_fibre_channel_zone_policy_info:
+      <<: *api_info
+    register: creation_info_res_b
+
+  - name: Check that there are at least 2 FC zone policies under this organization
+    ansible.builtin.assert:
+      that:
+        - creation_info_res_b.api_response | length > 1
+
+  - name: Test creation without optional parameters
+    cisco.intersight.intersight_fibre_channel_zone_policy:
+      <<: *api_info
+      name: test_fc_zone_policy_minimal
+    register: creation_res_minimal
+
+  - name: Verify minimal FC zone policy creation
+    ansible.builtin.assert:
+      that:
+        - creation_res_minimal.changed
+        - creation_res_minimal.api_response.Name == 'test_fc_zone_policy_minimal'
+
+  - name: Create FC zone policy with SIMT zoning and multiple targets
+    cisco.intersight.intersight_fibre_channel_zone_policy:
+      <<: *api_info
+      name: test_fc_zone_policy_simt
+      description: "Policy with SIMT zoning and multiple targets"
+      fc_target_zoning_type: SIMT
+      fc_target_members:
+        - name: "target1"
+          wwpn: "21:00:00:e0:8b:05:05:04"
+          switch_id: A
+          vsan_id: 100
+        - name: "target2"
+          wwpn: "21:00:00:e0:8b:05:05:03"
+          switch_id: B
+          vsan_id: 100
+        - name: "target3"
+          wwpn: "21:00:00:e0:8b:05:05:09"
+          switch_id: A
+          vsan_id: 200
+    register: fc_zone_policy_simt
+
+  - name: Verify FC zone policy with SIMT zoning and targets creation
+    ansible.builtin.assert:
+      that:
+        - fc_zone_policy_simt.changed
+        - fc_zone_policy_simt.api_response.Name == 'test_fc_zone_policy_simt'
+        - fc_zone_policy_simt.api_response.FcTargetZoningType == 'SIMT'
+        - fc_zone_policy_simt.api_response.FcTargetMembers | length == 3
+        - fc_zone_policy_simt.api_response.FcTargetMembers[0].Name == 'target1'
+        - fc_zone_policy_simt.api_response.FcTargetMembers[1].Name == 'target2'
+        - fc_zone_policy_simt.api_response.FcTargetMembers[2].Name == 'target3'
+        - fc_zone_policy_simt.api_response.FcTargetMembers[0].Wwpn == '21:00:00:e0:8b:05:05:04'
+        - fc_zone_policy_simt.api_response.FcTargetMembers[1].Wwpn == '21:00:00:e0:8b:05:05:03'
+        - fc_zone_policy_simt.api_response.FcTargetMembers[2].Wwpn == '21:00:00:e0:8b:05:05:09'
+        - fc_zone_policy_simt.api_response.FcTargetMembers[0].SwitchId == 'A'
+        - fc_zone_policy_simt.api_response.FcTargetMembers[1].SwitchId == 'B'
+        - fc_zone_policy_simt.api_response.FcTargetMembers[2].SwitchId == 'A'
+        - fc_zone_policy_simt.api_response.FcTargetMembers[0].VsanId == 100
+        - fc_zone_policy_simt.api_response.FcTargetMembers[1].VsanId == 100
+        - fc_zone_policy_simt.api_response.FcTargetMembers[2].VsanId == 200
+
+  - name: Create FC zone policy with SIMT again (idempotency check)
+    cisco.intersight.intersight_fibre_channel_zone_policy:
+      <<: *api_info
+      name: test_fc_zone_policy_simt
+      description: "Policy with SIMT zoning and multiple targets"
+      fc_target_zoning_type: SIMT
+      fc_target_members:
+        - name: "target1"
+          wwpn: "21:00:00:e0:8b:05:05:04"
+          switch_id: A
+          vsan_id: 100
+        - name: "target2"
+          wwpn: "21:00:00:e0:8b:05:05:03"
+          switch_id: B
+          vsan_id: 100
+        - name: "target3"
+          wwpn: "21:00:00:e0:8b:05:05:09"
+          switch_id: A
+          vsan_id: 200
+    register: fc_zone_policy_simt_idempotent
+
+  - name: Verify FC zone policy with SIMT idempotency
+    ansible.builtin.assert:
+      that:
+        - not fc_zone_policy_simt_idempotent.changed
+
+  - name: Create FC zone policy with SIST zoning
+    cisco.intersight.intersight_fibre_channel_zone_policy:
+      <<: *api_info
+      name: test_fc_zone_policy_sist
+      description: "Policy with SIST zoning"
+      fc_target_zoning_type: SIST
+      fc_target_members:
+        - name: "single-target"
+          wwpn: "21:00:00:e0:8b:05:05:01"
+          switch_id: A
+          vsan_id: 100
+    register: fc_zone_policy_sist
+
+  - name: Verify FC zone policy with SIST zoning creation
+    ansible.builtin.assert:
+      that:
+        - fc_zone_policy_sist.changed
+        - fc_zone_policy_sist.api_response.Name == 'test_fc_zone_policy_sist'
+        - fc_zone_policy_sist.api_response.FcTargetZoningType == 'SIST'
+        - fc_zone_policy_sist.api_response.FcTargetMembers | length == 1
+        - fc_zone_policy_sist.api_response.FcTargetMembers[0].Name == 'single-target'
+        - fc_zone_policy_sist.api_response.FcTargetMembers[0].Wwpn == '21:00:00:e0:8b:05:05:01'
+        - fc_zone_policy_sist.api_response.FcTargetMembers[0].SwitchId == 'A'
+        - fc_zone_policy_sist.api_response.FcTargetMembers[0].VsanId == 100
+
+  - name: Create FC zone policy with None zoning
+    cisco.intersight.intersight_fibre_channel_zone_policy:
+      <<: *api_info
+      name: test_fc_zone_policy_none
+      description: "Policy with None zoning"
+      fc_target_zoning_type: None
+    register: fc_zone_policy_none
+
+  - name: Verify FC zone policy with None zoning creation
+    ansible.builtin.assert:
+      that:
+        - fc_zone_policy_none.changed
+        - fc_zone_policy_none.api_response.Name == 'test_fc_zone_policy_none'
+        - fc_zone_policy_none.api_response.FcTargetZoningType == 'None'
+        - fc_zone_policy_none.api_response.FcTargetMembers | length == 0
+
+  - name: Test info module - fetch specific policy with FC targets
+    cisco.intersight.intersight_fibre_channel_zone_policy_info:
+      <<: *api_info
+      name: test_fc_zone_policy_simt
+    register: specific_policy_info
+
+  - name: Verify specific policy info
+    ansible.builtin.assert:
+      that:
+        - specific_policy_info.api_response[0].Name == 'test_fc_zone_policy_simt'
+        - specific_policy_info.api_response[0].FcTargetMembers | length == 3
+
+  - name: Test info module - fetch all policies
+    cisco.intersight.intersight_fibre_channel_zone_policy_info:
+      <<: *api_info
+    register: all_policies_info
+
+  - name: Verify all policies info
+    ansible.builtin.assert:
+      that:
+        - all_policies_info.api_response | length >= 4
+
+  - name: Update FC zone policy - remove one FC target
+    cisco.intersight.intersight_fibre_channel_zone_policy:
+      <<: *api_info
+      name: test_fc_zone_policy_simt
+      description: "Policy with reduced FC targets"
+      fc_target_zoning_type: SIMT
+      fc_target_members:
+        - name: "target1"
+          wwpn: "21:00:00:e0:8b:05:05:04"
+          switch_id: A
+          vsan_id: 100
+        - name: "target3"
+          wwpn: "21:00:00:e0:8b:05:05:09"
+          switch_id: A
+          vsan_id: 200
+    register: fc_target_removal_result
+
+  - name: Verify FC target removal
+    ansible.builtin.assert:
+      that:
+        - fc_target_removal_result.changed
+        - fc_target_removal_result.api_response.Name == 'test_fc_zone_policy_simt'
+        - fc_target_removal_result.api_response.FcTargetMembers | length == 2
+        - fc_target_removal_result.api_response.FcTargetMembers[0].Name == 'target1'
+        - fc_target_removal_result.api_response.FcTargetMembers[1].Name == 'target3'
+
+  # Test validation errors
+  - name: Test invalid WWPN format
+    cisco.intersight.intersight_fibre_channel_zone_policy:
+      <<: *api_info
+      name: test_fc_zone_policy_with_targets
+      fc_target_zoning_type: SIMT
+      fc_target_members:
+        - name: "invalid-target"
+          wwpn: "invalid_wwpn_format"
+          switch_id: A
+          vsan_id: 100
+    register: test_invalid_wwpn_result
+    failed_when:
+      - test_invalid_wwpn_result.failed == false
+      - "'Invalid WWPN format' not in test_invalid_wwpn_result.msg"
+
+  - name: Test invalid VSAN ID (too low)
+    cisco.intersight.intersight_fibre_channel_zone_policy:
+      <<: *api_info
+      name: test_fc_zone_policy_with_targets
+      fc_target_zoning_type: SIMT
+      fc_target_members:
+        - name: "invalid-vsan-target"
+          wwpn: "21:00:00:e0:8b:05:05:04"
+          switch_id: A
+          vsan_id: 0
+    register: test_invalid_vsan_low_result
+    failed_when:
+      - test_invalid_vsan_low_result.failed == false
+      - "'out of valid range' not in test_invalid_vsan_low_result.msg"
+
+  - name: Test invalid VSAN ID (too high)
+    cisco.intersight.intersight_fibre_channel_zone_policy:
+      <<: *api_info
+      name: test_fc_zone_policy_with_targets
+      fc_target_zoning_type: SIMT
+      fc_target_members:
+        - name: "invalid-vsan-target"
+          wwpn: "21:00:00:e0:8b:05:05:04"
+          switch_id: A
+          vsan_id: 5000
+    register: test_invalid_vsan_high_result
+    failed_when:
+      - test_invalid_vsan_high_result.failed == false
+      - "'out of valid range' not in test_invalid_vsan_high_result.msg"
+
+  - name: Test targets with None zoning type (should fail)
+    cisco.intersight.intersight_fibre_channel_zone_policy:
+      <<: *api_info
+      name: test_fc_zone_policy_with_targets
+      fc_target_zoning_type: None
+      fc_target_members:
+        - name: "should-fail"
+          wwpn: "21:00:00:e0:8b:05:05:04"
+          switch_id: A
+          vsan_id: 100
+    register: test_targets_with_none_result
+    failed_when:
+      - test_targets_with_none_result.failed == false
+      - "'fc_target_members should be empty' not in test_targets_with_none_result.msg"
+
+  always:
+  - name: Remove FC zone policies
+    cisco.intersight.intersight_fibre_channel_zone_policy:
+      <<: *api_info
+      name: "{{ item }}"
+      state: absent
+    loop:
+      - test_fc_zone_policy
+      - test_fc_zone_policy_2
+      - test_fc_zone_policy_minimal
+      - test_fc_zone_policy_simt
+      - test_fc_zone_policy_sist
+      - test_fc_zone_policy_none
+      - test_fc_zone_policy_with_targets
