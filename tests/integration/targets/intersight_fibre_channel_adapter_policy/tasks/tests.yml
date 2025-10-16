@@ -1,0 +1,504 @@
+---
+- name: Define anchor for Intersight API login info
+  ansible.builtin.set_fact:
+    api_info: &api_info
+      api_private_key: "{{ api_private_key }}"
+      api_key_id: "{{ api_key_id }}"
+      api_uri: "{{ api_uri | default(omit) }}"
+      validate_certs: "{{ validate_certs | default(omit) }}"
+      organization: "{{ organization }}"
+
+- name: Make sure Environment is clean
+  cisco.intersight.intersight_fibre_channel_adapter_policy:
+    <<: *api_info
+    name: "{{ item }}"
+    state: absent
+  loop:
+    - test_fc_adapter_minimal
+    - test_fc_adapter_default
+    - test_fc_adapter_error_recovery
+    - test_fc_adapter_custom_timeouts
+    - test_fc_adapter_high_performance
+    - test_fc_adapter_msi_mode
+    - test_fc_adapter_intx_mode
+    - test_fc_adapter_check_mode
+
+- name: Create Fibre Channel Adapter Policy with minimal parameters
+  cisco.intersight.intersight_fibre_channel_adapter_policy:
+    <<: *api_info
+    name: test_fc_adapter_minimal
+  register: result
+
+- name: Verify creation result
+  ansible.builtin.assert:
+    that:
+      - result is changed
+
+- name: Fetch created policy info
+  cisco.intersight.intersight_fibre_channel_adapter_policy_info:
+    <<: *api_info
+    name: test_fc_adapter_minimal
+  register: policy_info
+
+- name: Verify creation result from info module
+  ansible.builtin.assert:
+    that:
+      - policy_info.api_response | length == 1
+      - policy_info.api_response[0].Name == 'test_fc_adapter_minimal'
+      - policy_info.api_response[0].Moid is defined
+      - policy_info.api_response[0].ObjectType == 'vnic.FcAdapterPolicy'
+      - policy_info.api_response[0].ErrorRecoverySettings.Enabled == false
+      - policy_info.api_response[0].ErrorRecoverySettings.PortDownTimeout == 10000
+      - policy_info.api_response[0].ErrorRecoverySettings.IoRetryTimeout == 5
+      - policy_info.api_response[0].InterruptSettings.Mode == 'MSIx'
+      - policy_info.api_response[0].IoThrottleCount == 512
+      - policy_info.api_response[0].LunCount == 1024
+      - policy_info.api_response[0].LunQueueDepth == 20
+
+- name: Create same Fibre Channel Adapter Policy again (idempotency)
+  cisco.intersight.intersight_fibre_channel_adapter_policy:
+    <<: *api_info
+    name: test_fc_adapter_minimal
+  register: result
+
+- name: Verify idempotency
+  ansible.builtin.assert:
+    that:
+      - result is not changed
+
+- name: Fetch policy info after idempotency test
+  cisco.intersight.intersight_fibre_channel_adapter_policy_info:
+    <<: *api_info
+    name: test_fc_adapter_minimal
+  register: policy_info_idem
+
+- name: Verify policy unchanged from info module
+  ansible.builtin.assert:
+    that:
+      - policy_info_idem.api_response | length == 1
+      - policy_info_idem.api_response[0].Name == 'test_fc_adapter_minimal'
+
+- name: Create Fibre Channel Adapter Policy with default values
+  cisco.intersight.intersight_fibre_channel_adapter_policy:
+    <<: *api_info
+    name: test_fc_adapter_default
+    description: "Test FC Adapter policy with default values"
+    error_recovery_enabled: false
+    port_down_timeout: 10000
+    io_retry_timeout: 5
+    link_down_timeout: 30000
+    port_down_io_retry_count: 8
+    error_detection_timeout: 2000
+    resource_allocation_timeout: 10000
+    flogi_retries: 8
+    flogi_timeout: 4000
+    plogi_retries: 8
+    plogi_timeout: 20000
+    interrupt_mode: MSIx
+    io_throttle_count: 512
+    lun_count: 1024
+    lun_queue_depth: 20
+    rx_ring_size: 64
+    tx_ring_size: 64
+    scsi_io_queue_count: 1
+    scsi_io_ring_size: 512
+  register: result
+
+- name: Verify default values policy created
+  ansible.builtin.assert:
+    that:
+      - result is changed
+
+- name: Fetch default values policy info
+  cisco.intersight.intersight_fibre_channel_adapter_policy_info:
+    <<: *api_info
+    name: test_fc_adapter_default
+  register: default_policy_info
+
+- name: Verify default values policy from info module
+  ansible.builtin.assert:
+    that:
+      - default_policy_info.api_response | length == 1
+      - default_policy_info.api_response[0].Name == 'test_fc_adapter_default'
+      - default_policy_info.api_response[0].Description == 'Test FC Adapter policy with default values'
+      - default_policy_info.api_response[0].ErrorRecoverySettings.Enabled == false
+      - default_policy_info.api_response[0].ErrorRecoverySettings.PortDownTimeout == 10000
+      - default_policy_info.api_response[0].ErrorRecoverySettings.LinkDownTimeout == 30000
+      - default_policy_info.api_response[0].ErrorRecoverySettings.IoRetryTimeout == 5
+      - default_policy_info.api_response[0].ErrorRecoverySettings.IoRetryCount == 8
+      - default_policy_info.api_response[0].ErrorDetectionTimeout == 2000
+      - default_policy_info.api_response[0].ResourceAllocationTimeout == 10000
+
+- name: Create Fibre Channel Adapter Policy with error recovery enabled
+  cisco.intersight.intersight_fibre_channel_adapter_policy:
+    <<: *api_info
+    name: test_fc_adapter_error_recovery
+    description: "Test FC Adapter policy with error recovery"
+    error_recovery_enabled: true
+    port_down_timeout: 5000
+    io_retry_timeout: 8
+    link_down_timeout: 20000
+    port_down_io_retry_count: 10
+    tags:
+      - Key: Environment
+        Value: Test
+      - Key: Purpose
+        Value: ErrorRecovery
+  register: result
+
+- name: Verify error recovery policy created
+  ansible.builtin.assert:
+    that:
+      - result is changed
+
+- name: Fetch error recovery policy info
+  cisco.intersight.intersight_fibre_channel_adapter_policy_info:
+    <<: *api_info
+    name: test_fc_adapter_error_recovery
+  register: error_recovery_policy_info
+
+- name: Verify error recovery policy from info module
+  ansible.builtin.assert:
+    that:
+      - error_recovery_policy_info.api_response | length == 1
+      - error_recovery_policy_info.api_response[0].Name == 'test_fc_adapter_error_recovery'
+      - error_recovery_policy_info.api_response[0].ErrorRecoverySettings.Enabled == true
+      - error_recovery_policy_info.api_response[0].ErrorRecoverySettings.PortDownTimeout == 5000
+      - error_recovery_policy_info.api_response[0].ErrorRecoverySettings.IoRetryTimeout == 8
+      - error_recovery_policy_info.api_response[0].ErrorRecoverySettings.LinkDownTimeout == 20000
+      - error_recovery_policy_info.api_response[0].ErrorRecoverySettings.IoRetryCount == 10
+      - error_recovery_policy_info.api_response[0].Tags | length == 2
+
+- name: Create Fibre Channel Adapter Policy with custom timeout settings
+  cisco.intersight.intersight_fibre_channel_adapter_policy:
+    <<: *api_info
+    name: test_fc_adapter_custom_timeouts
+    description: "Test FC Adapter policy with custom timeouts"
+    error_detection_timeout: 5000
+    resource_allocation_timeout: 15000
+    flogi_retries: 12
+    flogi_timeout: 8000
+    plogi_retries: 12
+    plogi_timeout: 30000
+  register: result
+
+- name: Verify custom timeout policy created
+  ansible.builtin.assert:
+    that:
+      - result is changed
+
+- name: Fetch custom timeout policy info
+  cisco.intersight.intersight_fibre_channel_adapter_policy_info:
+    <<: *api_info
+    name: test_fc_adapter_custom_timeouts
+  register: custom_timeout_policy_info
+
+- name: Verify custom timeout policy from info module
+  ansible.builtin.assert:
+    that:
+      - custom_timeout_policy_info.api_response | length == 1
+      - custom_timeout_policy_info.api_response[0].Name == 'test_fc_adapter_custom_timeouts'
+      - custom_timeout_policy_info.api_response[0].ErrorDetectionTimeout == 5000
+      - custom_timeout_policy_info.api_response[0].ResourceAllocationTimeout == 15000
+      - custom_timeout_policy_info.api_response[0].FlogiSettings.Retries == 12
+      - custom_timeout_policy_info.api_response[0].FlogiSettings.Timeout == 8000
+      - custom_timeout_policy_info.api_response[0].PlogiSettings.Retries == 12
+      - custom_timeout_policy_info.api_response[0].PlogiSettings.Timeout == 30000
+
+- name: Create Fibre Channel Adapter Policy with high performance settings
+  cisco.intersight.intersight_fibre_channel_adapter_policy:
+    <<: *api_info
+    name: test_fc_adapter_high_performance
+    description: "Test FC Adapter policy with high performance settings"
+    io_throttle_count: 1024
+    lun_count: 4096
+    lun_queue_depth: 254
+    rx_ring_size: 128
+    tx_ring_size: 128
+    scsi_io_queue_count: 8
+    scsi_io_ring_size: 512
+  register: result
+
+- name: Verify high performance policy created
+  ansible.builtin.assert:
+    that:
+      - result is changed
+
+- name: Fetch high performance policy info
+  cisco.intersight.intersight_fibre_channel_adapter_policy_info:
+    <<: *api_info
+    name: test_fc_adapter_high_performance
+  register: high_perf_policy_info
+
+- name: Verify high performance policy from info module
+  ansible.builtin.assert:
+    that:
+      - high_perf_policy_info.api_response | length == 1
+      - high_perf_policy_info.api_response[0].Name == 'test_fc_adapter_high_performance'
+      - high_perf_policy_info.api_response[0].IoThrottleCount == 1024
+      - high_perf_policy_info.api_response[0].LunCount == 4096
+      - high_perf_policy_info.api_response[0].LunQueueDepth == 254
+      - high_perf_policy_info.api_response[0].RxQueueSettings.RingSize == 128
+      - high_perf_policy_info.api_response[0].TxQueueSettings.RingSize == 128
+      - high_perf_policy_info.api_response[0].ScsiQueueSettings.Count == 8
+      - high_perf_policy_info.api_response[0].ScsiQueueSettings.RingSize == 512
+
+- name: Create Fibre Channel Adapter Policy with MSI interrupt mode
+  cisco.intersight.intersight_fibre_channel_adapter_policy:
+    <<: *api_info
+    name: test_fc_adapter_msi_mode
+    description: "Test FC Adapter policy with MSI interrupt mode"
+    interrupt_mode: MSI
+  register: result
+
+- name: Verify MSI interrupt mode policy created
+  ansible.builtin.assert:
+    that:
+      - result is changed
+
+- name: Fetch MSI mode policy info
+  cisco.intersight.intersight_fibre_channel_adapter_policy_info:
+    <<: *api_info
+    name: test_fc_adapter_msi_mode
+  register: msi_mode_policy_info
+
+- name: Verify MSI interrupt mode policy from info module
+  ansible.builtin.assert:
+    that:
+      - msi_mode_policy_info.api_response | length == 1
+      - msi_mode_policy_info.api_response[0].Name == 'test_fc_adapter_msi_mode'
+      - msi_mode_policy_info.api_response[0].InterruptSettings.Mode == 'MSI'
+
+- name: Create Fibre Channel Adapter Policy with INTx interrupt mode
+  cisco.intersight.intersight_fibre_channel_adapter_policy:
+    <<: *api_info
+    name: test_fc_adapter_intx_mode
+    description: "Test FC Adapter policy with INTx interrupt mode"
+    interrupt_mode: INTx
+  register: result
+
+- name: Verify INTx interrupt mode policy created
+  ansible.builtin.assert:
+    that:
+      - result is changed
+
+- name: Fetch INTx mode policy info
+  cisco.intersight.intersight_fibre_channel_adapter_policy_info:
+    <<: *api_info
+    name: test_fc_adapter_intx_mode
+  register: intx_mode_policy_info
+
+- name: Verify INTx interrupt mode policy from info module
+  ansible.builtin.assert:
+    that:
+      - intx_mode_policy_info.api_response | length == 1
+      - intx_mode_policy_info.api_response[0].Name == 'test_fc_adapter_intx_mode'
+      - intx_mode_policy_info.api_response[0].InterruptSettings.Mode == 'INTx'
+
+- name: Update Fibre Channel Adapter Policy description
+  cisco.intersight.intersight_fibre_channel_adapter_policy:
+    <<: *api_info
+    name: test_fc_adapter_minimal
+    description: "Updated description for test policy"
+  register: result
+
+- name: Verify update changed
+  ansible.builtin.assert:
+    that:
+      - result is changed
+
+- name: Fetch updated policy info
+  cisco.intersight.intersight_fibre_channel_adapter_policy_info:
+    <<: *api_info
+    name: test_fc_adapter_minimal
+  register: updated_policy_info
+
+- name: Verify update from info module
+  ansible.builtin.assert:
+    that:
+      - updated_policy_info.api_response | length == 1
+      - updated_policy_info.api_response[0].Description == 'Updated description for test policy'
+
+- name: Update same description again (idempotency)
+  cisco.intersight.intersight_fibre_channel_adapter_policy:
+    <<: *api_info
+    name: test_fc_adapter_minimal
+    description: "Updated description for test policy"
+  register: result
+
+- name: Verify update idempotency
+  ansible.builtin.assert:
+    that:
+      - result is not changed
+
+- name: Fetch policy info after idempotency update
+  cisco.intersight.intersight_fibre_channel_adapter_policy_info:
+    <<: *api_info
+    name: test_fc_adapter_minimal
+  register: updated_policy_info_idem
+
+- name: Verify description unchanged from info module
+  ansible.builtin.assert:
+    that:
+      - updated_policy_info_idem.api_response | length == 1
+      - updated_policy_info_idem.api_response[0].Description == 'Updated description for test policy'
+
+- name: Test parameter validation - invalid port_down_timeout (too high)
+  cisco.intersight.intersight_fibre_channel_adapter_policy:
+    <<: *api_info
+    name: test_invalid_port_down_timeout
+    port_down_timeout: 250000
+  register: test_invalid_result
+  failed_when:
+    - test_invalid_result.failed == false
+    - "'port_down_timeout' not in test_invalid_result.msg"
+
+- name: Test parameter validation - invalid io_retry_timeout (too low)
+  cisco.intersight.intersight_fibre_channel_adapter_policy:
+    <<: *api_info
+    name: test_invalid_io_retry_timeout
+    io_retry_timeout: 0
+  register: test_invalid_result
+  failed_when:
+    - test_invalid_result.failed == false
+    - "'io_retry_timeout' not in test_invalid_result.msg"
+
+- name: Test parameter validation - invalid lun_count (too high)
+  cisco.intersight.intersight_fibre_channel_adapter_policy:
+    <<: *api_info
+    name: test_invalid_lun_count
+    lun_count: 5000
+  register: test_invalid_result
+  failed_when:
+    - test_invalid_result.failed == false
+    - "'lun_count' not in test_invalid_result.msg"
+
+- name: Test parameter validation - invalid rx_ring_size (too low)
+  cisco.intersight.intersight_fibre_channel_adapter_policy:
+    <<: *api_info
+    name: test_invalid_rx_ring_size
+    rx_ring_size: 32
+  register: test_invalid_result
+  failed_when:
+    - test_invalid_result.failed == false
+    - "'rx_ring_size' not in test_invalid_result.msg"
+
+- name: Test check mode - create policy
+  cisco.intersight.intersight_fibre_channel_adapter_policy:
+    <<: *api_info
+    name: test_fc_adapter_check_mode
+    description: "Test policy for check mode"
+  check_mode: true
+  register: result
+
+- name: Verify check mode behavior
+  ansible.builtin.assert:
+    that:
+      - result is changed
+      - result.api_response == {}
+
+- name: Verify policy was not actually created
+  cisco.intersight.intersight_fibre_channel_adapter_policy_info:
+    <<: *api_info
+    name: test_fc_adapter_check_mode
+  register: check_result
+
+- name: Verify no policy exists
+  ansible.builtin.assert:
+    that:
+      - check_result.api_response | length == 0
+
+- name: Test info module - get all policies
+  cisco.intersight.intersight_fibre_channel_adapter_policy_info:
+    <<: *api_info
+  register: all_policies
+
+- name: Verify all policies query
+  ansible.builtin.assert:
+    that:
+      - all_policies.api_response is defined
+      - all_policies.api_response | length >= 1
+
+- name: Test info module - get specific policy by name
+  cisco.intersight.intersight_fibre_channel_adapter_policy_info:
+    <<: *api_info
+    name: test_fc_adapter_minimal
+  register: specific_policy
+
+- name: Verify specific policy query
+  ansible.builtin.assert:
+    that:
+      - specific_policy.api_response | length == 1
+      - specific_policy.api_response[0].Name == 'test_fc_adapter_minimal'
+      - specific_policy.api_response[0].Moid is defined
+
+- name: Test info module - get policies by organization
+  cisco.intersight.intersight_fibre_channel_adapter_policy_info:
+    <<: *api_info
+    organization: "{{ organization }}"
+  register: org_policies
+
+- name: Verify organization query
+  ansible.builtin.assert:
+    that:
+      - org_policies.api_response is defined
+      - org_policies.api_response | length >= 1
+
+- name: Delete Fibre Channel Adapter Policy
+  cisco.intersight.intersight_fibre_channel_adapter_policy:
+    <<: *api_info
+    name: test_fc_adapter_minimal
+    state: absent
+  register: result
+
+- name: Verify deletion changed
+  ansible.builtin.assert:
+    that:
+      - result is changed
+
+- name: Verify policy deleted using info module
+  cisco.intersight.intersight_fibre_channel_adapter_policy_info:
+    <<: *api_info
+    name: test_fc_adapter_minimal
+  register: deleted_policy_info
+
+- name: Verify policy no longer exists
+  ansible.builtin.assert:
+    that:
+      - deleted_policy_info.api_response | length == 0
+
+- name: Delete same policy again (idempotency)
+  cisco.intersight.intersight_fibre_channel_adapter_policy:
+    <<: *api_info
+    name: test_fc_adapter_minimal
+    state: absent
+  register: result
+
+- name: Verify deletion idempotency
+  ansible.builtin.assert:
+    that:
+      - result is not changed
+
+- name: Verify policy still does not exist using info module
+  cisco.intersight.intersight_fibre_channel_adapter_policy_info:
+    <<: *api_info
+    name: test_fc_adapter_minimal
+  register: deleted_policy_info_idem
+
+- name: Verify policy still does not exist
+  ansible.builtin.assert:
+    that:
+      - deleted_policy_info_idem.api_response | length == 0
+
+- name: Cleanup all test policies
+  cisco.intersight.intersight_fibre_channel_adapter_policy:
+    <<: *api_info
+    name: "{{ item }}"
+    state: absent
+  loop:
+    - test_fc_adapter_default
+    - test_fc_adapter_error_recovery
+    - test_fc_adapter_custom_timeouts
+    - test_fc_adapter_high_performance
+    - test_fc_adapter_msi_mode
+    - test_fc_adapter_intx_mode

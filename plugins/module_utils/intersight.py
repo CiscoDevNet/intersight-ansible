@@ -438,7 +438,10 @@ class IntersightModule():
         filter_str = "Name eq '" + self.module.params['name'] + "'"
         if filter_value and filter_key:
             filter_str += " and " + filter_key + " eq '" + filter_value + "'"
-        filter_str += "and Organization.Moid eq '" + organization_moid + "'"
+        try:
+            filter_str += "and Organization.Moid eq '" + organization_moid + "'"
+        except Exception as e:
+            self.module.fail_json(msg="Error getting organization, verify the given organization exists")
         self.get_resource(
             resource_path=resource_path,
             query_params={
