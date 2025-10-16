@@ -1,0 +1,316 @@
+---
+- name: Define anchor for Intersight API login info
+  ansible.builtin.set_fact:
+    api_info: &api_info
+      api_private_key: "{{ api_private_key }}"
+      api_key_id: "{{ api_key_id }}"
+      api_uri: "{{ api_uri | default(omit) }}"
+      validate_certs: "{{ validate_certs | default(omit) }}"
+      organization: "{{ organization }}"
+
+- name: Make sure Environment is clean
+  cisco.intersight.intersight_fibre_channel_network_policy:
+    <<: *api_info
+    name: "{{ item }}"
+    state: absent
+  loop:
+    - test_fc_network_minimal
+    - test_fc_network_default
+    - test_fc_network_custom
+    - test_fc_network_high_vsan
+    - test_fc_network_edge_min
+    - test_fc_network_edge_max
+    - test_fc_network_check_mode
+
+- name: Create Fibre Channel Network Policy with minimal parameters
+  cisco.intersight.intersight_fibre_channel_network_policy:
+    <<: *api_info
+    name: test_fc_network_minimal
+  register: result
+
+- name: Verify creation result
+  ansible.builtin.assert:
+    that:
+      - result is changed
+      - result.api_response.Name == 'test_fc_network_minimal'
+      - result.api_response.Moid is defined
+      - result.api_response.ObjectType == 'vnic.FcNetworkPolicy'
+      - result.api_response.VsanSettings.DefaultVlanId == 0
+      - result.api_response.VsanSettings.Id == 1
+
+- name: Create same Fibre Channel Network Policy again (idempotency)
+  cisco.intersight.intersight_fibre_channel_network_policy:
+    <<: *api_info
+    name: test_fc_network_minimal
+  register: result
+
+- name: Verify idempotency
+  ansible.builtin.assert:
+    that:
+      - result is not changed
+      - result.api_response.Name == 'test_fc_network_minimal'
+
+- name: Create Fibre Channel Network Policy with default values
+  cisco.intersight.intersight_fibre_channel_network_policy:
+    <<: *api_info
+    name: test_fc_network_default
+    description: "Test Fibre Channel Network policy with default values"
+    default_vlan: 0
+    vsan_id: 1
+  register: result
+
+- name: Verify default values policy
+  ansible.builtin.assert:
+    that:
+      - result is changed
+      - result.api_response.Name == 'test_fc_network_default'
+      - result.api_response.Description == 'Test Fibre Channel Network policy with default values'
+      - result.api_response.VsanSettings.DefaultVlanId == 0
+      - result.api_response.VsanSettings.Id == 1
+
+- name: Create Fibre Channel Network Policy with custom values
+  cisco.intersight.intersight_fibre_channel_network_policy:
+    <<: *api_info
+    name: test_fc_network_custom
+    description: "Test Fibre Channel Network policy with custom values"
+    default_vlan: 100
+    vsan_id: 100
+    tags:
+      - Key: Environment
+        Value: Test
+      - Key: Owner
+        Value: Automation
+  register: result
+
+- name: Verify custom values policy
+  ansible.builtin.assert:
+    that:
+      - result is changed
+      - result.api_response.Name == 'test_fc_network_custom'
+      - result.api_response.VsanSettings.DefaultVlanId == 100
+      - result.api_response.VsanSettings.Id == 100
+      - result.api_response.Tags | length == 2
+
+- name: Update Fibre Channel Network Policy description
+  cisco.intersight.intersight_fibre_channel_network_policy:
+    <<: *api_info
+    name: test_fc_network_custom
+    description: "Updated description for test policy"
+    default_vlan: 100
+    vsan_id: 100
+  register: result
+
+- name: Verify update
+  ansible.builtin.assert:
+    that:
+      - result is changed
+      - result.api_response.Description == 'Updated description for test policy'
+      - result.api_response.VsanSettings.DefaultVlanId == 100
+
+- name: Update Fibre Channel Network Policy values
+  cisco.intersight.intersight_fibre_channel_network_policy:
+    <<: *api_info
+    name: test_fc_network_custom
+    description: "Updated description for test policy"
+    default_vlan: 200
+    vsan_id: 300
+  register: result
+
+- name: Verify value update
+  ansible.builtin.assert:
+    that:
+      - result is changed
+      - result.api_response.VsanSettings.DefaultVlanId == 200
+      - result.api_response.VsanSettings.Id == 300
+
+- name: Create Fibre Channel Network Policy with high VSAN settings
+  cisco.intersight.intersight_fibre_channel_network_policy:
+    <<: *api_info
+    name: test_fc_network_high_vsan
+    description: "Test policy with high VSAN values"
+    default_vlan: 2000
+    vsan_id: 2500
+  register: result
+
+- name: Verify high VSAN policy
+  ansible.builtin.assert:
+    that:
+      - result is changed
+      - result.api_response.Name == 'test_fc_network_high_vsan'
+      - result.api_response.VsanSettings.DefaultVlanId == 2000
+      - result.api_response.VsanSettings.Id == 2500
+
+- name: Create Fibre Channel Network Policy with minimum edge values
+  cisco.intersight.intersight_fibre_channel_network_policy:
+    <<: *api_info
+    name: test_fc_network_edge_min
+    description: "Test policy with minimum values"
+    default_vlan: 0
+    vsan_id: 1
+  register: result
+
+- name: Verify minimum edge values policy
+  ansible.builtin.assert:
+    that:
+      - result is changed
+      - result.api_response.Name == 'test_fc_network_edge_min'
+      - result.api_response.VsanSettings.DefaultVlanId == 0
+      - result.api_response.VsanSettings.Id == 1
+
+- name: Create Fibre Channel Network Policy with maximum edge values
+  cisco.intersight.intersight_fibre_channel_network_policy:
+    <<: *api_info
+    name: test_fc_network_edge_max
+    description: "Test policy with maximum values"
+    default_vlan: 4094
+    vsan_id: 4094
+  register: result
+
+- name: Verify maximum edge values policy
+  ansible.builtin.assert:
+    that:
+      - result is changed
+      - result.api_response.Name == 'test_fc_network_edge_max'
+      - result.api_response.VsanSettings.DefaultVlanId == 4094
+      - result.api_response.VsanSettings.Id == 4094
+
+- name: Test invalid default_vlan value (too high)
+  cisco.intersight.intersight_fibre_channel_network_policy:
+    <<: *api_info
+    name: test_fc_network_invalid
+    default_vlan: 4095
+  register: test_invalid_default_vlan_result
+  failed_when:
+    - test_invalid_default_vlan_result.failed == false
+    - "'default_vlan' not in test_invalid_default_vlan_result.msg"
+
+- name: Test invalid default_vlan value (too low)
+  cisco.intersight.intersight_fibre_channel_network_policy:
+    <<: *api_info
+    name: test_fc_network_invalid
+    default_vlan: -1
+  register: test_invalid_default_vlan_low_result
+  failed_when:
+    - test_invalid_default_vlan_low_result.failed == false
+    - "'default_vlan' not in test_invalid_default_vlan_low_result.msg"
+
+- name: Test invalid vsan_id value (too high)
+  cisco.intersight.intersight_fibre_channel_network_policy:
+    <<: *api_info
+    name: test_fc_network_invalid
+    vsan_id: 4095
+  register: test_invalid_vsan_id_result
+  failed_when:
+    - test_invalid_vsan_id_result.failed == false
+    - "'vsan_id' not in test_invalid_vsan_id_result.msg"
+
+- name: Test invalid vsan_id value (too low)
+  cisco.intersight.intersight_fibre_channel_network_policy:
+    <<: *api_info
+    name: test_fc_network_invalid
+    vsan_id: 0
+  register: test_invalid_vsan_id_low_result
+  failed_when:
+    - test_invalid_vsan_id_low_result.failed == false
+    - "'vsan_id' not in test_invalid_vsan_id_low_result.msg"
+
+- name: Test check mode - create
+  cisco.intersight.intersight_fibre_channel_network_policy:
+    <<: *api_info
+    name: test_fc_network_check_mode
+    description: "Check mode test policy"
+    default_vlan: 500
+    vsan_id: 600
+  check_mode: true
+  register: result
+
+- name: Verify check mode behavior
+  ansible.builtin.assert:
+    that:
+      - result is changed
+      - result.api_response == {}
+
+- name: Get Fibre Channel Network Policy info to verify check mode
+  cisco.intersight.intersight_fibre_channel_network_policy_info:
+    <<: *api_info
+    name: test_fc_network_check_mode
+  register: result
+
+- name: Verify policy was not created
+  ansible.builtin.assert:
+    that:
+      - result.api_response | length == 0
+
+- name: Get all Fibre Channel Network Policies
+  cisco.intersight.intersight_fibre_channel_network_policy_info:
+    <<: *api_info
+  register: result
+
+- name: Verify info module returns data
+  ansible.builtin.assert:
+    that:
+      - result.api_response is defined
+      - result.api_response | length >= 1
+
+- name: Get specific Fibre Channel Network Policy by name
+  cisco.intersight.intersight_fibre_channel_network_policy_info:
+    <<: *api_info
+    name: test_fc_network_custom
+  register: result
+
+- name: Verify specific policy retrieval
+  ansible.builtin.assert:
+    that:
+      - result.api_response | length == 1
+      - result.api_response[0].Name == 'test_fc_network_custom'
+      - result.api_response[0].VsanSettings.DefaultVlanId == 200
+      - result.api_response[0].VsanSettings.Id == 300
+
+- name: Get Fibre Channel Network Policies by organization
+  cisco.intersight.intersight_fibre_channel_network_policy_info:
+    <<: *api_info
+    organization: "{{ organization }}"
+  register: result
+
+- name: Verify organization filtering
+  ansible.builtin.assert:
+    that:
+      - result.api_response is defined
+      - result.api_response | length >= 1
+
+- name: Delete Fibre Channel Network Policy
+  cisco.intersight.intersight_fibre_channel_network_policy:
+    <<: *api_info
+    name: test_fc_network_minimal
+    state: absent
+  register: result
+
+- name: Verify deletion
+  ansible.builtin.assert:
+    that:
+      - result is changed
+
+- name: Delete same Fibre Channel Network Policy again (idempotency)
+  cisco.intersight.intersight_fibre_channel_network_policy:
+    <<: *api_info
+    name: test_fc_network_minimal
+    state: absent
+  register: result
+
+- name: Verify deletion idempotency
+  ansible.builtin.assert:
+    that:
+      - result is not changed
+
+# Cleanup - Delete all test policies
+- name: Cleanup all test policies
+  cisco.intersight.intersight_fibre_channel_network_policy:
+    <<: *api_info
+    name: "{{ item }}"
+    state: absent
+  loop:
+    - test_fc_network_default
+    - test_fc_network_custom
+    - test_fc_network_high_vsan
+    - test_fc_network_edge_min
+    - test_fc_network_edge_max
