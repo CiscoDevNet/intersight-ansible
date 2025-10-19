@@ -1,0 +1,494 @@
+---
+- block:
+  - name: Define anchor for Intersight API login info
+    ansible.builtin.set_fact:
+      api_info: &api_info
+        api_private_key: "{{ api_private_key }}"
+        api_key_id: "{{ api_key_id }}"
+        api_uri: "{{ api_uri | default(omit) }}"
+        validate_certs: "{{ validate_certs | default(omit) }}"
+        organization: "{{ organization }}"
+
+  - name: Create prerequisite FC Network Policy
+    cisco.intersight.intersight_fibre_channel_network_policy:
+      <<: *api_info
+      name: test_fc_network_policy
+      description: "FC Network Policy for SAN Connectivity tests"
+      vsan_id: 100
+    register: fc_network_policy_result
+
+  - name: Create prerequisite FC QoS Policy
+    cisco.intersight.intersight_fibre_channel_qos_policy:
+      <<: *api_info
+      name: test_fc_qos_policy
+      description: "FC QoS Policy for SAN Connectivity tests"
+      max_data_field_size: 2112
+      rate_limit: 0
+    register: fc_qos_policy_result
+
+  - name: Create prerequisite FC Adapter Policy
+    cisco.intersight.intersight_fibre_channel_adapter_policy:
+      <<: *api_info
+      name: test_fc_adapter_policy
+      description: "FC Adapter Policy for SAN Connectivity tests"
+    register: fc_adapter_policy_result
+
+  - name: Create prerequisite WWNN Pool for FI-Attached tests
+    cisco.intersight.intersight_wwn_pool:
+      <<: *api_info
+      name: test_wwnn_pool
+      description: "WWNN Pool for SAN Connectivity tests"
+      pool_purpose: WWNN
+      id_blocks:
+        - wwn_from: "20:00:00:25:B5:00:00:00"
+          size: 256
+    register: wwnn_pool_result
+
+  - name: Create prerequisite WWPN Pool for FI-Attached tests
+    cisco.intersight.intersight_wwn_pool:
+      <<: *api_info
+      name: test_wwpn_pool
+      description: "WWPN Pool for SAN Connectivity tests"
+      pool_purpose: WWPN
+      id_blocks:
+        - wwn_from: "20:00:00:25:B5:01:00:00"
+          size: 256
+    register: wwpn_pool_result
+
+  - name: Create prerequisite FC Zone Policy for FI-Attached tests
+    cisco.intersight.intersight_fibre_channel_zone_policy:
+      <<: *api_info
+      name: test_fc_zone_policy
+      description: "FC Zone Policy for SAN Connectivity tests"
+      fc_target_zoning_type: SIMT
+    register: fc_zone_policy_result
+
+  - name: Make sure Env is clean
+    cisco.intersight.intersight_san_connectivity_policy:
+      <<: *api_info
+      name: "{{ item }}"
+      state: absent
+    loop:
+      - test_san_policy_standalone
+      - test_san_policy_fi_attached
+      - test_san_policy_unified_edge
+      - test_san_policy_minimal
+      - test_san_policy_complex
+      - test_san_policy_vhba_management
+
+  - name: Create Standalone SAN Connectivity Policy (check-mode)
+    cisco.intersight.intersight_san_connectivity_policy:
+      <<: *api_info
+      name: test_san_policy_standalone
+      description: "Standalone SAN Connectivity Policy"
+      target_platform: "standalone"
+      tags:
+        - Key: Environment
+          Value: Test
+      vhbas:
+        - name: vhba0
+          vhba_type: "fc-initiator"
+          slot_id: "1"
+          pci_link: 0
+          uplink_port: 0
+          pci_order: 0
+          persistent_lun_bindings: false
+          fibre_channel_network_policy: test_fc_network_policy
+          fibre_channel_qos_policy: test_fc_qos_policy
+          fibre_channel_adapter_policy: test_fc_adapter_policy
+    check_mode: true
+    register: standalone_check_mode_result
+
+  - name: Verify check-mode behavior
+    ansible.builtin.assert:
+      that:
+        - standalone_check_mode_result is changed
+        - standalone_check_mode_result.api_response == {}
+
+  - name: Create Standalone SAN Connectivity Policy
+    cisco.intersight.intersight_san_connectivity_policy:
+      <<: *api_info
+      name: test_san_policy_standalone
+      description: "Standalone SAN Connectivity Policy"
+      target_platform: "standalone"
+      tags:
+        - Key: Environment
+          Value: Test
+      vhbas:
+        - name: vhba0
+          vhba_type: "fc-initiator"
+          slot_id: "1"
+          pci_link: 0
+          uplink_port: 0
+          pci_order: 0
+          persistent_lun_bindings: false
+          fibre_channel_network_policy: test_fc_network_policy
+          fibre_channel_qos_policy: test_fc_qos_policy
+          fibre_channel_adapter_policy: test_fc_adapter_policy
+    register: standalone_create_result
+
+  - name: Verify Standalone policy creation
+    ansible.builtin.assert:
+      that:
+        - standalone_create_result is changed
+        - standalone_create_result.api_response.Name == 'test_san_policy_standalone'
+        - standalone_create_result.api_response.TargetPlatform == 'Standalone'
+        - standalone_create_result.api_response.vHBAs | length == 1
+        - standalone_create_result.api_response.vHBAs[0].Name == 'vhba0'
+
+  - name: Create same Standalone policy (idempotency)
+    cisco.intersight.intersight_san_connectivity_policy:
+      <<: *api_info
+      name: test_san_policy_standalone
+      description: "Standalone SAN Connectivity Policy"
+      target_platform: "standalone"
+      tags:
+        - Key: Environment
+          Value: Test
+      vhbas:
+        - name: vhba0
+          vhba_type: "fc-initiator"
+          slot_id: "1"
+          pci_link: 0
+          uplink_port: 0
+          pci_order: 0
+          persistent_lun_bindings: false
+          fibre_channel_network_policy: test_fc_network_policy
+          fibre_channel_qos_policy: test_fc_qos_policy
+          fibre_channel_adapter_policy: test_fc_adapter_policy
+    register: standalone_idempotent_result
+
+  - name: Verify idempotency
+    ansible.builtin.assert:
+      that:
+        - standalone_idempotent_result is not changed
+
+  - name: Create FI-Attached SAN Connectivity Policy with WWNN Pool
+    cisco.intersight.intersight_san_connectivity_policy:
+      <<: *api_info
+      name: test_san_policy_fi_attached
+      description: "FI-Attached SAN Connectivity Policy"
+      target_platform: "fiattached"
+      wwnn_address_type: "pool"
+      wwnn_pool: test_wwnn_pool
+      tags:
+        - Key: Environment
+          Value: Test
+      vhbas:
+        - name: vhba-a
+          vhba_type: "fc-initiator"
+          wwpn_address_type: "pool"
+          wwpn_pool: test_wwpn_pool
+          switch_id: "a"
+          auto_slot_id: true
+          auto_pci_link: true
+          pci_order: 0
+          persistent_lun_bindings: false
+          fibre_channel_network_policy: test_fc_network_policy
+          fibre_channel_qos_policy: test_fc_qos_policy
+          fibre_channel_adapter_policy: test_fc_adapter_policy
+          fibre_channel_zone_policies:
+            - test_fc_zone_policy
+        - name: vhba-b
+          vhba_type: "fc-initiator"
+          wwpn_address_type: "pool"
+          wwpn_pool: test_wwpn_pool
+          switch_id: "b"
+          auto_slot_id: true
+          auto_pci_link: true
+          pci_order: 1
+          persistent_lun_bindings: false
+          fibre_channel_network_policy: test_fc_network_policy
+          fibre_channel_qos_policy: test_fc_qos_policy
+          fibre_channel_adapter_policy: test_fc_adapter_policy
+          fibre_channel_zone_policies:
+            - test_fc_zone_policy
+    register: fi_attached_create_result
+
+  - name: Verify FI-Attached policy creation
+    ansible.builtin.assert:
+      that:
+        - fi_attached_create_result is changed
+        - fi_attached_create_result.api_response.Name == 'test_san_policy_fi_attached'
+        - fi_attached_create_result.api_response.TargetPlatform == 'FIAttached'
+        - fi_attached_create_result.api_response.WwnnAddressType == 'POOL'
+        - fi_attached_create_result.api_response.vHBAs | length == 2
+
+  - name: Create FI-Attached Policy with Static WWNN
+    cisco.intersight.intersight_san_connectivity_policy:
+      <<: *api_info
+      name: test_san_policy_fi_static
+      description: "FI-Attached with Static WWNN"
+      target_platform: "fiattached"
+      wwnn_address_type: "static"
+      static_wwnn_address: "20:00:00:25:B5:00:00:10"
+      vhbas:
+        - name: vhba-static
+          vhba_type: "fc-target"
+          wwpn_address_type: "static"
+          static_wwpn_address: "20:00:00:25:B5:01:00:10"
+          switch_id: "a"
+          auto_slot_id: false
+          slot_id: "MLOM"
+          auto_pci_link: false
+          pci_link_assignment_mode: "custom"
+          pci_link: 1
+          pci_order: 2
+          persistent_lun_bindings: true
+          fibre_channel_network_policy: test_fc_network_policy
+          fibre_channel_qos_policy: test_fc_qos_policy
+          fibre_channel_adapter_policy: test_fc_adapter_policy
+    register: fi_static_create_result
+
+  - name: Verify FI-Attached static policy creation
+    ansible.builtin.assert:
+      that:
+        - fi_static_create_result is changed
+        - fi_static_create_result.api_response.WwnnAddressType == 'STATIC'
+        - fi_static_create_result.api_response.StaticWwnnAddress == '20:00:00:25:B5:00:00:10'
+
+  - name: Create Unified Edge SAN Connectivity Policy
+    cisco.intersight.intersight_san_connectivity_policy:
+      <<: *api_info
+      name: test_san_policy_unified_edge
+      description: "Unified Edge SAN Connectivity Policy"
+      target_platform: "unified"
+      vhbas:
+        - name: vhba-edge
+          vhba_type: "fc-nvme-initiator"
+          slot_id: "2"
+          pci_link: 0
+          uplink_port: 1
+          pci_order: 0
+          persistent_lun_bindings: true
+          fibre_channel_network_policy: test_fc_network_policy
+          fibre_channel_qos_policy: test_fc_qos_policy
+          fibre_channel_adapter_policy: test_fc_adapter_policy
+    register: unified_edge_create_result
+
+  - name: Verify Unified Edge policy creation
+    ansible.builtin.assert:
+      that:
+        - unified_edge_create_result is changed
+        - unified_edge_create_result.api_response.TargetPlatform == 'UnifiedEdgeServer'
+        - unified_edge_create_result.api_response.vHBAs[0].Type == 'fc-nvme-initiator'
+
+  - name: Update policy description
+    cisco.intersight.intersight_san_connectivity_policy:
+      <<: *api_info
+      name: test_san_policy_standalone
+      description: "Updated Standalone SAN Connectivity Policy"
+      target_platform: "standalone"
+      tags:
+        - Key: Environment
+          Value: Production
+      vhbas:
+        - name: vhba0
+          vhba_type: "fc-initiator"
+          slot_id: "1"
+          pci_link: 0
+          uplink_port: 0
+          pci_order: 0
+          persistent_lun_bindings: false
+          fibre_channel_network_policy: test_fc_network_policy
+          fibre_channel_qos_policy: test_fc_qos_policy
+          fibre_channel_adapter_policy: test_fc_adapter_policy
+    register: update_result
+
+  - name: Verify policy update
+    ansible.builtin.assert:
+      that:
+        - update_result is changed
+        - update_result.api_response.Description == 'Updated Standalone SAN Connectivity Policy'
+
+  - name: Manage vHBA states
+    cisco.intersight.intersight_san_connectivity_policy:
+      <<: *api_info
+      name: test_san_policy_vhba_management
+      description: "Policy for testing vHBA state management"
+      target_platform: "standalone"
+      vhbas:
+        - name: vhba-keep
+          vhba_type: "fc-initiator"
+          slot_id: "1"
+          pci_link: 0
+          uplink_port: 0
+          pci_order: 0
+          persistent_lun_bindings: false
+          fibre_channel_network_policy: test_fc_network_policy
+          fibre_channel_qos_policy: test_fc_qos_policy
+          fibre_channel_adapter_policy: test_fc_adapter_policy
+          state: present
+        - name: vhba-new
+          vhba_type: "fc-nvme-initiator"
+          slot_id: "2"
+          pci_link: 0
+          uplink_port: 1
+          pci_order: 1
+          persistent_lun_bindings: true
+          fibre_channel_network_policy: test_fc_network_policy
+          fibre_channel_qos_policy: test_fc_qos_policy
+          fibre_channel_adapter_policy: test_fc_adapter_policy
+          state: present
+    register: vhba_mgmt_create_result
+
+  - name: Verify vHBA management policy creation
+    ansible.builtin.assert:
+      that:
+        - vhba_mgmt_create_result is changed
+        - vhba_mgmt_create_result.api_response.vHBAs | length == 2
+
+  - name: Remove one vHBA
+    cisco.intersight.intersight_san_connectivity_policy:
+      <<: *api_info
+      name: test_san_policy_vhba_management
+      description: "Policy for testing vHBA state management"
+      target_platform: "standalone"
+      vhbas:
+        - name: vhba-keep
+          vhba_type: "fc-initiator"
+          slot_id: "1"
+          pci_link: 0
+          uplink_port: 0
+          pci_order: 0
+          persistent_lun_bindings: false
+          fibre_channel_network_policy: test_fc_network_policy
+          fibre_channel_qos_policy: test_fc_qos_policy
+          fibre_channel_adapter_policy: test_fc_adapter_policy
+          state: present
+        - name: vhba-new
+          state: absent
+    register: vhba_remove_result
+
+  - name: Verify vHBA removal
+    ansible.builtin.assert:
+      that:
+        - vhba_remove_result is changed
+        - vhba_remove_result.api_response.vHBAs | length == 1
+        - vhba_remove_result.api_response.vHBAs[0].Name == 'vhba-keep'
+
+  - name: Query SAN Connectivity Policy info
+    cisco.intersight.intersight_san_connectivity_policy_info:
+      <<: *api_info
+      name: test_san_policy_standalone
+    register: query_result
+
+  - name: Verify query results
+    ansible.builtin.assert:
+      that:
+        - query_result.api_response is defined
+        - query_result.api_response.Name == 'test_san_policy_standalone'
+        - query_result.api_response.vhbas is defined
+        - query_result.api_response.vhbas | length == 1
+        - query_result.api_response.vhbas[0].Name == 'vhba0'
+
+  - name: Query all SAN Connectivity Policies
+    cisco.intersight.intersight_san_connectivity_policy_info:
+      <<: *api_info
+    register: query_all_result
+
+  - name: Verify query all results
+    ansible.builtin.assert:
+      that:
+        - query_all_result.api_response is defined
+        - query_all_result.api_response | length >= 1
+
+  - name: Query FI-Attached policy with multiple vHBAs
+    cisco.intersight.intersight_san_connectivity_policy_info:
+      <<: *api_info
+      name: test_san_policy_fi_attached
+    register: query_fi_result
+
+  - name: Verify FI-Attached policy has multiple vHBAs
+    ansible.builtin.assert:
+      that:
+        - query_fi_result.api_response.Name == 'test_san_policy_fi_attached'
+        - query_fi_result.api_response.vhbas is defined
+        - query_fi_result.api_response.vhbas | length == 2
+        - query_fi_result.api_response.vhbas | selectattr('Name', 'equalto', 'vhba-a') | list | length == 1
+        - query_fi_result.api_response.vhbas | selectattr('Name', 'equalto', 'vhba-b') | list | length == 1
+
+  - name: Filter by specific vHBA name
+    cisco.intersight.intersight_san_connectivity_policy_info:
+      <<: *api_info
+      name: test_san_policy_fi_attached
+      vhba_name: vhba-a
+    register: query_vhba_filter_result
+
+  - name: Verify vHBA filtering works
+    ansible.builtin.assert:
+      that:
+        - query_vhba_filter_result.api_response.Name == 'test_san_policy_fi_attached'
+        - query_vhba_filter_result.api_response.vhbas is defined
+        - query_vhba_filter_result.api_response.vhbas | length == 1
+        - query_vhba_filter_result.api_response.vhbas[0].Name == 'vhba-a'
+
+  - name: Delete SAN Connectivity Policy
+    cisco.intersight.intersight_san_connectivity_policy:
+      <<: *api_info
+      name: test_san_policy_fi_static
+      state: absent
+    register: delete_result
+
+  - name: Verify policy deletion
+    ansible.builtin.assert:
+      that:
+        - delete_result is changed
+
+  always:
+  - name: Cleanup - Delete test policies
+    cisco.intersight.intersight_san_connectivity_policy:
+      <<: *api_info
+      name: "{{ item }}"
+      state: absent
+    loop:
+      - test_san_policy_standalone
+      - test_san_policy_fi_attached
+      - test_san_policy_fi_static
+      - test_san_policy_unified_edge
+      - test_san_policy_vhba_management
+    ignore_errors: true
+
+  - name: Cleanup - Delete prerequisite policies
+    cisco.intersight.intersight_fibre_channel_zone_policy:
+      <<: *api_info
+      name: test_fc_zone_policy
+      state: absent
+    ignore_errors: true
+
+  - name: Cleanup - Delete prerequisite WWPN Pool
+    cisco.intersight.intersight_wwn_pool:
+      <<: *api_info
+      name: test_wwpn_pool
+      pool_purpose: WWPN
+      state: absent
+    ignore_errors: true
+
+  - name: Cleanup - Delete prerequisite WWNN Pool
+    cisco.intersight.intersight_wwn_pool:
+      <<: *api_info
+      name: test_wwnn_pool
+      pool_purpose: WWNN
+      state: absent
+    ignore_errors: true
+
+  - name: Cleanup - Delete prerequisite FC Adapter Policy
+    cisco.intersight.intersight_fibre_channel_adapter_policy:
+      <<: *api_info
+      name: test_fc_adapter_policy
+      state: absent
+    ignore_errors: true
+
+  - name: Cleanup - Delete prerequisite FC QoS Policy
+    cisco.intersight.intersight_fibre_channel_qos_policy:
+      <<: *api_info
+      name: test_fc_qos_policy
+      state: absent
+    ignore_errors: true
+
+  - name: Cleanup - Delete prerequisite FC Network Policy
+    cisco.intersight.intersight_fibre_channel_network_policy:
+      <<: *api_info
+      name: test_fc_network_policy
+      state: absent
+    ignore_errors: true
