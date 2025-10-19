@@ -4312,6 +4312,437 @@ def check_and_add_prop(prop, propKey, params, api_body):
         api_body[prop] = params[propKey]
 
 
+def apply_bios_properties(params, api_body):
+    """
+    Apply BIOS properties from module parameters to API body.
+    Maps snake_case parameter names to PascalCase API property names.
+
+    Args:
+        params: Module parameters dictionary
+        api_body: API request body dictionary to update
+    """
+    # Mapping of snake_case parameter names to PascalCase API property names
+    bios_property_map = {
+        'acs_control_gpu1state': 'AcsControlGpu1state',
+        'acs_control_gpu2state': 'AcsControlGpu2state',
+        'acs_control_gpu3state': 'AcsControlGpu3state',
+        'acs_control_gpu4state': 'AcsControlGpu4state',
+        'acs_control_gpu5state': 'AcsControlGpu5state',
+        'acs_control_gpu6state': 'AcsControlGpu6state',
+        'acs_control_gpu7state': 'AcsControlGpu7state',
+        'acs_control_gpu8state': 'AcsControlGpu8state',
+        'acs_control_slot11state': 'AcsControlSlot11state',
+        'acs_control_slot12state': 'AcsControlSlot12state',
+        'acs_control_slot13state': 'AcsControlSlot13state',
+        'acs_control_slot14state': 'AcsControlSlot14state',
+        'adaptive_refresh_mgmt_level': 'AdaptiveRefreshMgmtLevel',
+        'adjacent_cache_line_prefetch': 'AdjacentCacheLinePrefetch',
+        'advanced_mem_test': 'AdvancedMemTest',
+        'all_usb_devices': 'AllUsbDevices',
+        'altitude': 'Altitude',
+        'aspm_support': 'AspmSupport',
+        'assert_nmi_on_perr': 'AssertNmiOnPerr',
+        'assert_nmi_on_serr': 'AssertNmiOnSerr',
+        'auto_cc_state': 'AutoCcState',
+        'autonumous_cstate_enable': 'AutonumousCstateEnable',
+        'baud_rate': 'BaudRate',
+        'bme_dma_mitigation': 'BmeDmaMitigation',
+        'boot_option_num_retry': 'BootOptionNumRetry',
+        'boot_option_re_cool_down': 'BootOptionReCoolDown',
+        'boot_option_retry': 'BootOptionRetry',
+        'boot_performance_mode': 'BootPerformanceMode',
+        'burst_and_postponed_refresh': 'BurstAndPostponedRefresh',
+        'c1auto_demotion': 'C1autoDemotion',
+        'c1auto_un_demotion': 'C1autoUnDemotion',
+        'cbs_cmn_apbdis': 'CbsCmnApbdis',
+        'cbs_cmn_cpu_cpb': 'CbsCmnCpuCpb',
+        'cbs_cmn_cpu_gen_downcore_ctrl': 'CbsCmnCpuGenDowncoreCtrl',
+        'cbs_cmn_cpu_global_cstate_ctrl': 'CbsCmnCpuGlobalCstateCtrl',
+        'cbs_cmn_cpu_l1stream_hw_prefetcher': 'CbsCmnCpuL1streamHwPrefetcher',
+        'cbs_cmn_cpu_l2stream_hw_prefetcher': 'CbsCmnCpuL2streamHwPrefetcher',
+        'cbs_cmn_cpu_smee': 'CbsCmnCpuSmee',
+        'cbs_cmn_cpu_streaming_stores_ctrl': 'CbsCmnCpuStreamingStoresCtrl',
+        'cbs_cmnc_tdp_ctl': 'CbsCmncTdpCtl',
+        'cbs_cmn_determinism_slider': 'CbsCmnDeterminismSlider',
+        'cbs_cmn_efficiency_mode_en': 'CbsCmnEfficiencyModeEn',
+        'cbs_cmn_fixed_soc_pstate': 'CbsCmnFixedSocPstate',
+        'cbs_cmn_gnb_nb_iommu': 'CbsCmnGnbNbIommu',
+        'cbs_cmn_gnb_smucppc': 'CbsCmnGnbSmucppc',
+        'cbs_cmn_gnb_smu_df_cstates': 'CbsCmnGnbSmuDfCstates',
+        'cbs_cmn_mem_ctrl_bank_group_swap_ddr4': 'CbsCmnMemCtrlBankGroupSwapDdr4',
+        'cbs_cmn_mem_map_bank_interleave_ddr4': 'CbsCmnMemMapBankInterleaveDdr4',
+        'cbs_cpu_ccd_ctrl_ssp': 'CbsCpuCcdCtrlSsp',
+        'cbs_cpu_core_ctrl': 'CbsCpuCoreCtrl',
+        'cbs_cpu_smt_ctrl': 'CbsCpuSmtCtrl',
+        'cbs_dbg_cpu_snp_mem_cover': 'CbsDbgCpuSnpMemCover',
+        'cbs_dbg_cpu_snp_mem_size_cover': 'CbsDbgCpuSnpMemSizeCover',
+        'cbs_df_cmn_acpi_srat_l3numa': 'CbsDfCmnAcpiSratL3numa',
+        'cbs_df_cmn_dram_nps': 'CbsDfCmnDramNps',
+        'cbs_df_cmn_mem_intlv': 'CbsDfCmnMemIntlv',
+        'cbs_df_cmn_mem_intlv_size': 'CbsDfCmnMemIntlvSize',
+        'cbs_sev_snp_support': 'CbsSevSnpSupport',
+        'cdn_enable': 'CdnEnable',
+        'cdn_support': 'CdnSupport',
+        'channel_inter_leave': 'ChannelInterLeave',
+        'cisco_adaptive_mem_training': 'CiscoAdaptiveMemTraining',
+        'cisco_debug_level': 'CiscoDebugLevel',
+        'cisco_oprom_launch_optimization': 'CiscoOpromLaunchOptimization',
+        'cisco_xgmi_max_speed': 'CiscoXgmiMaxSpeed',
+        'cke_low_policy': 'CkeLowPolicy',
+        'closed_loop_therm_throtl': 'ClosedLoopThermThrotl',
+        'cmci_enable': 'CmciEnable',
+        'config_tdp': 'ConfigTdp',
+        'config_tdp_level': 'ConfigTdpLevel',
+        'console_redirection': 'ConsoleRedirection',
+        'core_multi_processing': 'CoreMultiProcessing',
+        'cpu_energy_performance': 'CpuEnergyPerformance',
+        'cpu_frequency_floor': 'CpuFrequencyFloor',
+        'cpu_pa_limit': 'CpuPaLimit',
+        'cpu_perf_enhancement': 'CpuPerfEnhancement',
+        'cpu_performance': 'CpuPerformance',
+        'cpu_power_management': 'CpuPowerManagement',
+        'crfastgo_config': 'CrfastgoConfig',
+        'cr_qos': 'CrQos',
+        'dcpmm_firmware_downgrade': 'DcpmmFirmwareDowngrade',
+        'demand_scrub': 'DemandScrub',
+        'direct_cache_access': 'DirectCacheAccess',
+        'dma_ctrl_opt_in': 'DmaCtrlOptIn',
+        'dram_clock_throttling': 'DramClockThrottling',
+        'dram_refresh_rate': 'DramRefreshRate',
+        'dram_sw_thermal_throttling': 'DramSwThermalThrottling',
+        'eadr_support': 'EadrSupport',
+        'edpc_en': 'EdpcEn',
+        'enable_clock_spread_spec': 'EnableClockSpreadSpec',
+        'enable_mktme': 'EnableMktme',
+        'enable_rmt': 'EnableRmt',
+        'enable_sgx': 'EnableSgx',
+        'enable_tme': 'EnableTme',
+        'energy_efficient_turbo': 'EnergyEfficientTurbo',
+        'eng_perf_tuning': 'EngPerfTuning',
+        'enhanced_intel_speed_step_tech': 'EnhancedIntelSpeedStepTech',
+        'epoch_update': 'EpochUpdate',
+        'epp_enable': 'EppEnable',
+        'epp_profile': 'EppProfile',
+        'error_check_scrub': 'ErrorCheckScrub',
+        'execute_disable_bit': 'ExecuteDisableBit',
+        'extended_apic': 'ExtendedApic',
+        'flow_control': 'FlowControl',
+        'frb2enable': 'Frb2enable',
+        'hardware_prefetch': 'HardwarePrefetch',
+        'hwpm_enable': 'HwpmEnable',
+        'imc_interleave': 'ImcInterleave',
+        'intel_dynamic_speed_select': 'IntelDynamicSpeedSelect',
+        'intel_hyper_threading_tech': 'IntelHyperThreadingTech',
+        'intel_speed_select': 'IntelSpeedSelect',
+        'intel_turbo_boost_tech': 'IntelTurboBoostTech',
+        'intel_virtualization_technology': 'IntelVirtualizationTechnology',
+        'intel_vtdats_support': 'IntelVtdatsSupport',
+        'intel_vtd_coherency_support': 'IntelVtdCoherencySupport',
+        'intel_vtd_interrupt_remapping': 'IntelVtdInterruptRemapping',
+        'intel_vtd_pass_through_dma_support': 'IntelVtdPassThroughDmaSupport',
+        'intel_vt_for_directed_io': 'IntelVtForDirectedIo',
+        'ioh_error_enable': 'IohErrorEnable',
+        'ioh_resource': 'IohResource',
+        'ip_prefetch': 'IpPrefetch',
+        'ipv4http': 'Ipv4http',
+        'ipv4pxe': 'Ipv4pxe',
+        'ipv6http': 'Ipv6http',
+        'ipv6pxe': 'Ipv6pxe',
+        'kti_prefetch': 'KtiPrefetch',
+        'legacy_os_redirection': 'LegacyOsRedirection',
+        'legacy_usb_support': 'LegacyUsbSupport',
+        'llc_alloc': 'LlcAlloc',
+        'llc_prefetch': 'LlcPrefetch',
+        'lom_port0state': 'LomPort0state',
+        'lom_port1state': 'LomPort1state',
+        'lom_port2state': 'LomPort2state',
+        'lom_port3state': 'LomPort3state',
+        'lom_ports_all_state': 'LomPortsAllState',
+        'lv_ddr_mode': 'LvDdrMode',
+        'make_device_non_bootable': 'MakeDeviceNonBootable',
+        'memory_bandwidth_boost': 'MemoryBandwidthBoost',
+        'memory_inter_leave': 'MemoryInterLeave',
+        'memory_mapped_io_above4gb': 'MemoryMappedIoAbove4gb',
+        'memory_refresh_rate': 'MemoryRefreshRate',
+        'memory_size_limit': 'MemorySizeLimit',
+        'memory_thermal_throttling': 'MemoryThermalThrottling',
+        'mirroring_mode': 'MirroringMode',
+        'mmcfg_base': 'MmcfgBase',
+        'network_stack': 'NetworkStack',
+        'numa_optimized': 'NumaOptimized',
+        'nvmdimm_perform_config': 'NvmdimmPerformConfig',
+        'onboard10gbit_lom': 'Onboard10gbitLom',
+        'onboard_gbit_lom': 'OnboardGbitLom',
+        'onboard_scu_storage_support': 'OnboardScuStorageSupport',
+        'onboard_scu_storage_sw_stack': 'OnboardScuStorageSwStack',
+        'operation_mode': 'OperationMode',
+        'organization': 'Organization',
+        'os_boot_watchdog_timer': 'OsBootWatchdogTimer',
+        'os_boot_watchdog_timer_policy': 'OsBootWatchdogTimerPolicy',
+        'os_boot_watchdog_timer_timeout': 'OsBootWatchdogTimerTimeout',
+        'out_of_band_mgmt_port': 'OutOfBandMgmtPort',
+        'package_cstate_limit': 'PackageCstateLimit',
+        'panic_high_watermark': 'PanicHighWatermark',
+        'partial_cache_line_sparing': 'PartialCacheLineSparing',
+        'partial_mirror_mode_config': 'PartialMirrorModeConfig',
+        'partial_mirror_percent': 'PartialMirrorPercent',
+        'partial_mirror_value1': 'PartialMirrorValue1',
+        'partial_mirror_value2': 'PartialMirrorValue2',
+        'partial_mirror_value3': 'PartialMirrorValue3',
+        'partial_mirror_value4': 'PartialMirrorValue4',
+        'patrol_scrub': 'PatrolScrub',
+        'patrol_scrub_duration': 'PatrolScrubDuration',
+        'pch_pcie_pll_ssc': 'PchPciePllSsc',
+        'pch_usb30mode': 'PchUsb30mode',
+        'pcie_ari_support': 'PcieAriSupport',
+        'pcie_pll_ssc': 'PciePllSsc',
+        'pc_ie_ras_support': 'PcIeRasSupport',
+        'pcie_slot_mraid1link_speed': 'PcieSlotMraid1linkSpeed',
+        'pcie_slot_mraid1option_rom': 'PcieSlotMraid1optionRom',
+        'pcie_slot_mraid2link_speed': 'PcieSlotMraid2linkSpeed',
+        'pcie_slot_mraid2option_rom': 'PcieSlotMraid2optionRom',
+        'pcie_slot_mstorraid_link_speed': 'PcieSlotMstorraidLinkSpeed',
+        'pcie_slot_mstorraid_option_rom': 'PcieSlotMstorraidOptionRom',
+        'pcie_slot_nvme1link_speed': 'PcieSlotNvme1linkSpeed',
+        'pcie_slot_nvme1option_rom': 'PcieSlotNvme1optionRom',
+        'pcie_slot_nvme2link_speed': 'PcieSlotNvme2linkSpeed',
+        'pcie_slot_nvme2option_rom': 'PcieSlotNvme2optionRom',
+        'pcie_slot_nvme3link_speed': 'PcieSlotNvme3linkSpeed',
+        'pcie_slot_nvme3option_rom': 'PcieSlotNvme3optionRom',
+        'pcie_slot_nvme4link_speed': 'PcieSlotNvme4linkSpeed',
+        'pcie_slot_nvme4option_rom': 'PcieSlotNvme4optionRom',
+        'pcie_slot_nvme5link_speed': 'PcieSlotNvme5linkSpeed',
+        'pcie_slot_nvme5option_rom': 'PcieSlotNvme5optionRom',
+        'pcie_slot_nvme6link_speed': 'PcieSlotNvme6linkSpeed',
+        'pcie_slot_nvme6option_rom': 'PcieSlotNvme6optionRom',
+        'pcie_slots_cdn_enable': 'PcieSlotsCdnEnable',
+        'pc_ie_ssd_hot_plug_support': 'PcIeSsdHotPlugSupport',
+        'pci_option_ro_ms': 'PciOptionRoMs',
+        'pci_rom_clp': 'PciRomClp',
+        'pop_support': 'PopSupport',
+        'post_error_pause': 'PostErrorPause',
+        'post_package_repair': 'PostPackageRepair',
+        'processor_c1e': 'ProcessorC1e',
+        'processor_c3report': 'ProcessorC3report',
+        'processor_c6report': 'ProcessorC6report',
+        'processor_cstate': 'ProcessorCstate',
+        'profiles': 'Profiles',
+        'psata': 'Psata',
+        'pstate_coord_type': 'PstateCoordType',
+        'putty_key_pad': 'PuttyKeyPad',
+        'pwr_perf_tuning': 'PwrPerfTuning',
+        'qpi_link_frequency': 'QpiLinkFrequency',
+        'qpi_link_speed': 'QpiLinkSpeed',
+        'qpi_snoop_mode': 'QpiSnoopMode',
+        'rank_inter_leave': 'RankInterLeave',
+        'redirection_after_post': 'RedirectionAfterPost',
+        'sata_mode_select': 'SataModeSelect',
+        'select_memory_ras_configuration': 'SelectMemoryRasConfiguration',
+        'select_ppr_type': 'SelectPprType',
+        'serial_port_aenable': 'SerialPortAenable',
+        'sev': 'Sev',
+        'sgx_auto_registration_agent': 'SgxAutoRegistrationAgent',
+        'sgx_epoch0': 'SgxEpoch0',
+        'sgx_epoch1': 'SgxEpoch1',
+        'sgx_factory_reset': 'SgxFactoryReset',
+        'sgx_le_pub_key_hash0': 'SgxLePubKeyHash0',
+        'sgx_le_pub_key_hash1': 'SgxLePubKeyHash1',
+        'sgx_le_pub_key_hash2': 'SgxLePubKeyHash2',
+        'sgx_le_pub_key_hash3': 'SgxLePubKeyHash3',
+        'sgx_le_wr': 'SgxLeWr',
+        'sgx_package_info_in_band_access': 'SgxPackageInfoInBandAccess',
+        'sgx_qos': 'SgxQos',
+        'sha1pcr_bank': 'Sha1pcrBank',
+        'sha256pcr_bank': 'Sha256pcrBank',
+        'single_pctl_enable': 'SinglePctlEnable',
+        'slot10link_speed': 'Slot10linkSpeed',
+        'slot10state': 'Slot10state',
+        'slot11link_speed': 'Slot11linkSpeed',
+        'slot11state': 'Slot11state',
+        'slot12link_speed': 'Slot12linkSpeed',
+        'slot12state': 'Slot12state',
+        'slot13state': 'Slot13state',
+        'slot14state': 'Slot14state',
+        'slot1link_speed': 'Slot1linkSpeed',
+        'slot1state': 'Slot1state',
+        'slot2link_speed': 'Slot2linkSpeed',
+        'slot2state': 'Slot2state',
+        'slot3link_speed': 'Slot3linkSpeed',
+        'slot3state': 'Slot3state',
+        'slot4link_speed': 'Slot4linkSpeed',
+        'slot4state': 'Slot4state',
+        'slot5link_speed': 'Slot5linkSpeed',
+        'slot5state': 'Slot5state',
+        'slot6link_speed': 'Slot6linkSpeed',
+        'slot6state': 'Slot6state',
+        'slot7link_speed': 'Slot7linkSpeed',
+        'slot7state': 'Slot7state',
+        'slot8link_speed': 'Slot8linkSpeed',
+        'slot8state': 'Slot8state',
+        'slot9link_speed': 'Slot9linkSpeed',
+        'slot9state': 'Slot9state',
+        'slot_flom_link_speed': 'SlotFlomLinkSpeed',
+        'slot_front_nvme10link_speed': 'SlotFrontNvme10linkSpeed',
+        'slot_front_nvme10option_rom': 'SlotFrontNvme10optionRom',
+        'slot_front_nvme11link_speed': 'SlotFrontNvme11linkSpeed',
+        'slot_front_nvme11option_rom': 'SlotFrontNvme11optionRom',
+        'slot_front_nvme12link_speed': 'SlotFrontNvme12linkSpeed',
+        'slot_front_nvme12option_rom': 'SlotFrontNvme12optionRom',
+        'slot_front_nvme13link_speed': 'SlotFrontNvme13linkSpeed',
+        'slot_front_nvme13option_rom': 'SlotFrontNvme13optionRom',
+        'slot_front_nvme14link_speed': 'SlotFrontNvme14linkSpeed',
+        'slot_front_nvme14option_rom': 'SlotFrontNvme14optionRom',
+        'slot_front_nvme15link_speed': 'SlotFrontNvme15linkSpeed',
+        'slot_front_nvme15option_rom': 'SlotFrontNvme15optionRom',
+        'slot_front_nvme16link_speed': 'SlotFrontNvme16linkSpeed',
+        'slot_front_nvme16option_rom': 'SlotFrontNvme16optionRom',
+        'slot_front_nvme17link_speed': 'SlotFrontNvme17linkSpeed',
+        'slot_front_nvme17option_rom': 'SlotFrontNvme17optionRom',
+        'slot_front_nvme18link_speed': 'SlotFrontNvme18linkSpeed',
+        'slot_front_nvme18option_rom': 'SlotFrontNvme18optionRom',
+        'slot_front_nvme19link_speed': 'SlotFrontNvme19linkSpeed',
+        'slot_front_nvme19option_rom': 'SlotFrontNvme19optionRom',
+        'slot_front_nvme1link_speed': 'SlotFrontNvme1linkSpeed',
+        'slot_front_nvme1option_rom': 'SlotFrontNvme1optionRom',
+        'slot_front_nvme20link_speed': 'SlotFrontNvme20linkSpeed',
+        'slot_front_nvme20option_rom': 'SlotFrontNvme20optionRom',
+        'slot_front_nvme21link_speed': 'SlotFrontNvme21linkSpeed',
+        'slot_front_nvme21option_rom': 'SlotFrontNvme21optionRom',
+        'slot_front_nvme22link_speed': 'SlotFrontNvme22linkSpeed',
+        'slot_front_nvme22option_rom': 'SlotFrontNvme22optionRom',
+        'slot_front_nvme23link_speed': 'SlotFrontNvme23linkSpeed',
+        'slot_front_nvme23option_rom': 'SlotFrontNvme23optionRom',
+        'slot_front_nvme24link_speed': 'SlotFrontNvme24linkSpeed',
+        'slot_front_nvme24option_rom': 'SlotFrontNvme24optionRom',
+        'slot_front_nvme2link_speed': 'SlotFrontNvme2linkSpeed',
+        'slot_front_nvme2option_rom': 'SlotFrontNvme2optionRom',
+        'slot_front_nvme3link_speed': 'SlotFrontNvme3linkSpeed',
+        'slot_front_nvme3option_rom': 'SlotFrontNvme3optionRom',
+        'slot_front_nvme4link_speed': 'SlotFrontNvme4linkSpeed',
+        'slot_front_nvme4option_rom': 'SlotFrontNvme4optionRom',
+        'slot_front_nvme5link_speed': 'SlotFrontNvme5linkSpeed',
+        'slot_front_nvme5option_rom': 'SlotFrontNvme5optionRom',
+        'slot_front_nvme6link_speed': 'SlotFrontNvme6linkSpeed',
+        'slot_front_nvme6option_rom': 'SlotFrontNvme6optionRom',
+        'slot_front_nvme7link_speed': 'SlotFrontNvme7linkSpeed',
+        'slot_front_nvme7option_rom': 'SlotFrontNvme7optionRom',
+        'slot_front_nvme8link_speed': 'SlotFrontNvme8linkSpeed',
+        'slot_front_nvme8option_rom': 'SlotFrontNvme8optionRom',
+        'slot_front_nvme9link_speed': 'SlotFrontNvme9linkSpeed',
+        'slot_front_nvme9option_rom': 'SlotFrontNvme9optionRom',
+        'slot_front_slot5link_speed': 'SlotFrontSlot5linkSpeed',
+        'slot_front_slot6link_speed': 'SlotFrontSlot6linkSpeed',
+        'slot_gpu1state': 'SlotGpu1state',
+        'slot_gpu2state': 'SlotGpu2state',
+        'slot_gpu3state': 'SlotGpu3state',
+        'slot_gpu4state': 'SlotGpu4state',
+        'slot_gpu5state': 'SlotGpu5state',
+        'slot_gpu6state': 'SlotGpu6state',
+        'slot_gpu7state': 'SlotGpu7state',
+        'slot_gpu8state': 'SlotGpu8state',
+        'slot_hba_link_speed': 'SlotHbaLinkSpeed',
+        'slot_hba_state': 'SlotHbaState',
+        'slot_lom1link': 'SlotLom1link',
+        'slot_lom2link': 'SlotLom2link',
+        'slot_mezz_state': 'SlotMezzState',
+        'slot_mlom_link_speed': 'SlotMlomLinkSpeed',
+        'slot_mlom_state': 'SlotMlomState',
+        'slot_mraid_link_speed': 'SlotMraidLinkSpeed',
+        'slot_mraid_state': 'SlotMraidState',
+        'slot_n10state': 'SlotN10state',
+        'slot_n11state': 'SlotN11state',
+        'slot_n12state': 'SlotN12state',
+        'slot_n13state': 'SlotN13state',
+        'slot_n14state': 'SlotN14state',
+        'slot_n15state': 'SlotN15state',
+        'slot_n16state': 'SlotN16state',
+        'slot_n17state': 'SlotN17state',
+        'slot_n18state': 'SlotN18state',
+        'slot_n19state': 'SlotN19state',
+        'slot_n1state': 'SlotN1state',
+        'slot_n20state': 'SlotN20state',
+        'slot_n21state': 'SlotN21state',
+        'slot_n22state': 'SlotN22state',
+        'slot_n23state': 'SlotN23state',
+        'slot_n24state': 'SlotN24state',
+        'slot_n2state': 'SlotN2state',
+        'slot_n3state': 'SlotN3state',
+        'slot_n4state': 'SlotN4state',
+        'slot_n5state': 'SlotN5state',
+        'slot_n6state': 'SlotN6state',
+        'slot_n7state': 'SlotN7state',
+        'slot_n8state': 'SlotN8state',
+        'slot_n9state': 'SlotN9state',
+        'slot_raid_link_speed': 'SlotRaidLinkSpeed',
+        'slot_raid_state': 'SlotRaidState',
+        'slot_rear_nvme1link_speed': 'SlotRearNvme1linkSpeed',
+        'slot_rear_nvme1state': 'SlotRearNvme1state',
+        'slot_rear_nvme2link_speed': 'SlotRearNvme2linkSpeed',
+        'slot_rear_nvme2state': 'SlotRearNvme2state',
+        'slot_rear_nvme3link_speed': 'SlotRearNvme3linkSpeed',
+        'slot_rear_nvme3state': 'SlotRearNvme3state',
+        'slot_rear_nvme4link_speed': 'SlotRearNvme4linkSpeed',
+        'slot_rear_nvme4state': 'SlotRearNvme4state',
+        'slot_rear_nvme5state': 'SlotRearNvme5state',
+        'slot_rear_nvme6state': 'SlotRearNvme6state',
+        'slot_rear_nvme7state': 'SlotRearNvme7state',
+        'slot_rear_nvme8state': 'SlotRearNvme8state',
+        'slot_riser1link_speed': 'SlotRiser1linkSpeed',
+        'slot_riser1slot1link_speed': 'SlotRiser1slot1linkSpeed',
+        'slot_riser1slot2link_speed': 'SlotRiser1slot2linkSpeed',
+        'slot_riser1slot3link_speed': 'SlotRiser1slot3linkSpeed',
+        'slot_riser2link_speed': 'SlotRiser2linkSpeed',
+        'slot_riser2slot4link_speed': 'SlotRiser2slot4linkSpeed',
+        'slot_riser2slot5link_speed': 'SlotRiser2slot5linkSpeed',
+        'slot_riser2slot6link_speed': 'SlotRiser2slot6linkSpeed',
+        'slot_sas_state': 'SlotSasState',
+        'slot_ssd_slot1link_speed': 'SlotSsdSlot1linkSpeed',
+        'slot_ssd_slot2link_speed': 'SlotSsdSlot2linkSpeed',
+        'smee': 'Smee',
+        'smt_mode': 'SmtMode',
+        'snc': 'Snc',
+        'snoopy_mode_for2lm': 'SnoopyModeFor2lm',
+        'snoopy_mode_for_ad': 'SnoopyModeForAd',
+        'sparing_mode': 'SparingMode',
+        'sr_iov': 'SrIov',
+        'streamer_prefetch': 'StreamerPrefetch',
+        'svm_mode': 'SvmMode',
+        'terminal_type': 'TerminalType',
+        'tpm_control': 'TpmControl',
+        'tpm_pending_operation': 'TpmPendingOperation',
+        'tpm_ppi_required': 'TpmPpiRequired',
+        'tpm_support': 'TpmSupport',
+        'tsme': 'Tsme',
+        'txt_support': 'TxtSupport',
+        'ucsm_boot_order_rule': 'UcsmBootOrderRule',
+        'ufs_disable': 'UfsDisable',
+        'uma_based_clustering': 'UmaBasedClustering',
+        'upi_link_enablement': 'UpiLinkEnablement',
+        'upi_power_management': 'UpiPowerManagement',
+        'usb_emul6064': 'UsbEmul6064',
+        'usb_port_front': 'UsbPortFront',
+        'usb_port_internal': 'UsbPortInternal',
+        'usb_port_kvm': 'UsbPortKvm',
+        'usb_port_rear': 'UsbPortRear',
+        'usb_port_sd_card': 'UsbPortSdCard',
+        'usb_port_vmedia': 'UsbPortVmedia',
+        'usb_xhci_support': 'UsbXhciSupport',
+        'vga_priority': 'VgaPriority',
+        'virtual_numa': 'VirtualNuma',
+        'vmd_enable': 'VmdEnable',
+        'vol_memory_mode': 'VolMemoryMode',
+        'work_load_config': 'WorkLoadConfig',
+        'x2apic_opt_out': 'X2apicOptOut',
+        'xpt_prefetch': 'XptPrefetch',
+        'xpt_remote_prefetch': 'XptRemotePrefetch',
+    }
+
+    # Apply properties from the mapping
+    for param_name, api_property in bios_property_map.items():
+        if param_name in params:
+            api_body[api_property] = params[param_name]
+
+
 def main():
     argument_spec = intersight_argument_spec.copy()
     argument_spec.update(
@@ -8529,418 +8960,8 @@ def main():
     }
     intersight.set_tags_and_description()
 
-    check_and_add_prop('AcsControlGpu1state', 'acs_control_gpu1state', intersight.module.params, intersight.api_body)
-    check_and_add_prop('AcsControlGpu2state', 'acs_control_gpu2state', intersight.module.params, intersight.api_body)
-    check_and_add_prop('AcsControlGpu3state', 'acs_control_gpu3state', intersight.module.params, intersight.api_body)
-    check_and_add_prop('AcsControlGpu4state', 'acs_control_gpu4state', intersight.module.params, intersight.api_body)
-    check_and_add_prop('AcsControlGpu5state', 'acs_control_gpu5state', intersight.module.params, intersight.api_body)
-    check_and_add_prop('AcsControlGpu6state', 'acs_control_gpu6state', intersight.module.params, intersight.api_body)
-    check_and_add_prop('AcsControlGpu7state', 'acs_control_gpu7state', intersight.module.params, intersight.api_body)
-    check_and_add_prop('AcsControlGpu8state', 'acs_control_gpu8state', intersight.module.params, intersight.api_body)
-    check_and_add_prop('AcsControlSlot11state', 'acs_control_slot11state', intersight.module.params, intersight.api_body)
-    check_and_add_prop('AcsControlSlot12state', 'acs_control_slot12state', intersight.module.params, intersight.api_body)
-    check_and_add_prop('AcsControlSlot13state', 'acs_control_slot13state', intersight.module.params, intersight.api_body)
-    check_and_add_prop('AcsControlSlot14state', 'acs_control_slot14state', intersight.module.params, intersight.api_body)
-    check_and_add_prop('AdaptiveRefreshMgmtLevel', 'adaptive_refresh_mgmt_level', intersight.module.params, intersight.api_body)
-    check_and_add_prop('AdjacentCacheLinePrefetch', 'adjacent_cache_line_prefetch', intersight.module.params, intersight.api_body)
-    check_and_add_prop('AdvancedMemTest', 'advanced_mem_test', intersight.module.params, intersight.api_body)
-    check_and_add_prop('AllUsbDevices', 'all_usb_devices', intersight.module.params, intersight.api_body)
-    check_and_add_prop('Altitude', 'altitude', intersight.module.params, intersight.api_body)
-    check_and_add_prop('AspmSupport', 'aspm_support', intersight.module.params, intersight.api_body)
-    check_and_add_prop('AssertNmiOnPerr', 'assert_nmi_on_perr', intersight.module.params, intersight.api_body)
-    check_and_add_prop('AssertNmiOnSerr', 'assert_nmi_on_serr', intersight.module.params, intersight.api_body)
-    check_and_add_prop('AutoCcState', 'auto_cc_state', intersight.module.params, intersight.api_body)
-    check_and_add_prop('AutonumousCstateEnable', 'autonumous_cstate_enable', intersight.module.params, intersight.api_body)
-    check_and_add_prop('BaudRate', 'baud_rate', intersight.module.params, intersight.api_body)
-    check_and_add_prop('BmeDmaMitigation', 'bme_dma_mitigation', intersight.module.params, intersight.api_body)
-    check_and_add_prop('BootOptionNumRetry', 'boot_option_num_retry', intersight.module.params, intersight.api_body)
-    check_and_add_prop('BootOptionReCoolDown', 'boot_option_re_cool_down', intersight.module.params, intersight.api_body)
-    check_and_add_prop('BootOptionRetry', 'boot_option_retry', intersight.module.params, intersight.api_body)
-    check_and_add_prop('BootPerformanceMode', 'boot_performance_mode', intersight.module.params, intersight.api_body)
-    check_and_add_prop('BurstAndPostponedRefresh', 'burst_and_postponed_refresh', intersight.module.params, intersight.api_body)
-    check_and_add_prop('C1autoDemotion', 'c1auto_demotion', intersight.module.params, intersight.api_body)
-    check_and_add_prop('C1autoUnDemotion', 'c1auto_un_demotion', intersight.module.params, intersight.api_body)
-    check_and_add_prop('CbsCmnApbdis', 'cbs_cmn_apbdis', intersight.module.params, intersight.api_body)
-    check_and_add_prop('CbsCmnCpuCpb', 'cbs_cmn_cpu_cpb', intersight.module.params, intersight.api_body)
-    check_and_add_prop('CbsCmnCpuGenDowncoreCtrl', 'cbs_cmn_cpu_gen_downcore_ctrl', intersight.module.params, intersight.api_body)
-    check_and_add_prop('CbsCmnCpuGlobalCstateCtrl', 'cbs_cmn_cpu_global_cstate_ctrl', intersight.module.params, intersight.api_body)
-    check_and_add_prop('CbsCmnCpuL1streamHwPrefetcher', 'cbs_cmn_cpu_l1stream_hw_prefetcher', intersight.module.params, intersight.api_body)
-    check_and_add_prop('CbsCmnCpuL2streamHwPrefetcher', 'cbs_cmn_cpu_l2stream_hw_prefetcher', intersight.module.params, intersight.api_body)
-    check_and_add_prop('CbsCmnCpuSmee', 'cbs_cmn_cpu_smee', intersight.module.params, intersight.api_body)
-    check_and_add_prop('CbsCmnCpuStreamingStoresCtrl', 'cbs_cmn_cpu_streaming_stores_ctrl', intersight.module.params, intersight.api_body)
-    check_and_add_prop('CbsCmncTdpCtl', 'cbs_cmnc_tdp_ctl', intersight.module.params, intersight.api_body)
-    check_and_add_prop('CbsCmnDeterminismSlider', 'cbs_cmn_determinism_slider', intersight.module.params, intersight.api_body)
-    check_and_add_prop('CbsCmnEfficiencyModeEn', 'cbs_cmn_efficiency_mode_en', intersight.module.params, intersight.api_body)
-    check_and_add_prop('CbsCmnFixedSocPstate', 'cbs_cmn_fixed_soc_pstate', intersight.module.params, intersight.api_body)
-    check_and_add_prop('CbsCmnGnbNbIommu', 'cbs_cmn_gnb_nb_iommu', intersight.module.params, intersight.api_body)
-    check_and_add_prop('CbsCmnGnbSmucppc', 'cbs_cmn_gnb_smucppc', intersight.module.params, intersight.api_body)
-    check_and_add_prop('CbsCmnGnbSmuDfCstates', 'cbs_cmn_gnb_smu_df_cstates', intersight.module.params, intersight.api_body)
-    check_and_add_prop('CbsCmnMemCtrlBankGroupSwapDdr4', 'cbs_cmn_mem_ctrl_bank_group_swap_ddr4', intersight.module.params, intersight.api_body)
-    check_and_add_prop('CbsCmnMemMapBankInterleaveDdr4', 'cbs_cmn_mem_map_bank_interleave_ddr4', intersight.module.params, intersight.api_body)
-    check_and_add_prop('CbsCpuCcdCtrlSsp', 'cbs_cpu_ccd_ctrl_ssp', intersight.module.params, intersight.api_body)
-    check_and_add_prop('CbsCpuCoreCtrl', 'cbs_cpu_core_ctrl', intersight.module.params, intersight.api_body)
-    check_and_add_prop('CbsCpuSmtCtrl', 'cbs_cpu_smt_ctrl', intersight.module.params, intersight.api_body)
-    check_and_add_prop('CbsDbgCpuSnpMemCover', 'cbs_dbg_cpu_snp_mem_cover', intersight.module.params, intersight.api_body)
-    check_and_add_prop('CbsDbgCpuSnpMemSizeCover', 'cbs_dbg_cpu_snp_mem_size_cover', intersight.module.params, intersight.api_body)
-    check_and_add_prop('CbsDfCmnAcpiSratL3numa', 'cbs_df_cmn_acpi_srat_l3numa', intersight.module.params, intersight.api_body)
-    check_and_add_prop('CbsDfCmnDramNps', 'cbs_df_cmn_dram_nps', intersight.module.params, intersight.api_body)
-    check_and_add_prop('CbsDfCmnMemIntlv', 'cbs_df_cmn_mem_intlv', intersight.module.params, intersight.api_body)
-    check_and_add_prop('CbsDfCmnMemIntlvSize', 'cbs_df_cmn_mem_intlv_size', intersight.module.params, intersight.api_body)
-    check_and_add_prop('CbsSevSnpSupport', 'cbs_sev_snp_support', intersight.module.params, intersight.api_body)
-    check_and_add_prop('CdnEnable', 'cdn_enable', intersight.module.params, intersight.api_body)
-    check_and_add_prop('CdnSupport', 'cdn_support', intersight.module.params, intersight.api_body)
-    check_and_add_prop('ChannelInterLeave', 'channel_inter_leave', intersight.module.params, intersight.api_body)
-    check_and_add_prop('CiscoAdaptiveMemTraining', 'cisco_adaptive_mem_training', intersight.module.params, intersight.api_body)
-    check_and_add_prop('CiscoDebugLevel', 'cisco_debug_level', intersight.module.params, intersight.api_body)
-    check_and_add_prop('CiscoOpromLaunchOptimization', 'cisco_oprom_launch_optimization', intersight.module.params, intersight.api_body)
-    check_and_add_prop('CiscoXgmiMaxSpeed', 'cisco_xgmi_max_speed', intersight.module.params, intersight.api_body)
-    check_and_add_prop('CkeLowPolicy', 'cke_low_policy', intersight.module.params, intersight.api_body)
-    check_and_add_prop('ClosedLoopThermThrotl', 'closed_loop_therm_throtl', intersight.module.params, intersight.api_body)
-    check_and_add_prop('CmciEnable', 'cmci_enable', intersight.module.params, intersight.api_body)
-    check_and_add_prop('ConfigTdp', 'config_tdp', intersight.module.params, intersight.api_body)
-    check_and_add_prop('ConfigTdpLevel', 'config_tdp_level', intersight.module.params, intersight.api_body)
-    check_and_add_prop('ConsoleRedirection', 'console_redirection', intersight.module.params, intersight.api_body)
-    check_and_add_prop('CoreMultiProcessing', 'core_multi_processing', intersight.module.params, intersight.api_body)
-    check_and_add_prop('CpuEnergyPerformance', 'cpu_energy_performance', intersight.module.params, intersight.api_body)
-    check_and_add_prop('CpuFrequencyFloor', 'cpu_frequency_floor', intersight.module.params, intersight.api_body)
-    check_and_add_prop('CpuPaLimit', 'cpu_pa_limit', intersight.module.params, intersight.api_body)
-    check_and_add_prop('CpuPerfEnhancement', 'cpu_perf_enhancement', intersight.module.params, intersight.api_body)
-    check_and_add_prop('CpuPerformance', 'cpu_performance', intersight.module.params, intersight.api_body)
-    check_and_add_prop('CpuPowerManagement', 'cpu_power_management', intersight.module.params, intersight.api_body)
-    check_and_add_prop('CrfastgoConfig', 'crfastgo_config', intersight.module.params, intersight.api_body)
-    check_and_add_prop('CrQos', 'cr_qos', intersight.module.params, intersight.api_body)
-    check_and_add_prop('DcpmmFirmwareDowngrade', 'dcpmm_firmware_downgrade', intersight.module.params, intersight.api_body)
-    check_and_add_prop('DemandScrub', 'demand_scrub', intersight.module.params, intersight.api_body)
-    check_and_add_prop('DirectCacheAccess', 'direct_cache_access', intersight.module.params, intersight.api_body)
-    check_and_add_prop('DmaCtrlOptIn', 'dma_ctrl_opt_in', intersight.module.params, intersight.api_body)
-    check_and_add_prop('DramClockThrottling', 'dram_clock_throttling', intersight.module.params, intersight.api_body)
-    check_and_add_prop('DramRefreshRate', 'dram_refresh_rate', intersight.module.params, intersight.api_body)
-    check_and_add_prop('DramSwThermalThrottling', 'dram_sw_thermal_throttling', intersight.module.params, intersight.api_body)
-    check_and_add_prop('EadrSupport', 'eadr_support', intersight.module.params, intersight.api_body)
-    check_and_add_prop('EdpcEn', 'edpc_en', intersight.module.params, intersight.api_body)
-    check_and_add_prop('EnableClockSpreadSpec', 'enable_clock_spread_spec', intersight.module.params, intersight.api_body)
-    check_and_add_prop('EnableMktme', 'enable_mktme', intersight.module.params, intersight.api_body)
-    check_and_add_prop('EnableRmt', 'enable_rmt', intersight.module.params, intersight.api_body)
-    check_and_add_prop('EnableSgx', 'enable_sgx', intersight.module.params, intersight.api_body)
-    check_and_add_prop('EnableTme', 'enable_tme', intersight.module.params, intersight.api_body)
-    check_and_add_prop('EnergyEfficientTurbo', 'energy_efficient_turbo', intersight.module.params, intersight.api_body)
-    check_and_add_prop('EngPerfTuning', 'eng_perf_tuning', intersight.module.params, intersight.api_body)
-    check_and_add_prop('EnhancedIntelSpeedStepTech', 'enhanced_intel_speed_step_tech', intersight.module.params, intersight.api_body)
-    check_and_add_prop('EpochUpdate', 'epoch_update', intersight.module.params, intersight.api_body)
-    check_and_add_prop('EppEnable', 'epp_enable', intersight.module.params, intersight.api_body)
-    check_and_add_prop('EppProfile', 'epp_profile', intersight.module.params, intersight.api_body)
-    check_and_add_prop('ErrorCheckScrub', 'error_check_scrub', intersight.module.params, intersight.api_body)
-    check_and_add_prop('ExecuteDisableBit', 'execute_disable_bit', intersight.module.params, intersight.api_body)
-    check_and_add_prop('ExtendedApic', 'extended_apic', intersight.module.params, intersight.api_body)
-    check_and_add_prop('FlowControl', 'flow_control', intersight.module.params, intersight.api_body)
-    check_and_add_prop('Frb2enable', 'frb2enable', intersight.module.params, intersight.api_body)
-    check_and_add_prop('HardwarePrefetch', 'hardware_prefetch', intersight.module.params, intersight.api_body)
-    check_and_add_prop('HwpmEnable', 'hwpm_enable', intersight.module.params, intersight.api_body)
-    check_and_add_prop('ImcInterleave', 'imc_interleave', intersight.module.params, intersight.api_body)
-    check_and_add_prop('IntelDynamicSpeedSelect', 'intel_dynamic_speed_select', intersight.module.params, intersight.api_body)
-    check_and_add_prop('IntelHyperThreadingTech', 'intel_hyper_threading_tech', intersight.module.params, intersight.api_body)
-    check_and_add_prop('IntelSpeedSelect', 'intel_speed_select', intersight.module.params, intersight.api_body)
-    check_and_add_prop('IntelTurboBoostTech', 'intel_turbo_boost_tech', intersight.module.params, intersight.api_body)
-    check_and_add_prop('IntelVirtualizationTechnology', 'intel_virtualization_technology', intersight.module.params, intersight.api_body)
-    check_and_add_prop('IntelVtdatsSupport', 'intel_vtdats_support', intersight.module.params, intersight.api_body)
-    check_and_add_prop('IntelVtdCoherencySupport', 'intel_vtd_coherency_support', intersight.module.params, intersight.api_body)
-    check_and_add_prop('IntelVtdInterruptRemapping', 'intel_vtd_interrupt_remapping', intersight.module.params, intersight.api_body)
-    check_and_add_prop('IntelVtdPassThroughDmaSupport', 'intel_vtd_pass_through_dma_support', intersight.module.params, intersight.api_body)
-    check_and_add_prop('IntelVtForDirectedIo', 'intel_vt_for_directed_io', intersight.module.params, intersight.api_body)
-    check_and_add_prop('IohErrorEnable', 'ioh_error_enable', intersight.module.params, intersight.api_body)
-    check_and_add_prop('IohResource', 'ioh_resource', intersight.module.params, intersight.api_body)
-    check_and_add_prop('IpPrefetch', 'ip_prefetch', intersight.module.params, intersight.api_body)
-    check_and_add_prop('Ipv4http', 'ipv4http', intersight.module.params, intersight.api_body)
-    check_and_add_prop('Ipv4pxe', 'ipv4pxe', intersight.module.params, intersight.api_body)
-    check_and_add_prop('Ipv6http', 'ipv6http', intersight.module.params, intersight.api_body)
-    check_and_add_prop('Ipv6pxe', 'ipv6pxe', intersight.module.params, intersight.api_body)
-    check_and_add_prop('KtiPrefetch', 'kti_prefetch', intersight.module.params, intersight.api_body)
-    check_and_add_prop('LegacyOsRedirection', 'legacy_os_redirection', intersight.module.params, intersight.api_body)
-    check_and_add_prop('LegacyUsbSupport', 'legacy_usb_support', intersight.module.params, intersight.api_body)
-    check_and_add_prop('LlcAlloc', 'llc_alloc', intersight.module.params, intersight.api_body)
-    check_and_add_prop('LlcPrefetch', 'llc_prefetch', intersight.module.params, intersight.api_body)
-    check_and_add_prop('LomPort0state', 'lom_port0state', intersight.module.params, intersight.api_body)
-    check_and_add_prop('LomPort1state', 'lom_port1state', intersight.module.params, intersight.api_body)
-    check_and_add_prop('LomPort2state', 'lom_port2state', intersight.module.params, intersight.api_body)
-    check_and_add_prop('LomPort3state', 'lom_port3state', intersight.module.params, intersight.api_body)
-    check_and_add_prop('LomPortsAllState', 'lom_ports_all_state', intersight.module.params, intersight.api_body)
-    check_and_add_prop('LvDdrMode', 'lv_ddr_mode', intersight.module.params, intersight.api_body)
-    check_and_add_prop('MakeDeviceNonBootable', 'make_device_non_bootable', intersight.module.params, intersight.api_body)
-    check_and_add_prop('MemoryBandwidthBoost', 'memory_bandwidth_boost', intersight.module.params, intersight.api_body)
-    check_and_add_prop('MemoryInterLeave', 'memory_inter_leave', intersight.module.params, intersight.api_body)
-    check_and_add_prop('MemoryMappedIoAbove4gb', 'memory_mapped_io_above4gb', intersight.module.params, intersight.api_body)
-    check_and_add_prop('MemoryRefreshRate', 'memory_refresh_rate', intersight.module.params, intersight.api_body)
-    check_and_add_prop('MemorySizeLimit', 'memory_size_limit', intersight.module.params, intersight.api_body)
-    check_and_add_prop('MemoryThermalThrottling', 'memory_thermal_throttling', intersight.module.params, intersight.api_body)
-    check_and_add_prop('MirroringMode', 'mirroring_mode', intersight.module.params, intersight.api_body)
-    check_and_add_prop('MmcfgBase', 'mmcfg_base', intersight.module.params, intersight.api_body)
-    check_and_add_prop('NetworkStack', 'network_stack', intersight.module.params, intersight.api_body)
-    check_and_add_prop('NumaOptimized', 'numa_optimized', intersight.module.params, intersight.api_body)
-    check_and_add_prop('NvmdimmPerformConfig', 'nvmdimm_perform_config', intersight.module.params, intersight.api_body)
-    check_and_add_prop('Onboard10gbitLom', 'onboard10gbit_lom', intersight.module.params, intersight.api_body)
-    check_and_add_prop('OnboardGbitLom', 'onboard_gbit_lom', intersight.module.params, intersight.api_body)
-    check_and_add_prop('OnboardScuStorageSupport', 'onboard_scu_storage_support', intersight.module.params, intersight.api_body)
-    check_and_add_prop('OnboardScuStorageSwStack', 'onboard_scu_storage_sw_stack', intersight.module.params, intersight.api_body)
-    check_and_add_prop('OperationMode', 'operation_mode', intersight.module.params, intersight.api_body)
-    check_and_add_prop('Organization', 'organization', intersight.module.params, intersight.api_body)
-    check_and_add_prop('OsBootWatchdogTimer', 'os_boot_watchdog_timer', intersight.module.params, intersight.api_body)
-    check_and_add_prop('OsBootWatchdogTimerPolicy', 'os_boot_watchdog_timer_policy', intersight.module.params, intersight.api_body)
-    check_and_add_prop('OsBootWatchdogTimerTimeout', 'os_boot_watchdog_timer_timeout', intersight.module.params, intersight.api_body)
-    check_and_add_prop('OutOfBandMgmtPort', 'out_of_band_mgmt_port', intersight.module.params, intersight.api_body)
-    check_and_add_prop('PackageCstateLimit', 'package_cstate_limit', intersight.module.params, intersight.api_body)
-    check_and_add_prop('PanicHighWatermark', 'panic_high_watermark', intersight.module.params, intersight.api_body)
-    check_and_add_prop('PartialCacheLineSparing', 'partial_cache_line_sparing', intersight.module.params, intersight.api_body)
-    check_and_add_prop('PartialMirrorModeConfig', 'partial_mirror_mode_config', intersight.module.params, intersight.api_body)
-    check_and_add_prop('PartialMirrorPercent', 'partial_mirror_percent', intersight.module.params, intersight.api_body)
-    check_and_add_prop('PartialMirrorValue1', 'partial_mirror_value1', intersight.module.params, intersight.api_body)
-    check_and_add_prop('PartialMirrorValue2', 'partial_mirror_value2', intersight.module.params, intersight.api_body)
-    check_and_add_prop('PartialMirrorValue3', 'partial_mirror_value3', intersight.module.params, intersight.api_body)
-    check_and_add_prop('PartialMirrorValue4', 'partial_mirror_value4', intersight.module.params, intersight.api_body)
-    check_and_add_prop('PatrolScrub', 'patrol_scrub', intersight.module.params, intersight.api_body)
-    check_and_add_prop('PatrolScrubDuration', 'patrol_scrub_duration', intersight.module.params, intersight.api_body)
-    check_and_add_prop('PchPciePllSsc', 'pch_pcie_pll_ssc', intersight.module.params, intersight.api_body)
-    check_and_add_prop('PchUsb30mode', 'pch_usb30mode', intersight.module.params, intersight.api_body)
-    check_and_add_prop('PcieAriSupport', 'pcie_ari_support', intersight.module.params, intersight.api_body)
-    check_and_add_prop('PciePllSsc', 'pcie_pll_ssc', intersight.module.params, intersight.api_body)
-    check_and_add_prop('PcIeRasSupport', 'pc_ie_ras_support', intersight.module.params, intersight.api_body)
-    check_and_add_prop('PcieSlotMraid1linkSpeed', 'pcie_slot_mraid1link_speed', intersight.module.params, intersight.api_body)
-    check_and_add_prop('PcieSlotMraid1optionRom', 'pcie_slot_mraid1option_rom', intersight.module.params, intersight.api_body)
-    check_and_add_prop('PcieSlotMraid2linkSpeed', 'pcie_slot_mraid2link_speed', intersight.module.params, intersight.api_body)
-    check_and_add_prop('PcieSlotMraid2optionRom', 'pcie_slot_mraid2option_rom', intersight.module.params, intersight.api_body)
-    check_and_add_prop('PcieSlotMstorraidLinkSpeed', 'pcie_slot_mstorraid_link_speed', intersight.module.params, intersight.api_body)
-    check_and_add_prop('PcieSlotMstorraidOptionRom', 'pcie_slot_mstorraid_option_rom', intersight.module.params, intersight.api_body)
-    check_and_add_prop('PcieSlotNvme1linkSpeed', 'pcie_slot_nvme1link_speed', intersight.module.params, intersight.api_body)
-    check_and_add_prop('PcieSlotNvme1optionRom', 'pcie_slot_nvme1option_rom', intersight.module.params, intersight.api_body)
-    check_and_add_prop('PcieSlotNvme2linkSpeed', 'pcie_slot_nvme2link_speed', intersight.module.params, intersight.api_body)
-    check_and_add_prop('PcieSlotNvme2optionRom', 'pcie_slot_nvme2option_rom', intersight.module.params, intersight.api_body)
-    check_and_add_prop('PcieSlotNvme3linkSpeed', 'pcie_slot_nvme3link_speed', intersight.module.params, intersight.api_body)
-    check_and_add_prop('PcieSlotNvme3optionRom', 'pcie_slot_nvme3option_rom', intersight.module.params, intersight.api_body)
-    check_and_add_prop('PcieSlotNvme4linkSpeed', 'pcie_slot_nvme4link_speed', intersight.module.params, intersight.api_body)
-    check_and_add_prop('PcieSlotNvme4optionRom', 'pcie_slot_nvme4option_rom', intersight.module.params, intersight.api_body)
-    check_and_add_prop('PcieSlotNvme5linkSpeed', 'pcie_slot_nvme5link_speed', intersight.module.params, intersight.api_body)
-    check_and_add_prop('PcieSlotNvme5optionRom', 'pcie_slot_nvme5option_rom', intersight.module.params, intersight.api_body)
-    check_and_add_prop('PcieSlotNvme6linkSpeed', 'pcie_slot_nvme6link_speed', intersight.module.params, intersight.api_body)
-    check_and_add_prop('PcieSlotNvme6optionRom', 'pcie_slot_nvme6option_rom', intersight.module.params, intersight.api_body)
-    check_and_add_prop('PcieSlotsCdnEnable', 'pcie_slots_cdn_enable', intersight.module.params, intersight.api_body)
-    check_and_add_prop('PcIeSsdHotPlugSupport', 'pc_ie_ssd_hot_plug_support', intersight.module.params, intersight.api_body)
-    check_and_add_prop('PciOptionRoMs', 'pci_option_ro_ms', intersight.module.params, intersight.api_body)
-    check_and_add_prop('PciRomClp', 'pci_rom_clp', intersight.module.params, intersight.api_body)
-    check_and_add_prop('PopSupport', 'pop_support', intersight.module.params, intersight.api_body)
-    check_and_add_prop('PostErrorPause', 'post_error_pause', intersight.module.params, intersight.api_body)
-    check_and_add_prop('PostPackageRepair', 'post_package_repair', intersight.module.params, intersight.api_body)
-    check_and_add_prop('ProcessorC1e', 'processor_c1e', intersight.module.params, intersight.api_body)
-    check_and_add_prop('ProcessorC3report', 'processor_c3report', intersight.module.params, intersight.api_body)
-    check_and_add_prop('ProcessorC6report', 'processor_c6report', intersight.module.params, intersight.api_body)
-    check_and_add_prop('ProcessorCstate', 'processor_cstate', intersight.module.params, intersight.api_body)
-    check_and_add_prop('Profiles', 'profiles', intersight.module.params, intersight.api_body)
-    check_and_add_prop('Psata', 'psata', intersight.module.params, intersight.api_body)
-    check_and_add_prop('PstateCoordType', 'pstate_coord_type', intersight.module.params, intersight.api_body)
-    check_and_add_prop('PuttyKeyPad', 'putty_key_pad', intersight.module.params, intersight.api_body)
-    check_and_add_prop('PwrPerfTuning', 'pwr_perf_tuning', intersight.module.params, intersight.api_body)
-    check_and_add_prop('QpiLinkFrequency', 'qpi_link_frequency', intersight.module.params, intersight.api_body)
-    check_and_add_prop('QpiLinkSpeed', 'qpi_link_speed', intersight.module.params, intersight.api_body)
-    check_and_add_prop('QpiSnoopMode', 'qpi_snoop_mode', intersight.module.params, intersight.api_body)
-    check_and_add_prop('RankInterLeave', 'rank_inter_leave', intersight.module.params, intersight.api_body)
-    check_and_add_prop('RedirectionAfterPost', 'redirection_after_post', intersight.module.params, intersight.api_body)
-    check_and_add_prop('SataModeSelect', 'sata_mode_select', intersight.module.params, intersight.api_body)
-    check_and_add_prop('SelectMemoryRasConfiguration', 'select_memory_ras_configuration', intersight.module.params, intersight.api_body)
-    check_and_add_prop('SelectPprType', 'select_ppr_type', intersight.module.params, intersight.api_body)
-    check_and_add_prop('SerialPortAenable', 'serial_port_aenable', intersight.module.params, intersight.api_body)
-    check_and_add_prop('Sev', 'sev', intersight.module.params, intersight.api_body)
-    check_and_add_prop('SgxAutoRegistrationAgent', 'sgx_auto_registration_agent', intersight.module.params, intersight.api_body)
-    check_and_add_prop('SgxEpoch0', 'sgx_epoch0', intersight.module.params, intersight.api_body)
-    check_and_add_prop('SgxEpoch1', 'sgx_epoch1', intersight.module.params, intersight.api_body)
-    check_and_add_prop('SgxFactoryReset', 'sgx_factory_reset', intersight.module.params, intersight.api_body)
-    check_and_add_prop('SgxLePubKeyHash0', 'sgx_le_pub_key_hash0', intersight.module.params, intersight.api_body)
-    check_and_add_prop('SgxLePubKeyHash1', 'sgx_le_pub_key_hash1', intersight.module.params, intersight.api_body)
-    check_and_add_prop('SgxLePubKeyHash2', 'sgx_le_pub_key_hash2', intersight.module.params, intersight.api_body)
-    check_and_add_prop('SgxLePubKeyHash3', 'sgx_le_pub_key_hash3', intersight.module.params, intersight.api_body)
-    check_and_add_prop('SgxLeWr', 'sgx_le_wr', intersight.module.params, intersight.api_body)
-    check_and_add_prop('SgxPackageInfoInBandAccess', 'sgx_package_info_in_band_access', intersight.module.params, intersight.api_body)
-    check_and_add_prop('SgxQos', 'sgx_qos', intersight.module.params, intersight.api_body)
-    check_and_add_prop('Sha1pcrBank', 'sha1pcr_bank', intersight.module.params, intersight.api_body)
-    check_and_add_prop('Sha256pcrBank', 'sha256pcr_bank', intersight.module.params, intersight.api_body)
-    check_and_add_prop('SinglePctlEnable', 'single_pctl_enable', intersight.module.params, intersight.api_body)
-    check_and_add_prop('Slot10linkSpeed', 'slot10link_speed', intersight.module.params, intersight.api_body)
-    check_and_add_prop('Slot10state', 'slot10state', intersight.module.params, intersight.api_body)
-    check_and_add_prop('Slot11linkSpeed', 'slot11link_speed', intersight.module.params, intersight.api_body)
-    check_and_add_prop('Slot11state', 'slot11state', intersight.module.params, intersight.api_body)
-    check_and_add_prop('Slot12linkSpeed', 'slot12link_speed', intersight.module.params, intersight.api_body)
-    check_and_add_prop('Slot12state', 'slot12state', intersight.module.params, intersight.api_body)
-    check_and_add_prop('Slot13state', 'slot13state', intersight.module.params, intersight.api_body)
-    check_and_add_prop('Slot14state', 'slot14state', intersight.module.params, intersight.api_body)
-    check_and_add_prop('Slot1linkSpeed', 'slot1link_speed', intersight.module.params, intersight.api_body)
-    check_and_add_prop('Slot1state', 'slot1state', intersight.module.params, intersight.api_body)
-    check_and_add_prop('Slot2linkSpeed', 'slot2link_speed', intersight.module.params, intersight.api_body)
-    check_and_add_prop('Slot2state', 'slot2state', intersight.module.params, intersight.api_body)
-    check_and_add_prop('Slot3linkSpeed', 'slot3link_speed', intersight.module.params, intersight.api_body)
-    check_and_add_prop('Slot3state', 'slot3state', intersight.module.params, intersight.api_body)
-    check_and_add_prop('Slot4linkSpeed', 'slot4link_speed', intersight.module.params, intersight.api_body)
-    check_and_add_prop('Slot4state', 'slot4state', intersight.module.params, intersight.api_body)
-    check_and_add_prop('Slot5linkSpeed', 'slot5link_speed', intersight.module.params, intersight.api_body)
-    check_and_add_prop('Slot5state', 'slot5state', intersight.module.params, intersight.api_body)
-    check_and_add_prop('Slot6linkSpeed', 'slot6link_speed', intersight.module.params, intersight.api_body)
-    check_and_add_prop('Slot6state', 'slot6state', intersight.module.params, intersight.api_body)
-    check_and_add_prop('Slot7linkSpeed', 'slot7link_speed', intersight.module.params, intersight.api_body)
-    check_and_add_prop('Slot7state', 'slot7state', intersight.module.params, intersight.api_body)
-    check_and_add_prop('Slot8linkSpeed', 'slot8link_speed', intersight.module.params, intersight.api_body)
-    check_and_add_prop('Slot8state', 'slot8state', intersight.module.params, intersight.api_body)
-    check_and_add_prop('Slot9linkSpeed', 'slot9link_speed', intersight.module.params, intersight.api_body)
-    check_and_add_prop('Slot9state', 'slot9state', intersight.module.params, intersight.api_body)
-    check_and_add_prop('SlotFlomLinkSpeed', 'slot_flom_link_speed', intersight.module.params, intersight.api_body)
-    check_and_add_prop('SlotFrontNvme10linkSpeed', 'slot_front_nvme10link_speed', intersight.module.params, intersight.api_body)
-    check_and_add_prop('SlotFrontNvme10optionRom', 'slot_front_nvme10option_rom', intersight.module.params, intersight.api_body)
-    check_and_add_prop('SlotFrontNvme11linkSpeed', 'slot_front_nvme11link_speed', intersight.module.params, intersight.api_body)
-    check_and_add_prop('SlotFrontNvme11optionRom', 'slot_front_nvme11option_rom', intersight.module.params, intersight.api_body)
-    check_and_add_prop('SlotFrontNvme12linkSpeed', 'slot_front_nvme12link_speed', intersight.module.params, intersight.api_body)
-    check_and_add_prop('SlotFrontNvme12optionRom', 'slot_front_nvme12option_rom', intersight.module.params, intersight.api_body)
-    check_and_add_prop('SlotFrontNvme13linkSpeed', 'slot_front_nvme13link_speed', intersight.module.params, intersight.api_body)
-    check_and_add_prop('SlotFrontNvme13optionRom', 'slot_front_nvme13option_rom', intersight.module.params, intersight.api_body)
-    check_and_add_prop('SlotFrontNvme14linkSpeed', 'slot_front_nvme14link_speed', intersight.module.params, intersight.api_body)
-    check_and_add_prop('SlotFrontNvme14optionRom', 'slot_front_nvme14option_rom', intersight.module.params, intersight.api_body)
-    check_and_add_prop('SlotFrontNvme15linkSpeed', 'slot_front_nvme15link_speed', intersight.module.params, intersight.api_body)
-    check_and_add_prop('SlotFrontNvme15optionRom', 'slot_front_nvme15option_rom', intersight.module.params, intersight.api_body)
-    check_and_add_prop('SlotFrontNvme16linkSpeed', 'slot_front_nvme16link_speed', intersight.module.params, intersight.api_body)
-    check_and_add_prop('SlotFrontNvme16optionRom', 'slot_front_nvme16option_rom', intersight.module.params, intersight.api_body)
-    check_and_add_prop('SlotFrontNvme17linkSpeed', 'slot_front_nvme17link_speed', intersight.module.params, intersight.api_body)
-    check_and_add_prop('SlotFrontNvme17optionRom', 'slot_front_nvme17option_rom', intersight.module.params, intersight.api_body)
-    check_and_add_prop('SlotFrontNvme18linkSpeed', 'slot_front_nvme18link_speed', intersight.module.params, intersight.api_body)
-    check_and_add_prop('SlotFrontNvme18optionRom', 'slot_front_nvme18option_rom', intersight.module.params, intersight.api_body)
-    check_and_add_prop('SlotFrontNvme19linkSpeed', 'slot_front_nvme19link_speed', intersight.module.params, intersight.api_body)
-    check_and_add_prop('SlotFrontNvme19optionRom', 'slot_front_nvme19option_rom', intersight.module.params, intersight.api_body)
-    check_and_add_prop('SlotFrontNvme1linkSpeed', 'slot_front_nvme1link_speed', intersight.module.params, intersight.api_body)
-    check_and_add_prop('SlotFrontNvme1optionRom', 'slot_front_nvme1option_rom', intersight.module.params, intersight.api_body)
-    check_and_add_prop('SlotFrontNvme20linkSpeed', 'slot_front_nvme20link_speed', intersight.module.params, intersight.api_body)
-    check_and_add_prop('SlotFrontNvme20optionRom', 'slot_front_nvme20option_rom', intersight.module.params, intersight.api_body)
-    check_and_add_prop('SlotFrontNvme21linkSpeed', 'slot_front_nvme21link_speed', intersight.module.params, intersight.api_body)
-    check_and_add_prop('SlotFrontNvme21optionRom', 'slot_front_nvme21option_rom', intersight.module.params, intersight.api_body)
-    check_and_add_prop('SlotFrontNvme22linkSpeed', 'slot_front_nvme22link_speed', intersight.module.params, intersight.api_body)
-    check_and_add_prop('SlotFrontNvme22optionRom', 'slot_front_nvme22option_rom', intersight.module.params, intersight.api_body)
-    check_and_add_prop('SlotFrontNvme23linkSpeed', 'slot_front_nvme23link_speed', intersight.module.params, intersight.api_body)
-    check_and_add_prop('SlotFrontNvme23optionRom', 'slot_front_nvme23option_rom', intersight.module.params, intersight.api_body)
-    check_and_add_prop('SlotFrontNvme24linkSpeed', 'slot_front_nvme24link_speed', intersight.module.params, intersight.api_body)
-    check_and_add_prop('SlotFrontNvme24optionRom', 'slot_front_nvme24option_rom', intersight.module.params, intersight.api_body)
-    check_and_add_prop('SlotFrontNvme2linkSpeed', 'slot_front_nvme2link_speed', intersight.module.params, intersight.api_body)
-    check_and_add_prop('SlotFrontNvme2optionRom', 'slot_front_nvme2option_rom', intersight.module.params, intersight.api_body)
-    check_and_add_prop('SlotFrontNvme3linkSpeed', 'slot_front_nvme3link_speed', intersight.module.params, intersight.api_body)
-    check_and_add_prop('SlotFrontNvme3optionRom', 'slot_front_nvme3option_rom', intersight.module.params, intersight.api_body)
-    check_and_add_prop('SlotFrontNvme4linkSpeed', 'slot_front_nvme4link_speed', intersight.module.params, intersight.api_body)
-    check_and_add_prop('SlotFrontNvme4optionRom', 'slot_front_nvme4option_rom', intersight.module.params, intersight.api_body)
-    check_and_add_prop('SlotFrontNvme5linkSpeed', 'slot_front_nvme5link_speed', intersight.module.params, intersight.api_body)
-    check_and_add_prop('SlotFrontNvme5optionRom', 'slot_front_nvme5option_rom', intersight.module.params, intersight.api_body)
-    check_and_add_prop('SlotFrontNvme6linkSpeed', 'slot_front_nvme6link_speed', intersight.module.params, intersight.api_body)
-    check_and_add_prop('SlotFrontNvme6optionRom', 'slot_front_nvme6option_rom', intersight.module.params, intersight.api_body)
-    check_and_add_prop('SlotFrontNvme7linkSpeed', 'slot_front_nvme7link_speed', intersight.module.params, intersight.api_body)
-    check_and_add_prop('SlotFrontNvme7optionRom', 'slot_front_nvme7option_rom', intersight.module.params, intersight.api_body)
-    check_and_add_prop('SlotFrontNvme8linkSpeed', 'slot_front_nvme8link_speed', intersight.module.params, intersight.api_body)
-    check_and_add_prop('SlotFrontNvme8optionRom', 'slot_front_nvme8option_rom', intersight.module.params, intersight.api_body)
-    check_and_add_prop('SlotFrontNvme9linkSpeed', 'slot_front_nvme9link_speed', intersight.module.params, intersight.api_body)
-    check_and_add_prop('SlotFrontNvme9optionRom', 'slot_front_nvme9option_rom', intersight.module.params, intersight.api_body)
-    check_and_add_prop('SlotFrontSlot5linkSpeed', 'slot_front_slot5link_speed', intersight.module.params, intersight.api_body)
-    check_and_add_prop('SlotFrontSlot6linkSpeed', 'slot_front_slot6link_speed', intersight.module.params, intersight.api_body)
-    check_and_add_prop('SlotGpu1state', 'slot_gpu1state', intersight.module.params, intersight.api_body)
-    check_and_add_prop('SlotGpu2state', 'slot_gpu2state', intersight.module.params, intersight.api_body)
-    check_and_add_prop('SlotGpu3state', 'slot_gpu3state', intersight.module.params, intersight.api_body)
-    check_and_add_prop('SlotGpu4state', 'slot_gpu4state', intersight.module.params, intersight.api_body)
-    check_and_add_prop('SlotGpu5state', 'slot_gpu5state', intersight.module.params, intersight.api_body)
-    check_and_add_prop('SlotGpu6state', 'slot_gpu6state', intersight.module.params, intersight.api_body)
-    check_and_add_prop('SlotGpu7state', 'slot_gpu7state', intersight.module.params, intersight.api_body)
-    check_and_add_prop('SlotGpu8state', 'slot_gpu8state', intersight.module.params, intersight.api_body)
-    check_and_add_prop('SlotHbaLinkSpeed', 'slot_hba_link_speed', intersight.module.params, intersight.api_body)
-    check_and_add_prop('SlotHbaState', 'slot_hba_state', intersight.module.params, intersight.api_body)
-    check_and_add_prop('SlotLom1link', 'slot_lom1link', intersight.module.params, intersight.api_body)
-    check_and_add_prop('SlotLom2link', 'slot_lom2link', intersight.module.params, intersight.api_body)
-    check_and_add_prop('SlotMezzState', 'slot_mezz_state', intersight.module.params, intersight.api_body)
-    check_and_add_prop('SlotMlomLinkSpeed', 'slot_mlom_link_speed', intersight.module.params, intersight.api_body)
-    check_and_add_prop('SlotMlomState', 'slot_mlom_state', intersight.module.params, intersight.api_body)
-    check_and_add_prop('SlotMraidLinkSpeed', 'slot_mraid_link_speed', intersight.module.params, intersight.api_body)
-    check_and_add_prop('SlotMraidState', 'slot_mraid_state', intersight.module.params, intersight.api_body)
-    check_and_add_prop('SlotN10state', 'slot_n10state', intersight.module.params, intersight.api_body)
-    check_and_add_prop('SlotN11state', 'slot_n11state', intersight.module.params, intersight.api_body)
-    check_and_add_prop('SlotN12state', 'slot_n12state', intersight.module.params, intersight.api_body)
-    check_and_add_prop('SlotN13state', 'slot_n13state', intersight.module.params, intersight.api_body)
-    check_and_add_prop('SlotN14state', 'slot_n14state', intersight.module.params, intersight.api_body)
-    check_and_add_prop('SlotN15state', 'slot_n15state', intersight.module.params, intersight.api_body)
-    check_and_add_prop('SlotN16state', 'slot_n16state', intersight.module.params, intersight.api_body)
-    check_and_add_prop('SlotN17state', 'slot_n17state', intersight.module.params, intersight.api_body)
-    check_and_add_prop('SlotN18state', 'slot_n18state', intersight.module.params, intersight.api_body)
-    check_and_add_prop('SlotN19state', 'slot_n19state', intersight.module.params, intersight.api_body)
-    check_and_add_prop('SlotN1state', 'slot_n1state', intersight.module.params, intersight.api_body)
-    check_and_add_prop('SlotN20state', 'slot_n20state', intersight.module.params, intersight.api_body)
-    check_and_add_prop('SlotN21state', 'slot_n21state', intersight.module.params, intersight.api_body)
-    check_and_add_prop('SlotN22state', 'slot_n22state', intersight.module.params, intersight.api_body)
-    check_and_add_prop('SlotN23state', 'slot_n23state', intersight.module.params, intersight.api_body)
-    check_and_add_prop('SlotN24state', 'slot_n24state', intersight.module.params, intersight.api_body)
-    check_and_add_prop('SlotN2state', 'slot_n2state', intersight.module.params, intersight.api_body)
-    check_and_add_prop('SlotN3state', 'slot_n3state', intersight.module.params, intersight.api_body)
-    check_and_add_prop('SlotN4state', 'slot_n4state', intersight.module.params, intersight.api_body)
-    check_and_add_prop('SlotN5state', 'slot_n5state', intersight.module.params, intersight.api_body)
-    check_and_add_prop('SlotN6state', 'slot_n6state', intersight.module.params, intersight.api_body)
-    check_and_add_prop('SlotN7state', 'slot_n7state', intersight.module.params, intersight.api_body)
-    check_and_add_prop('SlotN8state', 'slot_n8state', intersight.module.params, intersight.api_body)
-    check_and_add_prop('SlotN9state', 'slot_n9state', intersight.module.params, intersight.api_body)
-    check_and_add_prop('SlotRaidLinkSpeed', 'slot_raid_link_speed', intersight.module.params, intersight.api_body)
-    check_and_add_prop('SlotRaidState', 'slot_raid_state', intersight.module.params, intersight.api_body)
-    check_and_add_prop('SlotRearNvme1linkSpeed', 'slot_rear_nvme1link_speed', intersight.module.params, intersight.api_body)
-    check_and_add_prop('SlotRearNvme1state', 'slot_rear_nvme1state', intersight.module.params, intersight.api_body)
-    check_and_add_prop('SlotRearNvme2linkSpeed', 'slot_rear_nvme2link_speed', intersight.module.params, intersight.api_body)
-    check_and_add_prop('SlotRearNvme2state', 'slot_rear_nvme2state', intersight.module.params, intersight.api_body)
-    check_and_add_prop('SlotRearNvme3linkSpeed', 'slot_rear_nvme3link_speed', intersight.module.params, intersight.api_body)
-    check_and_add_prop('SlotRearNvme3state', 'slot_rear_nvme3state', intersight.module.params, intersight.api_body)
-    check_and_add_prop('SlotRearNvme4linkSpeed', 'slot_rear_nvme4link_speed', intersight.module.params, intersight.api_body)
-    check_and_add_prop('SlotRearNvme4state', 'slot_rear_nvme4state', intersight.module.params, intersight.api_body)
-    check_and_add_prop('SlotRearNvme5state', 'slot_rear_nvme5state', intersight.module.params, intersight.api_body)
-    check_and_add_prop('SlotRearNvme6state', 'slot_rear_nvme6state', intersight.module.params, intersight.api_body)
-    check_and_add_prop('SlotRearNvme7state', 'slot_rear_nvme7state', intersight.module.params, intersight.api_body)
-    check_and_add_prop('SlotRearNvme8state', 'slot_rear_nvme8state', intersight.module.params, intersight.api_body)
-    check_and_add_prop('SlotRiser1linkSpeed', 'slot_riser1link_speed', intersight.module.params, intersight.api_body)
-    check_and_add_prop('SlotRiser1slot1linkSpeed', 'slot_riser1slot1link_speed', intersight.module.params, intersight.api_body)
-    check_and_add_prop('SlotRiser1slot2linkSpeed', 'slot_riser1slot2link_speed', intersight.module.params, intersight.api_body)
-    check_and_add_prop('SlotRiser1slot3linkSpeed', 'slot_riser1slot3link_speed', intersight.module.params, intersight.api_body)
-    check_and_add_prop('SlotRiser2linkSpeed', 'slot_riser2link_speed', intersight.module.params, intersight.api_body)
-    check_and_add_prop('SlotRiser2slot4linkSpeed', 'slot_riser2slot4link_speed', intersight.module.params, intersight.api_body)
-    check_and_add_prop('SlotRiser2slot5linkSpeed', 'slot_riser2slot5link_speed', intersight.module.params, intersight.api_body)
-    check_and_add_prop('SlotRiser2slot6linkSpeed', 'slot_riser2slot6link_speed', intersight.module.params, intersight.api_body)
-    check_and_add_prop('SlotSasState', 'slot_sas_state', intersight.module.params, intersight.api_body)
-    check_and_add_prop('SlotSsdSlot1linkSpeed', 'slot_ssd_slot1link_speed', intersight.module.params, intersight.api_body)
-    check_and_add_prop('SlotSsdSlot2linkSpeed', 'slot_ssd_slot2link_speed', intersight.module.params, intersight.api_body)
-    check_and_add_prop('Smee', 'smee', intersight.module.params, intersight.api_body)
-    check_and_add_prop('SmtMode', 'smt_mode', intersight.module.params, intersight.api_body)
-    check_and_add_prop('Snc', 'snc', intersight.module.params, intersight.api_body)
-    check_and_add_prop('SnoopyModeFor2lm', 'snoopy_mode_for2lm', intersight.module.params, intersight.api_body)
-    check_and_add_prop('SnoopyModeForAd', 'snoopy_mode_for_ad', intersight.module.params, intersight.api_body)
-    check_and_add_prop('SparingMode', 'sparing_mode', intersight.module.params, intersight.api_body)
-    check_and_add_prop('SrIov', 'sr_iov', intersight.module.params, intersight.api_body)
-    check_and_add_prop('StreamerPrefetch', 'streamer_prefetch', intersight.module.params, intersight.api_body)
-    check_and_add_prop('SvmMode', 'svm_mode', intersight.module.params, intersight.api_body)
-    check_and_add_prop('TerminalType', 'terminal_type', intersight.module.params, intersight.api_body)
-    check_and_add_prop('TpmControl', 'tpm_control', intersight.module.params, intersight.api_body)
-    check_and_add_prop('TpmPendingOperation', 'tpm_pending_operation', intersight.module.params, intersight.api_body)
-    check_and_add_prop('TpmPpiRequired', 'tpm_ppi_required', intersight.module.params, intersight.api_body)
-    check_and_add_prop('TpmSupport', 'tpm_support', intersight.module.params, intersight.api_body)
-    check_and_add_prop('Tsme', 'tsme', intersight.module.params, intersight.api_body)
-    check_and_add_prop('TxtSupport', 'txt_support', intersight.module.params, intersight.api_body)
-    check_and_add_prop('UcsmBootOrderRule', 'ucsm_boot_order_rule', intersight.module.params, intersight.api_body)
-    check_and_add_prop('UfsDisable', 'ufs_disable', intersight.module.params, intersight.api_body)
-    check_and_add_prop('UmaBasedClustering', 'uma_based_clustering', intersight.module.params, intersight.api_body)
-    check_and_add_prop('UpiLinkEnablement', 'upi_link_enablement', intersight.module.params, intersight.api_body)
-    check_and_add_prop('UpiPowerManagement', 'upi_power_management', intersight.module.params, intersight.api_body)
-    check_and_add_prop('UsbEmul6064', 'usb_emul6064', intersight.module.params, intersight.api_body)
-    check_and_add_prop('UsbPortFront', 'usb_port_front', intersight.module.params, intersight.api_body)
-    check_and_add_prop('UsbPortInternal', 'usb_port_internal', intersight.module.params, intersight.api_body)
-    check_and_add_prop('UsbPortKvm', 'usb_port_kvm', intersight.module.params, intersight.api_body)
-    check_and_add_prop('UsbPortRear', 'usb_port_rear', intersight.module.params, intersight.api_body)
-    check_and_add_prop('UsbPortSdCard', 'usb_port_sd_card', intersight.module.params, intersight.api_body)
-    check_and_add_prop('UsbPortVmedia', 'usb_port_vmedia', intersight.module.params, intersight.api_body)
-    check_and_add_prop('UsbXhciSupport', 'usb_xhci_support', intersight.module.params, intersight.api_body)
-    check_and_add_prop('VgaPriority', 'vga_priority', intersight.module.params, intersight.api_body)
-    check_and_add_prop('VirtualNuma', 'virtual_numa', intersight.module.params, intersight.api_body)
-    check_and_add_prop('VmdEnable', 'vmd_enable', intersight.module.params, intersight.api_body)
-    check_and_add_prop('VolMemoryMode', 'vol_memory_mode', intersight.module.params, intersight.api_body)
-    check_and_add_prop('WorkLoadConfig', 'work_load_config', intersight.module.params, intersight.api_body)
-    check_and_add_prop('X2apicOptOut', 'x2apic_opt_out', intersight.module.params, intersight.api_body)
-    check_and_add_prop('XptPrefetch', 'xpt_prefetch', intersight.module.params, intersight.api_body)
-    check_and_add_prop('XptRemotePrefetch', 'xpt_remote_prefetch', intersight.module.params, intersight.api_body)
+    # Apply all BIOS properties using the property mapping
+    apply_bios_properties(intersight.module.params, intersight.api_body)
 
     #
     # Code below should be common across all policy modules
