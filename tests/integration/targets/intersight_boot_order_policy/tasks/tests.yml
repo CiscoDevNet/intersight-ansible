@@ -1,0 +1,414 @@
+---
+- block:
+  - name: Define anchor for Intersight API login info
+    ansible.builtin.set_fact:
+      api_info: &api_info
+        api_private_key: "{{ api_private_key }}"
+        api_key_id: "{{ api_key_id }}"
+        api_uri: "{{ api_uri | default(omit) }}"
+        validate_certs: "{{ validate_certs | default(omit) }}"
+        organization: "{{ organization }}"
+
+  - name: Make sure Environment is clean
+    cisco.intersight.intersight_boot_order_policy:
+      <<: *api_info
+      name: "{{ item }}"
+      state: absent
+    loop:
+      - test_boot_order_policy_minimal
+      - test_boot_order_policy_legacy
+      - test_boot_order_policy_uefi
+      - test_boot_order_policy_uefi_secure
+      - test_boot_order_policy_san
+      - test_boot_order_policy_pxe
+      - test_boot_order_policy_multi
+
+  - name: Create Boot Order Policy with minimal parameters - check-mode
+    cisco.intersight.intersight_boot_order_policy:
+      <<: *api_info
+      name: test_boot_order_policy_minimal
+      description: "Test Boot Order policy with minimal parameters"
+      configured_boot_mode: Legacy
+    check_mode: true
+    register: creation_res_check_mode
+
+  - name: Verify Boot Order policy was not created - check-mode
+    ansible.builtin.assert:
+      that:
+        - creation_res_check_mode is changed
+        - creation_res_check_mode.api_response == {}
+
+  - name: Create Boot Order Policy with minimal parameters
+    cisco.intersight.intersight_boot_order_policy:
+      <<: *api_info
+      name: test_boot_order_policy_minimal
+      description: "Test Boot Order policy with minimal parameters"
+      configured_boot_mode: Legacy
+    register: creation_res
+
+  - name: Fetch info after creation
+    cisco.intersight.intersight_boot_order_policy_info:
+      <<: *api_info
+      name: test_boot_order_policy_minimal
+    register: creation_info_res
+
+  - name: Verify Boot Order policy creation by info
+    ansible.builtin.assert:
+      that:
+        - creation_res.changed
+        - creation_info_res.api_response[0].Name == 'test_boot_order_policy_minimal'
+        - creation_info_res.api_response[0].ObjectType == 'boot.PrecisionPolicy'
+        - creation_info_res.api_response[0].Description == 'Test Boot Order policy with minimal parameters'
+        - creation_info_res.api_response[0].ConfiguredBootMode == 'Legacy'
+
+  - name: Verify Boot Order policy creation response aligns with info response
+    ansible.builtin.assert:
+      that:
+        - creation_res.api_response.Name == creation_info_res.api_response[0].Name
+        - creation_res.api_response.Moid == creation_info_res.api_response[0].Moid
+
+  - name: Create Boot Order Policy (idempotency check)
+    cisco.intersight.intersight_boot_order_policy:
+      <<: *api_info
+      name: test_boot_order_policy_minimal
+      description: "Test Boot Order policy with minimal parameters"
+      configured_boot_mode: Legacy
+    register: creation_res_ide
+
+  - name: Verify Boot Order policy creation (idempotency check)
+    ansible.builtin.assert:
+      that:
+        - not creation_res_ide.changed
+
+  - name: Update Boot Order Policy - change boot mode to UEFI with Secure Boot and add boot device
+    cisco.intersight.intersight_boot_order_policy:
+      <<: *api_info
+      name: test_boot_order_policy_minimal
+      description: "Updated to UEFI with Secure Boot"
+      configured_boot_mode: Uefi
+      uefi_enable_secure_boot: true
+      boot_devices:
+        - device_type: Local Disk
+          device_name: UEFI-Boot-Disk
+          enabled: true
+          controller_slot: MRAID
+          bootloader_name: BOOTX64.EFI
+          bootloader_path: \EFI\BOOT\BOOTX64.EFI
+    register: update_res
+
+  - name: Fetch info after update
+    cisco.intersight.intersight_boot_order_policy_info:
+      <<: *api_info
+      name: test_boot_order_policy_minimal
+    register: update_info_res
+
+  - name: Verify Boot Order policy update - critical changes
+    ansible.builtin.assert:
+      that:
+        - update_res.changed
+        - update_info_res.api_response[0].Description == 'Updated to UEFI with Secure Boot'
+        - update_info_res.api_response[0].ConfiguredBootMode == 'Uefi'
+        - update_info_res.api_response[0].EnforceUefiSecureBoot == true
+        - update_info_res.api_response[0].BootDevices | length == 1
+        - update_info_res.api_response[0].BootDevices[0].ObjectType == 'boot.LocalDisk'
+        - update_info_res.api_response[0].BootDevices[0].Name == 'UEFI-Boot-Disk'
+
+  - name: Create Boot Order Policy with Legacy boot mode and local disk
+    cisco.intersight.intersight_boot_order_policy:
+      <<: *api_info
+      name: test_boot_order_policy_legacy
+      description: "Boot Order policy with Legacy boot mode"
+      tags:
+        - Key: Environment
+          Value: Test
+        - Key: Purpose
+          Value: Integration-Testing
+      configured_boot_mode: Legacy
+      boot_devices:
+        - device_type: Local Disk
+          device_name: Boot-Lun
+          enabled: true
+          controller_slot: MRAID
+    register: creation_res_legacy
+
+  - name: Fetch info for Legacy boot policy
+    cisco.intersight.intersight_boot_order_policy_info:
+      <<: *api_info
+      name: test_boot_order_policy_legacy
+    register: creation_info_res_legacy
+
+  - name: Verify Legacy boot policy creation
+    ansible.builtin.assert:
+      that:
+        - creation_res_legacy.changed
+        - creation_info_res_legacy.api_response[0].Name == 'test_boot_order_policy_legacy'
+        - creation_info_res_legacy.api_response[0].ConfiguredBootMode == 'Legacy'
+        - creation_info_res_legacy.api_response[0].BootDevices | length == 1
+        - creation_info_res_legacy.api_response[0].BootDevices[0].ObjectType == 'boot.LocalDisk'
+        - creation_info_res_legacy.api_response[0].BootDevices[0].Name == 'Boot-Lun'
+        - creation_info_res_legacy.api_response[0].Tags | length == 2
+
+  - name: Create Boot Order Policy with UEFI boot mode
+    cisco.intersight.intersight_boot_order_policy:
+      <<: *api_info
+      name: test_boot_order_policy_uefi
+      description: "Boot Order policy with UEFI boot mode"
+      configured_boot_mode: Uefi
+      uefi_enable_secure_boot: false
+      boot_devices:
+        - device_type: Local Disk
+          device_name: UEFI-Boot-Disk
+          enabled: true
+          controller_slot: MRAID
+          bootloader_name: BOOTX64.EFI
+          bootloader_description: UEFI bootloader
+          bootloader_path: \EFI\BOOT\BOOTX64.EFI
+    register: creation_res_uefi
+
+  - name: Fetch info for UEFI boot policy
+    cisco.intersight.intersight_boot_order_policy_info:
+      <<: *api_info
+      name: test_boot_order_policy_uefi
+    register: creation_info_res_uefi
+
+  - name: Verify UEFI boot policy creation
+    ansible.builtin.assert:
+      that:
+        - creation_res_uefi.changed
+        - creation_info_res_uefi.api_response[0].Name == 'test_boot_order_policy_uefi'
+        - creation_info_res_uefi.api_response[0].ConfiguredBootMode == 'Uefi'
+        - creation_info_res_uefi.api_response[0].EnforceUefiSecureBoot == false
+        - creation_info_res_uefi.api_response[0].BootDevices | length == 1
+        - creation_info_res_uefi.api_response[0].BootDevices[0].ObjectType == 'boot.LocalDisk'
+
+  - name: Create Boot Order Policy with UEFI Secure Boot enabled
+    cisco.intersight.intersight_boot_order_policy:
+      <<: *api_info
+      name: test_boot_order_policy_uefi_secure
+      description: "Boot Order policy with UEFI Secure Boot"
+      configured_boot_mode: Uefi
+      uefi_enable_secure_boot: true
+      boot_devices:
+        - device_type: Local Disk
+          device_name: Secure-Boot-Disk
+          enabled: true
+          controller_slot: MRAID
+    register: creation_res_uefi_secure
+
+  - name: Fetch info for UEFI Secure Boot policy
+    cisco.intersight.intersight_boot_order_policy_info:
+      <<: *api_info
+      name: test_boot_order_policy_uefi_secure
+    register: creation_info_res_uefi_secure
+
+  - name: Verify UEFI Secure Boot policy creation
+    ansible.builtin.assert:
+      that:
+        - creation_res_uefi_secure.changed
+        - creation_info_res_uefi_secure.api_response[0].Name == 'test_boot_order_policy_uefi_secure'
+        - creation_info_res_uefi_secure.api_response[0].ConfiguredBootMode == 'Uefi'
+        - creation_info_res_uefi_secure.api_response[0].EnforceUefiSecureBoot == true
+
+  - name: Create Boot Order Policy with SAN boot device
+    cisco.intersight.intersight_boot_order_policy:
+      <<: *api_info
+      name: test_boot_order_policy_san
+      description: "Boot Order policy with SAN boot device"
+      configured_boot_mode: Uefi
+      boot_devices:
+        - device_type: SAN
+          device_name: SAN-Primary
+          enabled: true
+          interface_name: vhba0
+          network_slot: MLOM
+          lun: 0
+          wwpn: "50:00:00:25:B5:00:00:01"
+    register: creation_res_san
+
+  - name: Fetch info for SAN boot policy
+    cisco.intersight.intersight_boot_order_policy_info:
+      <<: *api_info
+      name: test_boot_order_policy_san
+    register: creation_info_res_san
+
+  - name: Verify SAN boot policy creation
+    ansible.builtin.assert:
+      that:
+        - creation_res_san.changed
+        - creation_info_res_san.api_response[0].Name == 'test_boot_order_policy_san'
+        - creation_info_res_san.api_response[0].BootDevices | length == 1
+        - creation_info_res_san.api_response[0].BootDevices[0].ObjectType == 'boot.San'
+        - creation_info_res_san.api_response[0].BootDevices[0].Name == 'SAN-Primary'
+        - creation_info_res_san.api_response[0].BootDevices[0].Wwpn == '50:00:00:25:B5:00:00:01'
+
+  - name: Create Boot Order Policy with PXE boot device
+    cisco.intersight.intersight_boot_order_policy:
+      <<: *api_info
+      name: test_boot_order_policy_pxe
+      description: "Boot Order policy with PXE boot device"
+      configured_boot_mode: Uefi
+      boot_devices:
+        - device_type: PXE
+          device_name: PXE-Primary
+          enabled: true
+          network_slot: MLOM
+          port: 0
+          ip_type: IPv4
+          interface_source: name
+          interface_name: eth0
+    register: creation_res_pxe
+
+  - name: Fetch info for PXE boot policy
+    cisco.intersight.intersight_boot_order_policy_info:
+      <<: *api_info
+      name: test_boot_order_policy_pxe
+    register: creation_info_res_pxe
+
+  - name: Verify PXE boot policy creation
+    ansible.builtin.assert:
+      that:
+        - creation_res_pxe.changed
+        - creation_info_res_pxe.api_response[0].Name == 'test_boot_order_policy_pxe'
+        - creation_info_res_pxe.api_response[0].BootDevices | length == 1
+        - creation_info_res_pxe.api_response[0].BootDevices[0].ObjectType == 'boot.Pxe'
+        - creation_info_res_pxe.api_response[0].BootDevices[0].Name == 'PXE-Primary'
+
+  - name: Create Boot Order Policy with multiple boot devices
+    cisco.intersight.intersight_boot_order_policy:
+      <<: *api_info
+      name: test_boot_order_policy_multi
+      description: "Boot Order policy with multiple boot devices"
+      configured_boot_mode: Uefi
+      boot_devices:
+        - device_type: Local Disk
+          device_name: Local-Boot
+          enabled: true
+          controller_slot: MRAID
+        - device_type: PXE
+          device_name: Network-Boot
+          enabled: true
+          network_slot: MLOM
+          port: 0
+          ip_type: IPv4
+          interface_source: name
+          interface_name: eth0
+        - device_type: Virtual Media
+          device_name: Virtual-DVD
+          enabled: true
+          virtual_media_subtype: kvm-mapped-dvd
+    register: creation_res_multi
+
+  - name: Fetch info for multi-device boot policy
+    cisco.intersight.intersight_boot_order_policy_info:
+      <<: *api_info
+      name: test_boot_order_policy_multi
+    register: creation_info_res_multi
+
+  - name: Verify multi-device boot policy creation
+    ansible.builtin.assert:
+      that:
+        - creation_res_multi.changed
+        - creation_info_res_multi.api_response[0].Name == 'test_boot_order_policy_multi'
+        - creation_info_res_multi.api_response[0].BootDevices | length == 3
+        - creation_info_res_multi.api_response[0].BootDevices[0].ObjectType == 'boot.LocalDisk'
+        - creation_info_res_multi.api_response[0].BootDevices[1].ObjectType == 'boot.Pxe'
+        - creation_info_res_multi.api_response[0].BootDevices[2].ObjectType == 'boot.VirtualMedia'
+
+  - name: Fetch all Boot Order policies under the organization
+    cisco.intersight.intersight_boot_order_policy_info:
+      <<: *api_info
+    register: all_policies_res
+
+  - name: Check that there are at least 6 Boot Order policies under this organization
+    ansible.builtin.assert:
+      that:
+        - all_policies_res.api_response | length >= 6
+
+  - name: Verify specific policies exist in the list
+    ansible.builtin.assert:
+      that:
+        - all_policies_res.api_response | selectattr('Name', 'equalto', 'test_boot_order_policy_minimal') | list | length == 1
+        - all_policies_res.api_response | selectattr('Name', 'equalto', 'test_boot_order_policy_legacy') | list | length == 1
+        - all_policies_res.api_response | selectattr('Name', 'equalto', 'test_boot_order_policy_uefi') | list | length == 1
+        - all_policies_res.api_response | selectattr('Name', 'equalto', 'test_boot_order_policy_uefi_secure') | list | length == 1
+        - all_policies_res.api_response | selectattr('Name', 'equalto', 'test_boot_order_policy_san') | list | length == 1
+        - all_policies_res.api_response | selectattr('Name', 'equalto', 'test_boot_order_policy_pxe') | list | length == 1
+
+  - name: Update Boot Order Policy by adding a boot device
+    cisco.intersight.intersight_boot_order_policy:
+      <<: *api_info
+      name: test_boot_order_policy_legacy
+      description: "Boot Order policy with Legacy boot mode"
+      configured_boot_mode: Legacy
+      boot_devices:
+        - device_type: Local Disk
+          device_name: Boot-Lun
+          enabled: true
+          controller_slot: MRAID
+        - device_type: USB
+          device_name: USB-Boot
+          enabled: true
+          usb_subtype: usb-hdd
+    register: update_boot_devices_res
+
+  - name: Fetch info after adding boot device
+    cisco.intersight.intersight_boot_order_policy_info:
+      <<: *api_info
+      name: test_boot_order_policy_legacy
+    register: update_boot_devices_info_res
+
+  - name: Verify boot device was added
+    ansible.builtin.assert:
+      that:
+        - update_boot_devices_res.changed
+        - update_boot_devices_info_res.api_response[0].BootDevices | length == 2
+
+  - name: Delete Boot Order Policy - test_boot_order_policy_multi
+    cisco.intersight.intersight_boot_order_policy:
+      <<: *api_info
+      name: test_boot_order_policy_multi
+      state: absent
+    register: delete_res
+
+  - name: Verify deletion
+    ansible.builtin.assert:
+      that:
+        - delete_res.changed
+
+  - name: Delete Boot Order Policy again (idempotency check)
+    cisco.intersight.intersight_boot_order_policy:
+      <<: *api_info
+      name: test_boot_order_policy_multi
+      state: absent
+    register: delete_res_ide
+
+  - name: Verify deletion idempotency
+    ansible.builtin.assert:
+      that:
+        - not delete_res_ide.changed
+
+  - name: Verify policy is deleted via info module
+    cisco.intersight.intersight_boot_order_policy_info:
+      <<: *api_info
+      name: test_boot_order_policy_multi
+    register: deleted_policy_info
+
+  - name: Check that deleted policy is not found
+    ansible.builtin.assert:
+      that:
+        - deleted_policy_info.api_response | length == 0
+
+  always:
+  - name: Remove Boot Order policies
+    cisco.intersight.intersight_boot_order_policy:
+      <<: *api_info
+      name: "{{ item }}"
+      state: absent
+    loop:
+      - test_boot_order_policy_minimal
+      - test_boot_order_policy_legacy
+      - test_boot_order_policy_uefi
+      - test_boot_order_policy_uefi_secure
+      - test_boot_order_policy_san
+      - test_boot_order_policy_pxe
+      - test_boot_order_policy_multi
