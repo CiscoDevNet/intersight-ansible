@@ -521,42 +521,19 @@ api_response:
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible_collections.cisco.intersight.plugins.module_utils.intersight import IntersightModule, intersight_argument_spec
-import re
-
-
-def validate_wwn_address(wwn_address, address_type='WWNN'):
-    """
-    Validate WWN (WWNN or WWPN) address format and range.
-    """
-    wwn_pattern = r'^([0-9a-fA-F]{2}:){7}[0-9a-fA-F]{2}$'
-    if not re.match(wwn_pattern, wwn_address):
-        raise ValueError(f"Invalid {address_type} format '{wwn_address}'. Expected format: XX:XX:XX:XX:XX:XX:XX:XX (hex values)")
-    first_octet = int(wwn_address.split(':')[0], 16)
-    if not ((0x20 <= first_octet <= 0x2F) or (0x50 <= first_octet <= 0x5F)):
-        raise ValueError(f"Invalid {address_type} address range. First octet must be 20-2F or 50-5F")
-    return True
+from ansible_collections.cisco.intersight.plugins.module_utils.intersight_vhba_utils import (
+    validate_wwnn_address_config, validate_wwpn_address_config, validate_fi_attached_placement_config,
+    validate_standalone_vhba_config, resolve_policy_moids_from_mappings,
+    resolve_fc_zone_policies, build_wwpn_address_config, build_fi_attached_placement,
+    build_standalone_placement, get_san_connectivity_vhba_policy_mappings
+)
 
 
 def validate_fi_attached_params(module):
     """
     Validate FI-Attached specific parameters.
     """
-    wwnn_address_type = module.params.get('wwnn_address_type')
-    static_wwnn_address = module.params.get('static_wwnn_address')
-    wwnn_pool = module.params.get('wwnn_pool')
-    if wwnn_address_type == 'static' and not static_wwnn_address:
-        module.fail_json(msg="static_wwnn_address is required when wwnn_address_type is 'static'")
-    if wwnn_address_type == 'pool' and not wwnn_pool:
-        module.fail_json(msg="wwnn_pool is required when wwnn_address_type is 'pool'")
-    if wwnn_address_type != 'static' and static_wwnn_address:
-        module.fail_json(msg="static_wwnn_address should only be specified when wwnn_address_type is 'static'")
-    if wwnn_address_type != 'pool' and wwnn_pool:
-        module.fail_json(msg="wwnn_pool should only be specified when wwnn_address_type is 'pool'")
-    if static_wwnn_address:
-        try:
-            validate_wwn_address(static_wwnn_address, 'WWNN')
-        except ValueError as e:
-            module.fail_json(msg=str(e))
+    validate_wwnn_address_config(module, module.params)
 
 
 def validate_fi_attached_vhba_config(module, vhba_config):
@@ -564,57 +541,8 @@ def validate_fi_attached_vhba_config(module, vhba_config):
     Validate FIAttached specific vHBA configuration.
     """
     vhba_name = vhba_config.get('name', 'unknown')
-    wwpn_address_type = vhba_config.get('wwpn_address_type', 'pool')
-    wwpn_pool = vhba_config.get('wwpn_pool')
-    static_wwpn_address = vhba_config.get('static_wwpn_address')
-    if wwpn_address_type == 'pool' and not wwpn_pool:
-        module.fail_json(msg=f"wwpn_pool is required when wwpn_address_type is 'pool' for vHBA '{vhba_name}'")
-    if wwpn_address_type == 'static' and not static_wwpn_address:
-        module.fail_json(msg=f"static_wwpn_address is required when wwpn_address_type is 'static' for vHBA '{vhba_name}'")
-    if wwpn_address_type != 'pool' and wwpn_pool:
-        module.fail_json(msg=f"wwpn_pool should only be specified when wwpn_address_type is 'pool' for vHBA '{vhba_name}'")
-    if wwpn_address_type != 'static' and static_wwpn_address:
-        module.fail_json(msg=f"static_wwpn_address should only be specified when wwpn_address_type is 'static' for vHBA '{vhba_name}'")
-    if static_wwpn_address:
-        try:
-            validate_wwn_address(static_wwpn_address, 'WWPN')
-        except ValueError as e:
-            module.fail_json(msg=f"vHBA '{vhba_name}': {str(e)}")
+    validate_wwpn_address_config(module, vhba_config, f"vHBA '{vhba_name}'")
     validate_fi_attached_placement_config(module, vhba_config)
-
-
-def validate_fi_attached_placement_config(module, vhba_config):
-    """
-    Validate FIAttached placement configuration.
-    """
-    vhba_name = vhba_config.get('name', 'unknown')
-    auto_slot_id = vhba_config.get('auto_slot_id', True)
-    slot_id = vhba_config.get('slot_id')
-    auto_pci_link = vhba_config.get('auto_pci_link', True)
-    pci_link_assignment_mode = vhba_config.get('pci_link_assignment_mode')
-    pci_link = vhba_config.get('pci_link')
-    if not auto_slot_id and not slot_id:
-        module.fail_json(msg=f"slot_id is required when auto_slot_id is false for vHBA '{vhba_name}'")
-    if auto_slot_id and slot_id:
-        module.fail_json(msg=f"slot_id should not be specified when auto_slot_id is true for vHBA '{vhba_name}'")
-    if not auto_pci_link and not pci_link_assignment_mode:
-        module.fail_json(msg=f"pci_link_assignment_mode is required when auto_pci_link is false for vHBA '{vhba_name}'")
-    if auto_pci_link and pci_link_assignment_mode:
-        module.fail_json(msg=f"pci_link_assignment_mode should not be specified when auto_pci_link is true for vHBA '{vhba_name}'")
-    if pci_link_assignment_mode == 'custom' and pci_link is None:
-        module.fail_json(msg=f"pci_link is required when pci_link_assignment_mode is 'custom' for vHBA '{vhba_name}'")
-    if pci_link_assignment_mode != 'custom' and pci_link is not None and pci_link != 0:
-        module.fail_json(msg=f"pci_link should only be specified when pci_link_assignment_mode is 'custom' for vHBA '{vhba_name}'")
-
-
-def validate_standalone_vhba_config(module, vhba_config):
-    """
-    Validate Standalone specific vHBA configuration.
-    """
-    vhba_name = vhba_config.get('name', 'unknown')
-    slot_id = vhba_config.get('slot_id')
-    if not slot_id:
-        module.fail_json(msg=f"slot_id is required for standalone vHBA '{vhba_name}'")
 
 
 def validate_input(module):
@@ -639,57 +567,25 @@ def validate_input(module):
                 validate_standalone_vhba_config(module, vhba_config)
 
 
-def resolve_policy_moid(intersight, policy_cache, resource_path, policy_name, organization_name, policy_display_name):
-    """
-    Resolve policy name to MOID with caching.
-    """
-    cache_key = f"{resource_path}:{organization_name}:{policy_name}"
-    if cache_key in policy_cache:
-        return policy_cache[cache_key]
-    policy_moid = intersight.get_moid_by_name_and_org(
-        resource_path=resource_path,
-        resource_name=policy_name,
-        organization_name=organization_name
-    )
-    if not policy_moid:
-        intersight.module.fail_json(msg=f"{policy_display_name} '{policy_name}' not found in organization '{organization_name}'")
-    policy_cache[cache_key] = policy_moid
-    return policy_moid
-
-
 def build_standalone_vhba_api_body(intersight, policy_cache, module, vhba_config, san_connectivity_policy_moid):
     """
     Build Standalone vHBA API body for Intersight API call.
     """
     organization_name = module.params['organization']
+    target_platform = module.params.get('target_platform')
     vhba_api_body = {
         'Name': vhba_config['name'],
         'Type': vhba_config['vhba_type'],
-        'Placement': {
-            'Id': vhba_config['slot_id'],
-            'Uplink': vhba_config.get('uplink_port', 0),
-            'PciLink': vhba_config.get('pci_link', 0)
-        },
+        'Placement': build_standalone_placement(vhba_config),
         'Order': vhba_config.get('pci_order', 0),
         'PersistentBindings': vhba_config.get('persistent_lun_bindings', False),
         'SanConnectivityPolicy': san_connectivity_policy_moid,
         'StaticWwpnAddress': ''
     }
-    fc_network_policy_moid = resolve_policy_moid(
-        intersight, policy_cache, '/vnic/FcNetworkPolicies',
-        vhba_config['fibre_channel_network_policy'], organization_name, 'Fibre Channel Network Policy'
-    )
-    vhba_api_body['FcNetworkPolicy'] = fc_network_policy_moid
-    fc_qos_policy_moid = resolve_policy_moid(
-        intersight, policy_cache, '/vnic/FcQosPolicies',
-        vhba_config['fibre_channel_qos_policy'], organization_name, 'Fibre Channel QoS Policy'
-    )
-    vhba_api_body['FcQosPolicy'] = fc_qos_policy_moid
-    fc_adapter_policy_moid = resolve_policy_moid(
-        intersight, policy_cache, '/vnic/FcAdapterPolicies',
-        vhba_config['fibre_channel_adapter_policy'], organization_name, 'Fibre Channel Adapter Policy'
-    )
-    vhba_api_body['FcAdapterPolicy'] = fc_adapter_policy_moid
+    # Resolve FC policy MOIDs
+    policy_mappings = get_san_connectivity_vhba_policy_mappings(target_platform)
+    policy_moids = resolve_policy_moids_from_mappings(intersight, policy_cache, module, vhba_config, policy_mappings, organization_name)
+    vhba_api_body.update(policy_moids)
     vhba_api_body['FcZonePolicies'] = []
     return vhba_api_body
 
@@ -699,80 +595,35 @@ def build_fi_attached_vhba_api_body(intersight, policy_cache, module, vhba_confi
     Build FIAttached vHBA API body for Intersight API call.
     """
     organization_name = module.params['organization']
-    wwpn_address_type = vhba_config.get('wwpn_address_type', 'pool')
-    wwpn_address_type_map = {'pool': 'POOL', 'static': 'STATIC'}
-    api_wwpn_address_type = wwpn_address_type_map[wwpn_address_type]
+    target_platform = module.params.get('target_platform')
     vhba_api_body = {
         'Name': vhba_config['name'],
         'Type': vhba_config['vhba_type'],
-        'WwpnAddressType': api_wwpn_address_type,
         'Order': vhba_config.get('pci_order', 0),
         'PersistentBindings': vhba_config.get('persistent_lun_bindings', False),
         'SanConnectivityPolicy': san_connectivity_policy_moid
     }
-    auto_slot_id = vhba_config.get('auto_slot_id', True)
-    auto_pci_link = vhba_config.get('auto_pci_link', True)
-    switch_id = vhba_config.get('switch_id', 'a')
-    api_switch_id = switch_id.upper()
-    placement = {
-        'SwitchId': api_switch_id,
-        'AutoSlotId': auto_slot_id,
-        'AutoPciLink': auto_pci_link
-    }
+    # Build WWPN address configuration
+    wwpn_config = build_wwpn_address_config(vhba_config, intersight, policy_cache, module, organization_name)
+    vhba_api_body.update(wwpn_config)
 
-    if not auto_slot_id:
-        placement['Id'] = vhba_config['slot_id']
+    # Build placement configuration
+    vhba_api_body['Placement'] = build_fi_attached_placement(vhba_config)
 
-    if not auto_pci_link:
-        pci_link_mode = vhba_config['pci_link_assignment_mode']
-        pci_link_mode_map = {'custom': 'Custom', 'load-balanced': 'Load-Balanced'}
-        api_pci_link_mode = pci_link_mode_map[pci_link_mode]
-        placement['PciLinkAssignmentMode'] = api_pci_link_mode
-        if pci_link_mode == 'custom':
-            placement['PciLink'] = vhba_config.get('pci_link', 0)
+    # Resolve FC policy MOIDs
+    policy_mappings = get_san_connectivity_vhba_policy_mappings(target_platform)
+    policy_moids = resolve_policy_moids_from_mappings(intersight, policy_cache, module, vhba_config, policy_mappings, organization_name)
+    vhba_api_body.update(policy_moids)
 
-    vhba_api_body['Placement'] = placement
-    if wwpn_address_type == 'pool':
-        wwpn_pool_moid = resolve_policy_moid(
-            intersight, policy_cache, '/fcpool/Pools',
-            vhba_config['wwpn_pool'], organization_name, 'WWPN Pool'
-        )
-        vhba_api_body['WwpnPool'] = wwpn_pool_moid
-        vhba_api_body['StaticWwpnAddress'] = ''
-    else:
-        vhba_api_body['StaticWwpnAddress'] = vhba_config['static_wwpn_address']
-        vhba_api_body['WwpnPool'] = ''
-
-    fc_network_policy_moid = resolve_policy_moid(
-        intersight, policy_cache, '/vnic/FcNetworkPolicies',
-        vhba_config['fibre_channel_network_policy'], organization_name, 'Fibre Channel Network Policy'
-    )
-
-    vhba_api_body['FcNetworkPolicy'] = fc_network_policy_moid
-    fc_qos_policy_moid = resolve_policy_moid(
-        intersight, policy_cache, '/vnic/FcQosPolicies',
-        vhba_config['fibre_channel_qos_policy'], organization_name, 'Fibre Channel QoS Policy'
-    )
-
-    vhba_api_body['FcQosPolicy'] = fc_qos_policy_moid
-    fc_adapter_policy_moid = resolve_policy_moid(
-        intersight, policy_cache, '/vnic/FcAdapterPolicies',
-        vhba_config['fibre_channel_adapter_policy'], organization_name, 'Fibre Channel Adapter Policy'
-    )
-
-    vhba_api_body['FcAdapterPolicy'] = fc_adapter_policy_moid
-    fc_zone_policy_moids = []
-    if vhba_config.get('fibre_channel_zone_policies'):
-        for fc_zone_policy_name in vhba_config['fibre_channel_zone_policies']:
-            fc_zone_policy_moid = resolve_policy_moid(
-                intersight, policy_cache, '/fabric/FcZonePolicies',
-                fc_zone_policy_name, organization_name, 'Fibre Channel Zone Policy'
-            )
-            fc_zone_policy_moids.append(fc_zone_policy_moid)
-
+    # Resolve FC Zone Policies (optional)
+    fc_zone_policy_names = vhba_config.get('fibre_channel_zone_policies')
+    fc_zone_policy_moids = resolve_fc_zone_policies(intersight, policy_cache, module, fc_zone_policy_names, organization_name)
     vhba_api_body['FcZonePolicies'] = fc_zone_policy_moids
+
+    # Add pin group name if specified
     if vhba_config.get('pin_group_name'):
         vhba_api_body['PinGroupName'] = vhba_config['pin_group_name']
+
     return vhba_api_body
 
 

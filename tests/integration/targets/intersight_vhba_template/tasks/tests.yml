@@ -1,0 +1,394 @@
+---
+- block:
+  - name: Define anchor for Intersight API login info
+    ansible.builtin.set_fact:
+      api_info: &api_info
+        api_private_key: "{{ api_private_key }}"
+        api_key_id: "{{ api_key_id }}"
+        api_uri: "{{ api_uri | default(omit) }}"
+        validate_certs: "{{ validate_certs | default(omit) }}"
+        organization: "{{ organization }}"
+
+  - name: Make sure Env is clean
+    cisco.intersight.intersight_vhba_template:
+      <<: *api_info
+      name: "{{ item }}"
+      state: absent
+    loop:
+      - test_vhba_template
+      - test_vhba_template_minimal
+      - test_vhba_template_with_zones
+      - test_vhba_template_pingroup
+
+  # Create required policies for testing
+  - name: Create WWPN pool for testing
+    cisco.intersight.intersight_wwn_pool:
+      <<: *api_info
+      name: wwpn_pool_for_vhba_template
+      pool_purpose: WWPN
+      description: "Test WWPN pool for vHBA template"
+      id_blocks:
+        - wwn_from: "20:00:00:25:B5:00:00:00"
+          size: 256
+    register: wwpn_pool_res
+
+  - name: Create Fibre Channel Network policy for testing
+    cisco.intersight.intersight_fibre_channel_network_policy:
+      <<: *api_info
+      name: fc_network_policy_for_vhba_template
+      description: "Test FC Network policy for vHBA template"
+      vsan_id: 100
+    register: fc_network_policy_res
+
+  - name: Create Fibre Channel QoS policy for testing
+    cisco.intersight.intersight_fibre_channel_qos_policy:
+      <<: *api_info
+      name: fc_qos_policy_for_vhba_template
+      description: "Test FC QoS policy for vHBA template"
+      burst: 1024
+      rate_limit: 0
+      cos: 3
+      max_data_field_size: 2112
+    register: fc_qos_policy_res
+
+  - name: Create Fibre Channel Adapter policy for testing
+    cisco.intersight.intersight_fibre_channel_adapter_policy:
+      <<: *api_info
+      name: fc_adapter_policy_for_vhba_template
+      description: "Test FC Adapter policy for vHBA template"
+      error_detection_timeout: 2000
+      resource_allocation_timeout: 10000
+      error_recovery_enabled: true
+    register: fc_adapter_policy_res
+
+  - name: Create Fibre Channel Zone policy for testing
+    cisco.intersight.intersight_fibre_channel_zone_policy:
+      <<: *api_info
+      name: fc_zone_policy_for_vhba_template
+      description: "Test FC Zone policy for vHBA template"
+      fc_target_zoning_type: None
+    register: fc_zone_policy_res
+
+  - name: Create vHBA template - check-mode
+    cisco.intersight.intersight_vhba_template:
+      <<: *api_info
+      name: test_vhba_template
+      description: "Test vHBA template description"
+      enable_override: false
+      vhba_type: "fc-initiator"
+      switch_id: "A"
+      persistent_bindings: false
+      wwpn_pool_name: "wwpn_pool_for_vhba_template"
+      fibre_channel_network_policy_name: "fc_network_policy_for_vhba_template"
+      fibre_channel_qos_policy_name: "fc_qos_policy_for_vhba_template"
+      fibre_channel_adapter_policy_name: "fc_adapter_policy_for_vhba_template"
+      tags:
+        - Key: Site
+          Value: Test
+        - Key: Site2
+          Value: Test2
+    check_mode: true
+    register: creation_res_check_mode
+
+  - name: Verify vHBA template was not created - check-mode
+    ansible.builtin.assert:
+      that:
+        - creation_res_check_mode is changed
+        - creation_res_check_mode.api_response == {}
+
+  - name: Create vHBA template
+    cisco.intersight.intersight_vhba_template:
+      <<: *api_info
+      name: test_vhba_template
+      description: "Test vHBA template description"
+      enable_override: false
+      vhba_type: "fc-initiator"
+      switch_id: "A"
+      persistent_bindings: false
+      wwpn_pool_name: "wwpn_pool_for_vhba_template"
+      fibre_channel_network_policy_name: "fc_network_policy_for_vhba_template"
+      fibre_channel_qos_policy_name: "fc_qos_policy_for_vhba_template"
+      fibre_channel_adapter_policy_name: "fc_adapter_policy_for_vhba_template"
+      tags:
+        - Key: Site
+          Value: Test
+        - Key: Site2
+          Value: Test2
+    register: creation_res
+
+  - name: Fetch info after creation
+    cisco.intersight.intersight_vhba_template_info:
+      <<: *api_info
+      name: test_vhba_template
+    register: creation_info_res
+
+  - name: Verify vHBA template creation via info module
+    ansible.builtin.assert:
+      that:
+        - creation_res.changed
+        - creation_info_res.api_response | length == 1
+        - creation_info_res.api_response[0].Name == 'test_vhba_template'
+        - creation_info_res.api_response[0].Description == 'Test vHBA template description'
+        - creation_info_res.api_response[0].EnableOverride == false
+        - creation_info_res.api_response[0].Type == 'fc-initiator'
+        - creation_info_res.api_response[0].SwitchId == 'A'
+        - creation_info_res.api_response[0].PersistentBindings == false
+        - creation_info_res.api_response[0].Tags | length == 2
+        - creation_info_res.api_response[0].ObjectType == 'vnic.VhbaTemplate'
+
+  - name: Create same vHBA template again (idempotency)
+    cisco.intersight.intersight_vhba_template:
+      <<: *api_info
+      name: test_vhba_template
+      description: "Test vHBA template description"
+      enable_override: false
+      vhba_type: "fc-initiator"
+      switch_id: "A"
+      persistent_bindings: false
+      wwpn_pool_name: "wwpn_pool_for_vhba_template"
+      fibre_channel_network_policy_name: "fc_network_policy_for_vhba_template"
+      fibre_channel_qos_policy_name: "fc_qos_policy_for_vhba_template"
+      fibre_channel_adapter_policy_name: "fc_adapter_policy_for_vhba_template"
+      tags:
+        - Key: Site
+          Value: Test
+        - Key: Site2
+          Value: Test2
+    register: idempotency_res
+
+  - name: Verify idempotency
+    ansible.builtin.assert:
+      that:
+        - idempotency_res is not changed
+        - idempotency_res.api_response.Name == 'test_vhba_template'
+
+  - name: Update vHBA template
+    cisco.intersight.intersight_vhba_template:
+      <<: *api_info
+      name: test_vhba_template
+      description: "Updated vHBA template description"
+      enable_override: true
+      vhba_type: "fc-initiator"
+      switch_id: "B"
+      persistent_bindings: true
+      wwpn_pool_name: "wwpn_pool_for_vhba_template"
+      fibre_channel_network_policy_name: "fc_network_policy_for_vhba_template"
+      fibre_channel_qos_policy_name: "fc_qos_policy_for_vhba_template"
+      fibre_channel_adapter_policy_name: "fc_adapter_policy_for_vhba_template"
+      tags:
+        - Key: Site
+          Value: Test
+        - Key: Site2
+          Value: Test2
+    register: update_res
+
+  - name: Fetch info after update
+    cisco.intersight.intersight_vhba_template_info:
+      <<: *api_info
+      name: test_vhba_template
+    register: update_info_res
+
+  - name: Verify update via info module
+    ansible.builtin.assert:
+      that:
+        - update_res.changed
+        - update_info_res.api_response | length == 1
+        - update_info_res.api_response[0].Description == 'Updated vHBA template description'
+        - update_info_res.api_response[0].EnableOverride == true
+        - update_info_res.api_response[0].SwitchId == 'B'
+        - update_info_res.api_response[0].PersistentBindings == true
+
+  - name: Create vHBA template with minimal parameters
+    cisco.intersight.intersight_vhba_template:
+      <<: *api_info
+      name: test_vhba_template_minimal
+      vhba_type: "fc-initiator"
+      wwpn_pool_name: "wwpn_pool_for_vhba_template"
+      fibre_channel_network_policy_name: "fc_network_policy_for_vhba_template"
+      fibre_channel_qos_policy_name: "fc_qos_policy_for_vhba_template"
+      fibre_channel_adapter_policy_name: "fc_adapter_policy_for_vhba_template"
+    register: minimal_res
+
+  - name: Fetch info after minimal creation
+    cisco.intersight.intersight_vhba_template_info:
+      <<: *api_info
+      name: test_vhba_template_minimal
+    register: minimal_info_res
+
+  - name: Verify minimal template creation via info module
+    ansible.builtin.assert:
+      that:
+        - minimal_res.changed
+        - minimal_info_res.api_response | length == 1
+        - minimal_info_res.api_response[0].Name == 'test_vhba_template_minimal'
+        - minimal_info_res.api_response[0].EnableOverride == false
+        - minimal_info_res.api_response[0].SwitchId == 'A'
+        - minimal_info_res.api_response[0].PersistentBindings == false
+
+  - name: Create vHBA template with FC Zone policies
+    cisco.intersight.intersight_vhba_template:
+      <<: *api_info
+      name: test_vhba_template_with_zones
+      description: "vHBA template with FC zone policies"
+      vhba_type: "fc-initiator"
+      wwpn_pool_name: "wwpn_pool_for_vhba_template"
+      fibre_channel_network_policy_name: "fc_network_policy_for_vhba_template"
+      fibre_channel_qos_policy_name: "fc_qos_policy_for_vhba_template"
+      fibre_channel_adapter_policy_name: "fc_adapter_policy_for_vhba_template"
+      fibre_channel_zone_policy_names:
+        - "fc_zone_policy_for_vhba_template"
+    register: with_zones_res
+
+  - name: Fetch info after zones creation
+    cisco.intersight.intersight_vhba_template_info:
+      <<: *api_info
+      name: test_vhba_template_with_zones
+    register: with_zones_info_res
+
+  - name: Verify template with zones via info module
+    ansible.builtin.assert:
+      that:
+        - with_zones_res.changed
+        - with_zones_info_res.api_response | length == 1
+        - with_zones_info_res.api_response[0].Name == 'test_vhba_template_with_zones'
+        - with_zones_info_res.api_response[0].FcZonePolicies | length == 1
+
+  - name: Create vHBA template with pin group
+    cisco.intersight.intersight_vhba_template:
+      <<: *api_info
+      name: test_vhba_template_pingroup
+      description: "vHBA template with static pinning"
+      vhba_type: "fc-nvme-initiator"
+      persistent_bindings: true
+      wwpn_pool_name: "wwpn_pool_for_vhba_template"
+      fibre_channel_network_policy_name: "fc_network_policy_for_vhba_template"
+      fibre_channel_qos_policy_name: "fc_qos_policy_for_vhba_template"
+      fibre_channel_adapter_policy_name: "fc_adapter_policy_for_vhba_template"
+      pin_group_name: "pingroup-a"
+    register: with_pingroup_res
+
+  - name: Fetch info after pingroup creation
+    cisco.intersight.intersight_vhba_template_info:
+      <<: *api_info
+      name: test_vhba_template_pingroup
+    register: with_pingroup_info_res
+
+  - name: Verify template with pin group via info module
+    ansible.builtin.assert:
+      that:
+        - with_pingroup_res.changed
+        - with_pingroup_info_res.api_response | length == 1
+        - with_pingroup_info_res.api_response[0].Name == 'test_vhba_template_pingroup'
+        - with_pingroup_info_res.api_response[0].Type == 'fc-nvme-initiator'
+        - with_pingroup_info_res.api_response[0].PinGroupName == 'pingroup-a'
+
+  - name: Test info module - get all templates
+    cisco.intersight.intersight_vhba_template_info:
+      <<: *api_info
+    register: all_templates_res
+
+  - name: Verify all templates returned
+    ansible.builtin.assert:
+      that:
+        - all_templates_res.api_response | length >= 4
+
+  - name: Test info module - get specific template
+    cisco.intersight.intersight_vhba_template_info:
+      <<: *api_info
+      name: test_vhba_template
+    register: specific_template_res
+
+  - name: Verify specific template info
+    ansible.builtin.assert:
+      that:
+        - specific_template_res.api_response[0].Name == 'test_vhba_template'
+        - specific_template_res.api_response[0].ObjectType == 'vnic.VhbaTemplate'
+
+  - name: Test missing required parameter - vhba_type
+    cisco.intersight.intersight_vhba_template:
+      <<: *api_info
+      name: test_invalid
+      wwpn_pool_name: "wwpn_pool_for_vhba_template"
+      fibre_channel_network_policy_name: "fc_network_policy_for_vhba_template"
+      fibre_channel_qos_policy_name: "fc_qos_policy_for_vhba_template"
+      fibre_channel_adapter_policy_name: "fc_adapter_policy_for_vhba_template"
+    register: test_missing_vhba_type
+    failed_when:
+      - test_missing_vhba_type.failed == false
+      - "'vhba_type' not in test_missing_vhba_type.msg"
+
+  - name: Test missing WWPN pool
+    cisco.intersight.intersight_vhba_template:
+      <<: *api_info
+      name: test_invalid
+      vhba_type: "fc-initiator"
+      fibre_channel_network_policy_name: "fc_network_policy_for_vhba_template"
+      fibre_channel_qos_policy_name: "fc_qos_policy_for_vhba_template"
+      fibre_channel_adapter_policy_name: "fc_adapter_policy_for_vhba_template"
+    register: test_missing_wwpn_pool
+    failed_when:
+      - test_missing_wwpn_pool.failed == false
+      - "'wwpn_pool_name' not in test_missing_wwpn_pool.msg"
+
+  - name: Test nonexistent policy reference
+    cisco.intersight.intersight_vhba_template:
+      <<: *api_info
+      name: test_invalid
+      vhba_type: "fc-initiator"
+      wwpn_pool_name: "nonexistent_wwpn_pool"
+      fibre_channel_network_policy_name: "fc_network_policy_for_vhba_template"
+      fibre_channel_qos_policy_name: "fc_qos_policy_for_vhba_template"
+      fibre_channel_adapter_policy_name: "fc_adapter_policy_for_vhba_template"
+    register: test_nonexistent_policy
+    failed_when:
+      - test_nonexistent_policy.failed == false
+      - "'not found' not in test_nonexistent_policy.msg"
+
+  always:
+    - name: Clean up test resources
+      cisco.intersight.intersight_vhba_template:
+        <<: *api_info
+        name: "{{ item }}"
+        state: absent
+      loop:
+        - test_vhba_template
+        - test_vhba_template_minimal
+        - test_vhba_template_with_zones
+        - test_vhba_template_pingroup
+      ignore_errors: true
+
+    - name: Clean up FC Zone Policy
+      cisco.intersight.intersight_fibre_channel_zone_policy:
+        <<: *api_info
+        name: fc_zone_policy_for_vhba_template
+        state: absent
+      ignore_errors: true
+
+    - name: Clean up FC Adapter Policy
+      cisco.intersight.intersight_fibre_channel_adapter_policy:
+        <<: *api_info
+        name: fc_adapter_policy_for_vhba_template
+        state: absent
+      ignore_errors: true
+
+    - name: Clean up FC QoS Policy
+      cisco.intersight.intersight_fibre_channel_qos_policy:
+        <<: *api_info
+        name: fc_qos_policy_for_vhba_template
+        state: absent
+      ignore_errors: true
+
+    - name: Clean up FC Network Policy
+      cisco.intersight.intersight_fibre_channel_network_policy:
+        <<: *api_info
+        name: fc_network_policy_for_vhba_template
+        state: absent
+      ignore_errors: true
+
+    - name: Clean up WWPN Pool
+      cisco.intersight.intersight_wwn_pool:
+        <<: *api_info
+        name: wwpn_pool_for_vhba_template
+        pool_purpose: WWPN
+        state: absent
+      ignore_errors: true
