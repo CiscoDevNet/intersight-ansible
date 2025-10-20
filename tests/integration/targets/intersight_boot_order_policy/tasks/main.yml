@@ -1,0 +1,3 @@
+---
+- name: Import boot order policy tests
+  ansible.builtin.import_tasks: tests.yml

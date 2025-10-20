@@ -374,25 +374,29 @@ def main():
             'Name': intersight.module.params['organization'],
         },
         'Name': intersight.module.params['name'],
-        'Tags': intersight.module.params['tags'],
-        'Description': intersight.module.params['description'],
-        'ConfiguredBootMode': intersight.module.params['configured_boot_mode'],
-        "EnforceUefiSecureBoot": intersight.module.params['uefi_enable_secure_boot'],
-        'BootDevices': [],
     }
-    if intersight.module.params.get('boot_devices'):
+
+    # Only set these fields when creating or updating (state == present)
+    if intersight.module.params['state'] == 'present':
+        intersight.api_body['ConfiguredBootMode'] = intersight.module.params['configured_boot_mode']
+        intersight.api_body['EnforceUefiSecureBoot'] = intersight.module.params['uefi_enable_secure_boot']
+        intersight.api_body['BootDevices'] = []
+        intersight.set_tags_and_description()
+
+    if intersight.module.params['state'] == 'present' and intersight.module.params.get('boot_devices'):
         for device in intersight.module.params['boot_devices']:
             if device['device_type'] == 'iSCSI':
-                intersight.api_body['BootDevices'].append(
-                    {
-                        "ClassId": "boot.Iscsi",
-                        "ObjectType": "boot.Iscsi",
-                        "Enabled": device['enabled'],
-                        "Name": device['device_name'],
-                        "Slot": device['network_slot'],
-                        "Port": device['port'],
-                    }
-                )
+                iscsi_device = {
+                    "ClassId": "boot.Iscsi",
+                    "ObjectType": "boot.Iscsi",
+                    "Enabled": device['enabled'],
+                    "Name": device['device_name'],
+                }
+                if device.get('network_slot'):
+                    iscsi_device['Slot'] = device['network_slot']
+                if device.get('port') is not None:
+                    iscsi_device['Port'] = device['port']
+                intersight.api_body['BootDevices'].append(iscsi_device)
             elif device['device_type'] == 'Local CDD':
                 intersight.api_body['BootDevices'].append(
                     {
@@ -403,108 +407,127 @@ def main():
                     }
                 )
             elif device['device_type'] == 'Local Disk':
-                intersight.api_body['BootDevices'].append(
-                    {
-                        "ClassId": "boot.LocalDisk",
-                        "ObjectType": "boot.LocalDisk",
-                        "Enabled": device['enabled'],
-                        "Name": device['device_name'],
-                        "Slot": device['controller_slot'],
-                        "Bootloader": {
-                            "ClassId": "boot.Bootloader",
-                            "ObjectType": "boot.Bootloader",
-                            "Description": device['bootloader_description'],
-                            "Name": device['bootloader_name'],
-                            "Path": device['bootloader_path'],
-                        },
+                local_disk_device = {
+                    "ClassId": "boot.LocalDisk",
+                    "ObjectType": "boot.LocalDisk",
+                    "Enabled": device['enabled'],
+                    "Name": device['device_name'],
+                }
+                if device.get('controller_slot'):
+                    local_disk_device['Slot'] = device['controller_slot']
+                # Only include bootloader if at least one bootloader field is specified
+                if device.get('bootloader_name') or device.get('bootloader_path') or device.get('bootloader_description'):
+                    local_disk_device['Bootloader'] = {
+                        "ClassId": "boot.Bootloader",
+                        "ObjectType": "boot.Bootloader",
+                        "Description": device.get('bootloader_description', ''),
+                        "Name": device.get('bootloader_name', ''),
+                        "Path": device.get('bootloader_path', ''),
                     }
-                )
+                intersight.api_body['BootDevices'].append(local_disk_device)
             elif device['device_type'] == 'NVMe':
-                intersight.api_body['BootDevices'].append(
-                    {
-                        "ClassId": "boot.Nvme",
-                        "ObjectType": "boot.Nvme",
-                        "Enabled": device['enabled'],
-                        "Name": device['device_name'],
-                        "Bootloader": {
-                            "ClassId": "boot.Bootloader",
-                            "ObjectType": "boot.Bootloader",
-                            "Description": device['bootloader_description'],
-                            "Name": device['bootloader_name'],
-                            "Path": device['bootloader_path'],
-                        },
+                nvme_device = {
+                    "ClassId": "boot.Nvme",
+                    "ObjectType": "boot.Nvme",
+                    "Enabled": device['enabled'],
+                    "Name": device['device_name'],
+                }
+                # Only include bootloader if at least one bootloader field is specified
+                if device.get('bootloader_name') or device.get('bootloader_path') or device.get('bootloader_description'):
+                    nvme_device['Bootloader'] = {
+                        "ClassId": "boot.Bootloader",
+                        "ObjectType": "boot.Bootloader",
+                        "Description": device.get('bootloader_description', ''),
+                        "Name": device.get('bootloader_name', ''),
+                        "Path": device.get('bootloader_path', ''),
                     }
-                )
+                intersight.api_body['BootDevices'].append(nvme_device)
             elif device['device_type'] == 'PCH Storage':
-                intersight.api_body['BootDevices'].append(
-                    {
-                        "ClassId": "boot.PchStorage",
-                        "ObjectType": "boot.PchStorage",
-                        "Enabled": device['enabled'],
-                        "Name": device['device_name'],
-                        "Bootloader": {
-                            "ClassId": "boot.Bootloader",
-                            "ObjectType": "boot.Bootloader",
-                            "Description": device['bootloader_description'],
-                            "Name": device['bootloader_name'],
-                            "Path": device['bootloader_path'],
-                        },
-                        "Lun": device['lun'],
+                pch_storage_device = {
+                    "ClassId": "boot.PchStorage",
+                    "ObjectType": "boot.PchStorage",
+                    "Enabled": device['enabled'],
+                    "Name": device['device_name'],
+                }
+                # Only include bootloader if at least one bootloader field is specified
+                if device.get('bootloader_name') or device.get('bootloader_path') or device.get('bootloader_description'):
+                    pch_storage_device['Bootloader'] = {
+                        "ClassId": "boot.Bootloader",
+                        "ObjectType": "boot.Bootloader",
+                        "Description": device.get('bootloader_description', ''),
+                        "Name": device.get('bootloader_name', ''),
+                        "Path": device.get('bootloader_path', ''),
                     }
-                )
+                if device.get('lun') is not None:
+                    pch_storage_device['Lun'] = device['lun']
+                intersight.api_body['BootDevices'].append(pch_storage_device)
             elif device['device_type'] == 'PXE':
-                intersight.api_body['BootDevices'].append(
-                    {
-                        "ClassId": "boot.Pxe",
-                        "ObjectType": "boot.Pxe",
-                        "Enabled": device['enabled'],
-                        "Name": device['device_name'],
-                        "IpType": device['ip_type'],
-                        "InterfaceSource": device['interface_source'],
-                        "Slot": device['network_slot'],
-                        "InterfaceName": device['interface_name'],
-                        "Port": device['port'],
-                        "MacAddress": device['mac_address'],
-                    }
-                )
+                pxe_device = {
+                    "ClassId": "boot.Pxe",
+                    "ObjectType": "boot.Pxe",
+                    "Enabled": device['enabled'],
+                    "Name": device['device_name'],
+                    "IpType": device['ip_type'],
+                    "InterfaceSource": device['interface_source'],
+                }
+                # Add optional fields based on configuration
+                if device.get('network_slot'):
+                    pxe_device['Slot'] = device['network_slot']
+                if device.get('port') is not None:
+                    pxe_device['Port'] = device['port']
+                # Include InterfaceName only when interface_source is 'name'
+                if device['interface_source'] == 'name' and device.get('interface_name'):
+                    pxe_device['InterfaceName'] = device['interface_name']
+                # Include MacAddress only when interface_source is 'mac'
+                if device['interface_source'] == 'mac' and device.get('mac_address'):
+                    pxe_device['MacAddress'] = device['mac_address']
+                intersight.api_body['BootDevices'].append(pxe_device)
             elif device['device_type'] == 'SAN':
-                intersight.api_body['BootDevices'].append(
-                    {
-                        "ClassId": "boot.San",
-                        "ObjectType": "boot.San",
-                        "Enabled": device['enabled'],
-                        "Name": device['device_name'],
-                        "InterfaceName": device['interface_name'],
-                        "Lun": device['lun'],
-                        "Slot": device['network_slot'],
-                        "Wwpn": device['wwpn'],
-                        "Bootloader": {
-                            "ClassId": "boot.Bootloader",
-                            "ObjectType": "boot.Bootloader",
-                            "Description": device['bootloader_description'],
-                            "Name": device['bootloader_name'],
-                            "Path": device['bootloader_path'],
-                        },
+                san_device = {
+                    "ClassId": "boot.San",
+                    "ObjectType": "boot.San",
+                    "Enabled": device['enabled'],
+                    "Name": device['device_name'],
+                }
+                if device.get('interface_name'):
+                    san_device['InterfaceName'] = device['interface_name']
+                if device.get('lun') is not None:
+                    san_device['Lun'] = device['lun']
+                if device.get('network_slot'):
+                    san_device['Slot'] = device['network_slot']
+                if device.get('wwpn'):
+                    san_device['Wwpn'] = device['wwpn']
+                # Only include bootloader if at least one bootloader field is specified
+                if device.get('bootloader_name') or device.get('bootloader_path') or device.get('bootloader_description'):
+                    san_device['Bootloader'] = {
+                        "ClassId": "boot.Bootloader",
+                        "ObjectType": "boot.Bootloader",
+                        "Description": device.get('bootloader_description', ''),
+                        "Name": device.get('bootloader_name', ''),
+                        "Path": device.get('bootloader_path', ''),
                     }
-                )
+                intersight.api_body['BootDevices'].append(san_device)
             elif device['device_type'] == 'SD Card':
-                intersight.api_body['BootDevices'].append(
-                    {
-                        "ClassId": "boot.SdCard",
-                        "ObjectType": "boot.SdCard",
-                        "Enabled": device['enabled'],
-                        "Name": device['device_name'],
-                        "Lun": device['lun'],
-                        "SubType": device['sd_card_subtype'],
-                        "Bootloader": {
-                            "ClassId": "boot.Bootloader",
-                            "ObjectType": "boot.Bootloader",
-                            "Description": device['bootloader_description'],
-                            "Name": device['bootloader_name'],
-                            "Path": device['bootloader_path'],
-                        },
+                sd_card_device = {
+                    "ClassId": "boot.SdCard",
+                    "ObjectType": "boot.SdCard",
+                    "Enabled": device['enabled'],
+                    "Name": device['device_name'],
+                }
+                if device.get('lun') is not None:
+                    sd_card_device['Lun'] = device['lun']
+                if device.get('sd_card_subtype') and device['sd_card_subtype'] != 'None':
+                    sd_card_device['SubType'] = device['sd_card_subtype']
+                # Only include bootloader if at least one bootloader field is specified
+                if device.get('bootloader_name') or device.get('bootloader_path') or device.get('bootloader_description'):
+                    sd_card_device['Bootloader'] = {
+                        "ClassId": "boot.Bootloader",
+                        "ObjectType": "boot.Bootloader",
+                        "Description": device.get('bootloader_description', ''),
+                        "Name": device.get('bootloader_name', ''),
+                        "Path": device.get('bootloader_path', ''),
                     }
-                )
+                intersight.api_body['BootDevices'].append(sd_card_device)
             elif device['device_type'] == 'UEFI Shell':
                 intersight.api_body['BootDevices'].append(
                     {
@@ -515,28 +538,27 @@ def main():
                     }
                 )
             elif device['device_type'] == 'USB':
-                intersight.api_body['BootDevices'].append(
-                    {
-                        "ClassId": "boot.Usb",
-                        "ObjectType": "boot.Usb",
-                        "Enabled": device['enabled'],
-                        "Name": device['device_name'],
-                        "SubType": device['usb_subtype'],
-                    }
-                )
+                usb_device = {
+                    "ClassId": "boot.Usb",
+                    "ObjectType": "boot.Usb",
+                    "Enabled": device['enabled'],
+                    "Name": device['device_name'],
+                }
+                if device.get('usb_subtype') and device['usb_subtype'] != 'None':
+                    usb_device['SubType'] = device['usb_subtype']
+                intersight.api_body['BootDevices'].append(usb_device)
             elif device['device_type'] == 'Virtual Media':
-                intersight.api_body['BootDevices'].append(
-                    {
-                        "ClassId": "boot.VirtualMedia",
-                        "ObjectType": "boot.VirtualMedia",
-                        "Enabled": device['enabled'],
-                        "Name": device['device_name'],
-                        "SubType": device['virtual_media_subtype'],
-                    }
-                )
-    #
-    # Code below should be common across all policy modules
-    #
+                virtual_media_device = {
+                    "ClassId": "boot.VirtualMedia",
+                    "ObjectType": "boot.VirtualMedia",
+                    "Enabled": device['enabled'],
+                    "Name": device['device_name'],
+                }
+                if device.get('virtual_media_subtype') and device['virtual_media_subtype'] != 'None':
+                    virtual_media_device['SubType'] = device['virtual_media_subtype']
+                intersight.api_body['BootDevices'].append(virtual_media_device)
+
+    # Configure the policy
     intersight.configure_policy_or_profile(resource_path=resource_path)
 
     module.exit_json(**intersight.result)
