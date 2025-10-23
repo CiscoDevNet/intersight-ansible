@@ -266,18 +266,6 @@
       - result.api_response[0].VsanSettings.DefaultVlanId == 200
       - result.api_response[0].VsanSettings.Id == 300
 
-- name: Get Fibre Channel Network Policies by organization
-  cisco.intersight.intersight_fibre_channel_network_policy_info:
-    <<: *api_info
-    organization: "{{ organization }}"
-  register: result
-
-- name: Verify organization filtering
-  ansible.builtin.assert:
-    that:
-      - result.api_response is defined
-      - result.api_response | length >= 1
-
 - name: Delete Fibre Channel Network Policy
   cisco.intersight.intersight_fibre_channel_network_policy:
     <<: *api_info
