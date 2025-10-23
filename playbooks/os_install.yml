@@ -102,7 +102,7 @@
                     "ObjectType": "os.Ipv4Configuration"
                   },
                   "IsRootPasswordCrypted": false,
-                  "Nameserver": "170.70.168.183",
+                  "Nameserver": "171.70.168.183",
                   "RootPassword": "{{ vault_password }}",
                   "Source": "Template"
                 },
