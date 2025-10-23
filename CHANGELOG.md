@@ -1,5 +1,8 @@
 # cisco.intersight Ansible Collection Changelog
 
+## Version 2.7.0
+- Added SAN Connectivity and FC Zone/QoS/Network/Adapter Policies, vHBA Template, and indirect node count support.
+
 ## Version 2.6.0
 - Added support for VLAN ranges
 
