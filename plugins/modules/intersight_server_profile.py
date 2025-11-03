@@ -64,6 +64,10 @@ options:
       - Managed Obect ID (MOID) of assigned server.
       - Option can be omitted if user wishes to assign server later.
     type: str
+  adapter_policy:
+    description:
+      - Name of Adapter Policy to associate with this profile.
+    type: str
   bios_policy:
     description:
       - Name of BIOS Policy to associate with this profile.
@@ -226,6 +230,7 @@ from ansible_collections.cisco.intersight.plugins.module_utils.intersight import
 
 # When adding new policy parameters, update this dict with their respective resource path
 policy_resource_path = {
+    'adapter_policy': '/adapter/ConfigPolicies',
     'bios_policy': '/bios/Policies',
     'boot_order_policy': '/boot/PrecisionPolicies',
     'certificate_policy': '/certificatemanagement/Policies',
@@ -315,6 +320,7 @@ def main():
         tags=dict(type='list', elements='dict', default=[]),
         description=dict(type='str', aliases=['descr'], default=''),
         assigned_server=dict(type='str'),
+        adapter_policy=dict(type='str'),
         bios_policy=dict(type='str'),
         boot_order_policy=dict(type='str'),
         certificate_policy=dict(type='str'),
