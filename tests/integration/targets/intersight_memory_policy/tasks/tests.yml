@@ -1,0 +1,150 @@
+---
+- block:
+  - name: Define anchor for Intersight API login info
+    ansible.builtin.set_fact:
+      api_info: &api_info
+        api_private_key: "{{ api_private_key }}"
+        api_key_id: "{{ api_key_id }}"
+        api_uri: "{{ api_uri | default(omit) }}"
+        validate_certs: "{{ validate_certs | default(omit) }}"
+        organization: "{{ organization }}"
+
+  - name: Make sure Env is clean
+    cisco.intersight.intersight_memory_policy:
+      <<: *api_info
+      name: "{{ item }}"
+      state: absent
+    loop:
+      - test_memory_policy_basic
+      - test_memory_policy_disabled
+      - test_memory_policy_updated
+
+  # Test 1: Basic Memory Policy Creation
+  - name: Create basic Memory policy - check-mode
+    cisco.intersight.intersight_memory_policy:
+      <<: *api_info
+      name: test_memory_policy_basic
+      description: "Test basic Memory policy"
+      enable_dimm_blocklisting: true
+      tags:
+        - Key: Site
+          Value: Test
+    check_mode: true
+    register: basic_creation_check_mode
+
+  - name: Verify basic Memory policy was not created - check-mode
+    ansible.builtin.assert:
+      that:
+        - basic_creation_check_mode is changed
+        - basic_creation_check_mode.api_response == {}
+
+  - name: Create basic Memory policy
+    cisco.intersight.intersight_memory_policy:
+      <<: *api_info
+      name: test_memory_policy_basic
+      description: "Test basic Memory policy"
+      enable_dimm_blocklisting: true
+      tags:
+        - Key: Site
+          Value: Test
+    check_mode: true
+    register: basic_creation_check_mode
+
+  - name: Verify basic Memory policy was not created - check-mode
+    ansible.builtin.assert:
+      that:
+        - basic_creation_check_mode is changed
+        - basic_creation_check_mode.api_response == {}
+
+  - name: Create basic Memory policy
+    cisco.intersight.intersight_memory_policy:
+      <<: *api_info
+      name: test_memory_policy_basic
+      description: "Test basic Memory policy"
+      enable_dimm_blocklisting: true
+      tags:
+        - Key: Site
+          Value: Test
+    register: basic_creation
+
+  - name: Verify basic Memory policy creation
+    ansible.builtin.assert:
+      that:
+        - basic_creation.changed
+
+  - name: Create basic Memory policy (idempotency check)
+    cisco.intersight.intersight_memory_policy:
+      <<: *api_info
+      name: test_memory_policy_basic
+      description: "Test basic Memory policy"
+      enable_dimm_blocklisting: true
+      tags:
+        - Key: Site
+          Value: Test
+    register: basic_creation_ide
+
+  - name: Verify basic Memory policy creation (idempotency check)
+    ansible.builtin.assert:
+      that:
+        - not basic_creation_ide.changed
+
+  # Test 2: Disabled Memory Policy
+  - name: Create disabled Memory policy
+    cisco.intersight.intersight_memory_policy:
+      <<: *api_info
+      name: test_memory_policy_disabled
+      description: "Test disabled Memory policy"
+      enable_dimm_blocklisting: false
+      tags:
+        - Key: Environment
+          Value: Test
+    register: disabled_creation
+
+  - name: Verify disabled Memory policy creation
+    ansible.builtin.assert:
+      that:
+        - disabled_creation.changed
+
+  - name: Create disabled Memory policy (idempotency check)
+    cisco.intersight.intersight_memory_policy:
+      <<: *api_info
+      name: test_memory_policy_disabled
+      description: "Test disabled Memory policy"
+      enable_dimm_blocklisting: false
+      tags:
+        - Key: Environment
+          Value: Test
+    register: disabled_creation_ide
+
+  - name: Verify disabled Memory policy creation (idempotency check)
+    ansible.builtin.assert:
+      that:
+        - not disabled_creation_ide.changed
+
+  # Test 3: Update Memory Policy
+  - name: Disable Memory policy
+    cisco.intersight.intersight_memory_policy:
+      <<: *api_info
+      name: test_memory_policy_disabled
+      description: "Updated disabled Memory policy"
+      enable_dimm_blocklisting: false
+      tags:
+        - Key: Environment
+          Value: Disabled
+    register: disabled_update
+
+  - name: Verify disabled Memory policy update
+    ansible.builtin.assert:
+      that:
+        - disabled_update.changed
+
+  always:
+  - name: Remove all test Memory policies
+    cisco.intersight.intersight_memory_policy:
+      <<: *api_info
+      name: "{{ item }}"
+      state: absent
+    loop:
+      - test_memory_policy_basic
+      - test_memory_policy_disabled
+      - test_memory_policy_updated
