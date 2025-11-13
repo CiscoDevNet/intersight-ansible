@@ -754,10 +754,11 @@ def main():
                 intersight.api_body = vhba_api_body
 
             resource_path = '/vnic/FcIfs'
+            custom_filter = f"Name eq '{vhba_config['name']}' and SanConnectivityPolicy.Moid eq '{san_connectivity_policy_moid}'"
             intersight.configure_secondary_resource(
                 resource_path=resource_path,
-                resource_name=vhba_config['name'],
-                state=vhba_state
+                state=vhba_state,
+                custom_filter=custom_filter
             )
             if vhba_state == 'present':
                 vhbas_response.append(intersight.result['api_response'])
