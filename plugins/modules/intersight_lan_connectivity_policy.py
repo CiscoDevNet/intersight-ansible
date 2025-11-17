@@ -1154,10 +1154,12 @@ def main():
 
             # Configure the vNIC (create/update/delete)
             resource_path = '/vnic/EthIfs'
+            # Filter by both vNIC name AND LAN Connectivity Policy to avoid affecting vNICs in other policies
+            custom_filter = f"Name eq '{vnic_config['name']}' and LanConnectivityPolicy.Moid eq '{lan_connectivity_policy_moid}'"
             intersight.configure_secondary_resource(
                 resource_path=resource_path,
-                resource_name=vnic_config['name'],
-                state=vnic_state
+                state=vnic_state,
+                custom_filter=custom_filter
             )
 
             # Save the vNIC response only if it's present
