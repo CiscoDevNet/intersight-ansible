@@ -1,5 +1,9 @@
 # cisco.intersight Ansible Collection Changelog
 
+## Version 2.8.0
+- Fixes incorrect updates for Port, Storage, LAN, and SAN Connectivity Policies.
+- Adds support for Device Connector, Drive Security, and Memory Policies.
+
 ## Version 2.7.0
 - Added SAN Connectivity and FC Zone/QoS/Network/Adapter Policies, vHBA Template, and indirect node count support.
 
