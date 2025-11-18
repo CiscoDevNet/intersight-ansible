@@ -1,0 +1,328 @@
+---
+- block:
+  - name: Define anchor for Intersight API login info
+    ansible.builtin.set_fact:
+      api_info: &api_info
+        api_private_key: "{{ api_private_key }}"
+        api_key_id: "{{ api_key_id }}"
+        api_uri: "{{ api_uri | default(omit) }}"
+        validate_certs: "{{ validate_certs | default(omit) }}"
+        organization: "{{ organization }}"
+
+  - name: Make sure Env is clean
+    cisco.intersight.intersight_drive_security_policy:
+      <<: *api_info
+      name: "{{ item }}"
+      state: absent
+    loop:
+      - test_drive_security_policy_manual
+      - test_drive_security_policy_manual_update
+      - test_drive_security_policy_kmip_primary
+      - test_drive_security_policy_kmip_both
+      - test_drive_security_policy_kmip_auth
+
+  - name: Create Drive Security Policy with Manual Key - check-mode
+    cisco.intersight.intersight_drive_security_policy:
+      <<: *api_info
+      name: test_drive_security_policy_manual
+      description: "Test Drive Security Policy with Manual Key"
+      manual_key:
+        new_key: "TestP@ssw0rd123"
+      tags:
+        - Key: Environment
+          Value: Test
+    check_mode: true
+    register: manual_creation_check_mode
+
+  - name: Verify Drive Security Policy was not created - check-mode
+    ansible.builtin.assert:
+      that:
+        - manual_creation_check_mode is changed
+        - manual_creation_check_mode.api_response == {}
+
+  - name: Create Drive Security Policy with Manual Key
+    cisco.intersight.intersight_drive_security_policy:
+      <<: *api_info
+      name: test_drive_security_policy_manual
+      description: "Test Drive Security Policy with Manual Key"
+      manual_key:
+        new_key: "TestP@ssw0rd123"
+      tags:
+        - Key: Environment
+          Value: Test
+    register: manual_creation
+
+  - name: Fetch info after Manual Drive Security Policy creation
+    cisco.intersight.intersight_drive_security_policy_info:
+      <<: *api_info
+      name: test_drive_security_policy_manual
+    register: manual_info
+
+  - name: Verify Manual Drive Security Policy creation
+    ansible.builtin.assert:
+      that:
+        - manual_creation.changed
+        - manual_info.api_response[0].Name == 'test_drive_security_policy_manual'
+        - manual_info.api_response[0].KeySetting.KeyType == 'Manual'
+        - manual_info.api_response[0].Description == 'Test Drive Security Policy with Manual Key'
+
+  - name: Create Drive Security Policy with Manual Key (idempotency check)
+    cisco.intersight.intersight_drive_security_policy:
+      <<: *api_info
+      name: test_drive_security_policy_manual
+      description: "Test Drive Security Policy with Manual Key"
+      manual_key:
+        new_key: "TestP@ssw0rd123"
+      tags:
+        - Key: Environment
+          Value: Test
+    register: manual_creation_ide
+
+  - name: Verify Manual Drive Security Policy creation (idempotency check)
+    ansible.builtin.assert:
+      that:
+        - not manual_creation_ide.changed
+
+  - name: Update Drive Security Policy with new Manual Key
+    cisco.intersight.intersight_drive_security_policy:
+      <<: *api_info
+      name: test_drive_security_policy_manual_update
+      description: "Test Drive Security Policy Manual Key Update"
+      manual_key:
+        new_key: "NewTestP@ssw0rd456"
+      tags:
+        - Key: Environment
+          Value: Test
+    register: manual_update
+
+  - name: Fetch info after Manual Key update
+    cisco.intersight.intersight_drive_security_policy_info:
+      <<: *api_info
+      name: test_drive_security_policy_manual_update
+    register: manual_update_info
+
+  - name: Verify Manual Key update
+    ansible.builtin.assert:
+      that:
+        - manual_update.changed
+        - manual_update_info.api_response[0].Name == 'test_drive_security_policy_manual_update'
+        - manual_update_info.api_response[0].KeySetting.KeyType == 'Manual'
+
+  - name: Create Drive Security Policy with KMIP (Primary Only)
+    cisco.intersight.intersight_drive_security_policy:
+      <<: *api_info
+      name: test_drive_security_policy_kmip_primary
+      description: "Test Drive Security Policy with KMIP Primary Server"
+      remote_key:
+        primary_server:
+          enable_drive_security: true
+          ip_address: "192.168.1.100"
+          port: 5696
+          timeout: 60
+        secondary_server:
+          enable_drive_security: false
+        server_certificate: "LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUYyekNDQThPZ0F3SUJBZ0lVS21BdXJTK1Y2TDRZWS9TMWlDT0oxU1JsOXlRd0RRWUpLb1pJaHZjTkFRRUwKQlFBd2ZURUxNQWtHQTFVRUJoTUNNVE14RWpBUUJnTlZCQWdNQ1hKaGJXRjBJR2RoYmpFU01CQUdBMVVFQnd3SgpjbUZ0WVhRZ1oyRnVNUXd3Q2dZRFZRUUtEQU55YjI0eEREQUtCZ05WQkFzTUEzSnZiakVNTUFvR0ExVUVBd3dECmNtOXVNUnd3R2dZSktvWklodmNOQVFrQkZnMXliMjVBWjIxaGFXd3VZMjl0TUI0WERUSTFNVEF5TXpFd016Z3oKTUZvWERUTTFNVEF5TVRFd016Z3pNRm93ZlRFTE1Ba0dBMVVFQmhNQ01UTXhFakFRQmdOVkJBZ01DWEpoYldGMApJR2RoYmpFU01CQUdBMVVFQnd3SmNtRnRZWFFnWjJGdU1Rd3dDZ1lEVlFRS0RBTnliMjR4RERBS0JnTlZCQXNNCkEzSnZiakVNTUFvR0ExVUVBd3dEY205dU1Sd3dHZ1lKS29aSWh2Y05BUWtCRmcxeWIyNUFaMjFoYVd3dVkyOXQKTUlJQ0lqQU5CZ2txaGtpRzl3MEJBUUVGQUFPQ0FnOEFNSUlDQ2dLQ0FnRUF3YnZoNDB2cGZoUXhqa0NkM2JOcgphWGxLTTFaRGcxdzNKTXJCdFAxVlI2aUY0OElDMEYyeWRFRkdIOEZnR0dXaTQ4cnRtZ2U2dE1ZclZycW1IRHN6CjhUVGZ3a1o2WHlwdjZBUGNtNHlpbGRWZFltc1FhZ0JOa2gxUWtKSlVkWldnZFRrNGtTTjhhM0lSS2lGUVFmTmIKbFRvWVNXUXppdGlLOWFsaGtmMGE3T1ZRMDVnTk5Kblp0cEdqanc2SXVDMFE0TCtVdXltZ1QxWFdWU0x3RHFmcQpJUGxJZXVyRmNIRHdtdk9KeUhkeGNrNkJvaHVRcXptQjEzRGVQOUh1RXRMcmFoVWRycnc4SW94MlhLMlNhMnZwCjhxWVhBZElwMWZqNEJzUFEyWHk1U3dyaEFCWEZGLzRySlVydzNqNE5WNm4rQ2ZCSHF3cUlnYzhVRVV4MW1LQUgKc0lLdGtvNE1tVjNDVWZIMFUrb3J4OFpQOUVSZy9PRTZFa2NJZWhiR2NUamowQXRsVll5RWdEa1VZN0ZXczBObApUaWRENVQzaGNMWTlBcXhNWHhHVHBTM1RiTEo0blVaeXQxZ3FPWkdFVytPdTBWR3pXLzVYbEh1SUF3MUJBVXZoCkNhUVJYM3NwT3lmYUs0akNwZjNvb2M1TlNZaHNVcGFKdGpYYndPS1AycVA3TDcxOWxSVmtVR21sQzkwSjcrM1QKbFRKNGZ2ZmNPYlNvWlllenc1L2FxV1lRb3J2WVNvcjhXSllJRDR5UWIvK3IyN2dEWXFFT0g5SFVUV3FQaUNXQwoyTWRmMFdBNFEwdVNXMGt2WWJ4Tk5qUllNOG9CWjlWTXBYQXlWNUFIakRTRDA3Y1p0YitRS1lMektuM0dGOWJICmIzTk52RkViYWkyOTVkandQOW5vTi9NQ0F3RUFBYU5UTUZFd0hRWURWUjBPQkJZRUZGbk5ybnVxTWdaRFNoZVMKYU9SY1UvOWlLWGdzTUI4R0ExVWRJd1FZTUJhQUZGbk5ybnVxTWdaRFNoZVNhT1JjVS85aUtYZ3NNQThHQTFVZApFd0VCL3dRRk1BTUJBZjh3RFFZSktvWklodmNOQVFFTEJRQURnZ0lCQUpaNThPMCsxdmxFK0NYdVFiSDJNYTUvClJqUDJBREZXZVNaeEd3MWJKSldHY2ZlMGc1SjFIVTBNcE9jTDFzMEFmMWdjKzdkbXk4T09EK2xtWTE5YmVxUlEKZXh2VDFUQXFhODByYTJtRzBMSVJsY2pMWnMrMjltZkxMQlZKUFdMWXVKWTFlQ0xRQ1Rmd1FxWUEyaUcrV2ZQMQp2bTJCQXdFVFoxdkZVbmFTOU0wZHNCQit6K0txODJUL1lBZlhiYVVodGgrRnl0M2FDbHludTMzbkcyM1hST3NoClozckFOckc2ME55S3c3Y2VQL0VrQ0ZIcmdTdUJwRXhFTTFVZ1FYZFgycXFQQWJJbnRBTlR5QWpvSk5yRXprVm8KbWE1b3JYZDlrbGx3dExZc2liWDdKcTlIeitCK0FRalIvUjU0eWFNMld1VStkRHo3UFFFV1hVVnhsbFR1OCtvcQpvZkUySGd4QW05RlM3Z0ViYWhaMS9Lb0h1ekRjdVNDai9aNkNTbEpXS3JUT3ZOUktsOS9TczM5OGFJSUdLRHhDCmVWK1lpTFJtYkMrUjVHTm9vUFZIaGZOd2l2dHFucW5XSnVmWUF3bUpZMjQvUmhjLzlqZSs4cG1qdlpvZGthYVoKOWVnSDVGTFRVRzJsWTJURkIxWVMyOEN5VGtOR3o3RWgycGMzM2UrN204bm5TeHhaMnpxeXZzdTZNNHgyUzRGOQpSOEdERWlMakRuRW11YXJ5SzA1NXNxQzV4QTkwMG9Kb01MS3hTSTlRZ24ydVFYdTcyek5oWkMwSEpZMFhuWlNGCm16MlBLZTJybXJPcTB5OXRXR3BnMGZhRG1xbG5pbWxaYjUzSkNVcUIxMDFPTkc5RkpxKzdqRUdySC93RzNXai8KMlJGOVl0VnA1eHVSSitNOVhLcC8KLS0tLS1FTkQgQ0VSVElGSUNBVEUtLS0tLQo="
+        use_authentication: false
+    register: kmip_primary_creation
+
+  - name: Fetch info after KMIP Primary Drive Security Policy creation
+    cisco.intersight.intersight_drive_security_policy_info:
+      <<: *api_info
+      name: test_drive_security_policy_kmip_primary
+    register: kmip_primary_info
+
+  - name: Verify KMIP Primary Drive Security Policy creation
+    ansible.builtin.assert:
+      that:
+        - kmip_primary_creation.changed
+        - kmip_primary_info.api_response[0].Name == 'test_drive_security_policy_kmip_primary'
+        - kmip_primary_info.api_response[0].KeySetting.KeyType == 'Kmip'
+        - kmip_primary_info.api_response[0].KeySetting.RemoteKey.PrimaryServer.EnableDriveSecurity == true
+        - kmip_primary_info.api_response[0].KeySetting.RemoteKey.PrimaryServer.IpAddress == '192.168.1.100'
+        - kmip_primary_info.api_response[0].KeySetting.RemoteKey.SecondaryServer.EnableDriveSecurity == false
+
+  - name: Create Drive Security Policy with KMIP (Both Servers)
+    cisco.intersight.intersight_drive_security_policy:
+      <<: *api_info
+      name: test_drive_security_policy_kmip_both
+      description: "Test Drive Security Policy with KMIP Both Servers"
+      remote_key:
+        primary_server:
+          enable_drive_security: true
+          ip_address: "192.168.1.100"
+          port: 5696
+          timeout: 60
+        secondary_server:
+          enable_drive_security: true
+          ip_address: "192.168.1.101"
+          port: 5697
+          timeout: 90
+        server_certificate: "LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUYyekNDQThPZ0F3SUJBZ0lVS21BdXJTK1Y2TDRZWS9TMWlDT0oxU1JsOXlRd0RRWUpLb1pJaHZjTkFRRUwKQlFBd2ZURUxNQWtHQTFVRUJoTUNNVE14RWpBUUJnTlZCQWdNQ1hKaGJXRjBJR2RoYmpFU01CQUdBMVVFQnd3SgpjbUZ0WVhRZ1oyRnVNUXd3Q2dZRFZRUUtEQU55YjI0eEREQUtCZ05WQkFzTUEzSnZiakVNTUFvR0ExVUVBd3dECmNtOXVNUnd3R2dZSktvWklodmNOQVFrQkZnMXliMjVBWjIxaGFXd3VZMjl0TUI0WERUSTFNVEF5TXpFd016Z3oKTUZvWERUTTFNVEF5TVRFd016Z3pNRm93ZlRFTE1Ba0dBMVVFQmhNQ01UTXhFakFRQmdOVkJBZ01DWEpoYldGMApJR2RoYmpFU01CQUdBMVVFQnd3SmNtRnRZWFFnWjJGdU1Rd3dDZ1lEVlFRS0RBTnliMjR4RERBS0JnTlZCQXNNCkEzSnZiakVNTUFvR0ExVUVBd3dEY205dU1Sd3dHZ1lKS29aSWh2Y05BUWtCRmcxeWIyNUFaMjFoYVd3dVkyOXQKTUlJQ0lqQU5CZ2txaGtpRzl3MEJBUUVGQUFPQ0FnOEFNSUlDQ2dLQ0FnRUF3YnZoNDB2cGZoUXhqa0NkM2JOcgphWGxLTTFaRGcxdzNKTXJCdFAxVlI2aUY0OElDMEYyeWRFRkdIOEZnR0dXaTQ4cnRtZ2U2dE1ZclZycW1IRHN6CjhUVGZ3a1o2WHlwdjZBUGNtNHlpbGRWZFltc1FhZ0JOa2gxUWtKSlVkWldnZFRrNGtTTjhhM0lSS2lGUVFmTmIKbFRvWVNXUXppdGlLOWFsaGtmMGE3T1ZRMDVnTk5Kblp0cEdqanc2SXVDMFE0TCtVdXltZ1QxWFdWU0x3RHFmcQpJUGxJZXVyRmNIRHdtdk9KeUhkeGNrNkJvaHVRcXptQjEzRGVQOUh1RXRMcmFoVWRycnc4SW94MlhLMlNhMnZwCjhxWVhBZElwMWZqNEJzUFEyWHk1U3dyaEFCWEZGLzRySlVydzNqNE5WNm4rQ2ZCSHF3cUlnYzhVRVV4MW1LQUgKc0lLdGtvNE1tVjNDVWZIMFUrb3J4OFpQOUVSZy9PRTZFa2NJZWhiR2NUamowQXRsVll5RWdEa1VZN0ZXczBObApUaWRENVQzaGNMWTlBcXhNWHhHVHBTM1RiTEo0blVaeXQxZ3FPWkdFVytPdTBWR3pXLzVYbEh1SUF3MUJBVXZoCkNhUVJYM3NwT3lmYUs0akNwZjNvb2M1TlNZaHNVcGFKdGpYYndPS1AycVA3TDcxOWxSVmtVR21sQzkwSjcrM1QKbFRKNGZ2ZmNPYlNvWlllenc1L2FxV1lRb3J2WVNvcjhXSllJRDR5UWIvK3IyN2dEWXFFT0g5SFVUV3FQaUNXQwoyTWRmMFdBNFEwdVNXMGt2WWJ4Tk5qUllNOG9CWjlWTXBYQXlWNUFIakRTRDA3Y1p0YitRS1lMektuM0dGOWJICmIzTk52RkViYWkyOTVkandQOW5vTi9NQ0F3RUFBYU5UTUZFd0hRWURWUjBPQkJZRUZGbk5ybnVxTWdaRFNoZVMKYU9SY1UvOWlLWGdzTUI4R0ExVWRJd1FZTUJhQUZGbk5ybnVxTWdaRFNoZVNhT1JjVS85aUtYZ3NNQThHQTFVZApFd0VCL3dRRk1BTUJBZjh3RFFZSktvWklodmNOQVFFTEJRQURnZ0lCQUpaNThPMCsxdmxFK0NYdVFiSDJNYTUvClJqUDJBREZXZVNaeEd3MWJKSldHY2ZlMGc1SjFIVTBNcE9jTDFzMEFmMWdjKzdkbXk4T09EK2xtWTE5YmVxUlEKZXh2VDFUQXFhODByYTJtRzBMSVJsY2pMWnMrMjltZkxMQlZKUFdMWXVKWTFlQ0xRQ1Rmd1FxWUEyaUcrV2ZQMQp2bTJCQXdFVFoxdkZVbmFTOU0wZHNCQit6K0txODJUL1lBZlhiYVVodGgrRnl0M2FDbHludTMzbkcyM1hST3NoClozckFOckc2ME55S3c3Y2VQL0VrQ0ZIcmdTdUJwRXhFTTFVZ1FYZFgycXFQQWJJbnRBTlR5QWpvSk5yRXprVm8KbWE1b3JYZDlrbGx3dExZc2liWDdKcTlIeitCK0FRalIvUjU0eWFNMld1VStkRHo3UUFFV1hVVnhsbFR1OCtvcQpvZkUySGd4QW05RlM3Z0ViYWhaMS9Lb0h1ekRjdVNDai9aNkNTbEpXS3JUT3ZOUktsOS9TczM5OGFJSUdLRHhDCmVWK1lpTFJtYkMrUjVHTm9vUFZIaGZOd2l2dHFucW5XSnVmWUF3bUpZMjQvUmhjLzlqZSs4cG1qdlpvZGthYVoKOWVnSDVGTFRVRzJsWTJURkIxWVMyOEN5VGtOR3o3RWgycGMzM2UrN204bm5TeHhaMnpxeXZzdTZNNHgyUzRGOQpSOEdERWlMakRuRW11YXJ5SzA1NXNxQzV4QTkwMG9Kb01MS3hTSTlRZ24ydVFYdTcyek5oWkMwSEpZMFhuWlNGCm16MlBLZTJybXJPcTB5OXRXR3BnMGZhRG1xbG5pbWxaYjUzSkNVcUIxMDFPTkc5RkpxKzdqRUdySC93RzNXai8KMlJGOVl0VnA1eHVSSitNOVhLcC8KLS0tLS1FTkQgQ0VSVElGSUNBVEUtLS0tLQo="
+        use_authentication: false
+    register: kmip_both_creation
+
+  - name: Fetch info after KMIP Both Servers Drive Security Policy creation
+    cisco.intersight.intersight_drive_security_policy_info:
+      <<: *api_info
+      name: test_drive_security_policy_kmip_both
+    register: kmip_both_info
+
+  - name: Verify KMIP Both Servers Drive Security Policy creation
+    ansible.builtin.assert:
+      that:
+        - kmip_both_creation.changed
+        - kmip_both_info.api_response[0].Name == 'test_drive_security_policy_kmip_both'
+        - kmip_both_info.api_response[0].KeySetting.KeyType == 'Kmip'
+        - kmip_both_info.api_response[0].KeySetting.RemoteKey.PrimaryServer.EnableDriveSecurity == true
+        - kmip_both_info.api_response[0].KeySetting.RemoteKey.PrimaryServer.IpAddress == '192.168.1.100'
+        - kmip_both_info.api_response[0].KeySetting.RemoteKey.SecondaryServer.EnableDriveSecurity == true
+        - kmip_both_info.api_response[0].KeySetting.RemoteKey.SecondaryServer.IpAddress == '192.168.1.101'
+        - kmip_both_info.api_response[0].KeySetting.RemoteKey.SecondaryServer.Port == 5697
+
+  - name: Create Drive Security Policy with KMIP and Authentication
+    cisco.intersight.intersight_drive_security_policy:
+      <<: *api_info
+      name: test_drive_security_policy_kmip_auth
+      description: "Test Drive Security Policy with KMIP and Authentication"
+      remote_key:
+        primary_server:
+          enable_drive_security: true
+          ip_address: "192.168.1.100"
+          port: 5696
+          timeout: 60
+        secondary_server:
+          enable_drive_security: false
+        server_certificate: "LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUYyekNDQThPZ0F3SUJBZ0lVS21BdXJTK1Y2TDRZWS9TMWlDT0oxU1JsOXlRd0RRWUpLb1pJaHZjTkFRRUwKQlFBd2ZURUxNQWtHQTFVRUJoTUNNVE14RWpBUUJnTlZCQWdNQ1hKaGJXRjBJR2RoYmpFU01CQUdBMVVFQnd3SgpjbUZ0WVhRZ1oyRnVNUXd3Q2dZRFZRUUtEQU55YjI0eEREQUtCZ05WQkFzTUEzSnZiakVNTUFvR0ExVUVBd3dECmNtOXVNUnd3R2dZSktvWklodmNOQVFrQkZnMXliMjVBWjIxaGFXd3VZMjl0TUI0WERUSTFNVEF5TXpFd016Z3oKTUZvWERUTTFNVEF5TVRFd016Z3pNRm93ZlRFTE1Ba0dBMVVFQmhNQ01UTXhFakFRQmdOVkJBZ01DWEpoYldGMApJR2RoYmpFU01CQUdBMVVFQnd3SmNtRnRZWFFnWjJGdU1Rd3dDZ1lEVlFRS0RBTnliMjR4RERBS0JnTlZCQXNNCkEzSnZiakVNTUFvR0ExVUVBd3dEY205dU1Sd3dHZ1lKS29aSWh2Y05BUWtCRmcxeWIyNUFaMjFoYVd3dVkyOXQKTUlJQ0lqQU5CZ2txaGtpRzl3MEJBUUVGQUFPQ0FnOEFNSUlDQ2dLQ0FnRUF3YnZoNDB2cGZoUXhqa0NkM2JOcgphWGxLTTFaRGcxdzNKTXJCdFAxVlI2aUY0OElDMEYyeWRFRkdIOEZnR0dXaTQ4cnRtZ2U2dE1ZclZycW1IRHN6CjhUVGZ3a1o2WHlwdjZBUGNtNHlpbGRWZFltc1FhZ0JOa2gxUWtKSlVkWldnZFRrNGtTTjhhM0lSS2lGUVFmTmIKbFRvWVNXUXppdGlLOWFsaGtmMGE3T1ZRMDVnTk5Kblp0cEdqanc2SXVDMFE0TCtVdXltZ1QxWFdWU0x3RHFmcQpJUGxJZXVyRmNIRHdtdk9KeUhkeGNrNkJvaHVRcXptQjEzRGVQOUh1RXRMcmFoVWRycnc4SW94MlhLMlNhMnZwCjhxWVhBZElwMWZqNEJzUFEyWHk1U3dyaEFCWEZGLzRySlVydzNqNE5WNm4rQ2ZCSHF3cUlnYzhVRVV4MW1LQUgKc0lLdGtvNE1tVjNDVWZIMFUrb3J4OFpQOUVSZy9PRTZFa2NJZWhiR2NUamowQXRsVll5RWdEa1VZN0ZXczBObApUaWRENVQzaGNMWTlBcXhNWHhHVHBTM1RiTEo0blVaeXQxZ3FPWkdFVytPdTBWR3pXLzVYbEh1SUF3MUJBVXZoCkNhUVJYM3NwT3lmYUs0akNwZjNvb2M1TlNZaHNVcGFKdGpYYndPS1AycVA3TDcxOWxSVmtVR21sQzkwSjcrM1QKbFRKNGZ2ZmNPYlNvWlllenc1L2FxV1lRb3J2WVNvcjhXSllJRDR5UWIvK3IyN2dEWXFFT0g5SFVUV3FQaUNXQwoyTWRmMFdBNFEwdVNXMGt2WWJ4Tk5qUllNOG9CWjlWTXBYQXlWNUFIakRTRDA3Y1p0YitRS1lMektuM0dGOWJICmIzTk52RkViYWkyOTVkandQOW5vTi9NQ0F3RUFBYU5UTUZFd0hRWURWUjBPQkJZRUZGbk5ybnVxTWdaRFNoZVMKYU9SY1UvOWlLWGdzTUI4R0ExVWRJd1FZTUJhQUZGbk5ybnVxTWdaRFNoZVNhT1JjVS85aUtYZ3NNQThHQTFVZApFd0VCL3dRRk1BTUJBZjh3RFFZSktvWklodmNOQVFFTEJRQURnZ0lCQUpaNThPMCsxdmxFK0NYdVFiSDJNYTUvClJqUDJBREZXZVNaeEd3MWJKSldHY2ZlMGc1SjFIVTBNcE9jTDFzMEFmMWdjKzdkbXk4T09EK2xtWTE5YmVxUlEKZXh2VDFUQXFhODByYTJtRzBMSVJsY2pMWnMrMjltZkxMQlZKUFdMWXVKWTFlQ0xRQ1Rmd1FxWUEyaUcrV2ZQMQp2bTJCQXdFVFoxdkZVbmFTOU0wZHNCQit6K0txODJUL1lBZlhiYVVodGgrRnl0M2FDbHludTMzbkcyM1hST3NoClozckFOckc2ME55S3c3Y2VQL0VrQ0ZIcmdTdUJwRXhFTTFVZ1FYZFgycXFQQWJJbnRBTlR5QWpvSk5yRXprVm8KbWE1b3JYZDlrbGx3dExZc2liWDdKcTlIeitCK0FRalIvUjU0eWFNMld1VStkRHo3UUFFV1hVVnhsbFR1OCtvcQpvZkUySGd4QW05RlM3Z0ViYWhaMS9Lb0h1ekRjdVNDai9aNkNTbEpXS3JUT3ZOUktsOS9TczM5OGFJSUdLRHhDCmVWK1lpTFJtYkMrUjVHTm9vUFZIaGZOd2l2dHFucW5XSnVmWUF3bUpZMjQvUmhjLzlqZSs4cG1qdlpvZGthYVoKOWVnSDVGTFRVRzJsWTJURkIxWVMyOEN5VGtOR3o3RWgycGMzM2UrN204bm5TeHhaMnpxeXZzdTZNNHgyUzRGOQpSOEdERWlMakRuRW11YXJ5SzA1NXNxQzV4QTkwMG9Kb01MS3hTSTlRZ24ydVFYdTcyek5oWkMwSEpZMFhuWlNGCm16MlBLZTJybXJPcTB5OXRXR3BnMGZhRG1xbG5pbWxaYjUzSkNVcUIxMDFPTkc5RkpxKzdqRUdySC93RzNXai8KMlJGOVl0VnA1eHVSSitNOVhLcC8KLS0tLS1FTkQgQ0VSVElGSUNBVEUtLS0tLQo="
+        use_authentication: true
+        username: "kmip_admin"
+        password: "Kmip_P@ssw0rd"
+    register: kmip_auth_creation
+
+  - name: Fetch info after KMIP with Authentication Drive Security Policy creation
+    cisco.intersight.intersight_drive_security_policy_info:
+      <<: *api_info
+      name: test_drive_security_policy_kmip_auth
+    register: kmip_auth_info
+
+  - name: Verify KMIP with Authentication Drive Security Policy creation
+    ansible.builtin.assert:
+      that:
+        - kmip_auth_creation.changed
+        - kmip_auth_info.api_response[0].Name == 'test_drive_security_policy_kmip_auth'
+        - kmip_auth_info.api_response[0].KeySetting.KeyType == 'Kmip'
+        - kmip_auth_info.api_response[0].KeySetting.RemoteKey.AuthCredentials.UseAuthentication == true
+        - kmip_auth_info.api_response[0].KeySetting.RemoteKey.AuthCredentials.Username == 'kmip_admin'
+
+  - name: Update existing Drive Security Policy
+    cisco.intersight.intersight_drive_security_policy:
+      <<: *api_info
+      name: test_drive_security_policy_manual
+      description: "Updated Drive Security Policy Description"
+      manual_key:
+        new_key: "TestP@ssw0rd123"
+      tags:
+        - Key: Environment
+          Value: Updated
+    register: manual_update
+
+  - name: Fetch info after policy update
+    cisco.intersight.intersight_drive_security_policy_info:
+      <<: *api_info
+      name: test_drive_security_policy_manual
+    register: manual_update_info
+
+  - name: Verify policy update
+    ansible.builtin.assert:
+      that:
+        - manual_update.changed
+        - manual_update_info.api_response[0].Description == 'Updated Drive Security Policy Description'
+
+  - name: Fetch all Drive Security Policies under selected organization
+    cisco.intersight.intersight_drive_security_policy_info:
+      <<: *api_info
+    register: all_policies_info
+
+  - name: Check that there are Drive Security Policies under this organization
+    ansible.builtin.assert:
+      that:
+        - all_policies_info.api_response | length >= 4
+
+  # VALIDATION TESTS - Testing expected failures
+  
+  - name: Test validation - Neither key type specified (should fail)
+    cisco.intersight.intersight_drive_security_policy:
+      <<: *api_info
+      name: test_validation_fail
+    register: validation_fail_1
+    failed_when:
+      - "'Either manual_key or remote_key must be specified' not in validation_fail_1.msg"
+      - not validation_fail_1.failed
+
+  - name: Test validation - Both key types specified (should fail)
+    cisco.intersight.intersight_drive_security_policy:
+      <<: *api_info
+      name: test_validation_fail
+      manual_key:
+        new_key: "TestP@ssw0rd123"
+      remote_key:
+        primary_server:
+          enable_drive_security: true
+          ip_address: "192.168.1.100"
+        secondary_server:
+          enable_drive_security: false
+        server_certificate: "LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0t..."
+        use_authentication: false
+    register: validation_fail_2
+    failed_when:
+      - "'Cannot specify both manual_key and remote_key' not in validation_fail_2.msg"
+      - not validation_fail_2.failed
+
+  - name: Test validation - Invalid passphrase too short (should fail)
+    cisco.intersight.intersight_drive_security_policy:
+      <<: *api_info
+      name: test_validation_fail
+      manual_key:
+        new_key: "Short1!"
+    register: validation_fail_3
+    failed_when:
+      - "'at least 8 characters long' not in validation_fail_3.msg"
+      - not validation_fail_3.failed
+
+  - name: Test validation - Invalid passphrase missing uppercase (should fail)
+    cisco.intersight.intersight_drive_security_policy:
+      <<: *api_info
+      name: test_validation_fail
+      manual_key:
+        new_key: "testpassword123!"
+    register: validation_fail_4
+    failed_when:
+      - "'uppercase letter' not in validation_fail_4.msg"
+      - not validation_fail_4.failed
+
+  - name: Test validation - Missing server_certificate (should fail)
+    cisco.intersight.intersight_drive_security_policy:
+      <<: *api_info
+      name: test_validation_fail
+      remote_key:
+        primary_server:
+          enable_drive_security: true
+          ip_address: "192.168.1.100"
+        secondary_server:
+          enable_drive_security: false
+        use_authentication: false
+    register: validation_fail_5
+    failed_when:
+      - "'server_certificate is required' not in validation_fail_5.msg"
+      - not validation_fail_5.failed
+  always:
+  - name: Remove all test Drive Security Policies
+    cisco.intersight.intersight_drive_security_policy:
+      <<: *api_info
+      name: "{{ item }}"
+      state: absent
+    loop:
+      - test_drive_security_policy_manual
+      - test_drive_security_policy_manual_update
+      - test_drive_security_policy_kmip_primary
+      - test_drive_security_policy_kmip_both
+      - test_drive_security_policy_kmip_auth
