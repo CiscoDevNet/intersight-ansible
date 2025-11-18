@@ -1,0 +1,177 @@
+---
+- block:
+  - name: Define anchor for Intersight API login info
+    ansible.builtin.set_fact:
+      api_info: &api_info
+        api_private_key: "{{ api_private_key }}"
+        api_key_id: "{{ api_key_id }}"
+        api_uri: "{{ api_uri | default(omit) }}"
+        validate_certs: "{{ validate_certs | default(omit) }}"
+        organization: "{{ organization }}"
+
+  - name: Make sure Env is clean
+    cisco.intersight.intersight_device_connector_policy:
+      <<: *api_info
+      name: "{{ item }}"
+      state: absent
+    loop:
+      - test_device_connector_policy_lockout
+      - test_device_connector_policy_no_lockout
+      - test_device_connector_policy_update
+
+  - name: Create Device Connector Policy with lockout enabled - check-mode
+    cisco.intersight.intersight_device_connector_policy:
+      <<: *api_info
+      name: test_device_connector_policy_lockout
+      description: "Test Device Connector Policy with lockout enabled"
+      enable_lockout: true
+      tags:
+        - Key: Environment
+          Value: Test
+    check_mode: true
+    register: lockout_creation_check_mode
+
+  - name: Verify Device Connector Policy was not created - check-mode
+    ansible.builtin.assert:
+      that:
+        - lockout_creation_check_mode is changed
+        - lockout_creation_check_mode.api_response == {}
+
+  - name: Create Device Connector Policy with lockout enabled
+    cisco.intersight.intersight_device_connector_policy:
+      <<: *api_info
+      name: test_device_connector_policy_lockout
+      description: "Test Device Connector Policy with lockout enabled"
+      enable_lockout: true
+      tags:
+        - Key: Environment
+          Value: Test
+    register: lockout_creation
+
+  - name: Fetch info after Device Connector Policy creation
+    cisco.intersight.intersight_device_connector_policy_info:
+      <<: *api_info
+      name: test_device_connector_policy_lockout
+    register: lockout_info
+
+  - name: Verify Device Connector Policy creation with lockout enabled
+    ansible.builtin.assert:
+      that:
+        - lockout_creation.changed
+        - lockout_info.api_response[0].Name == 'test_device_connector_policy_lockout'
+        - lockout_info.api_response[0].LockoutEnabled == true
+        - lockout_info.api_response[0].Description == 'Test Device Connector Policy with lockout enabled'
+
+  - name: Create Device Connector Policy with lockout enabled (idempotency check)
+    cisco.intersight.intersight_device_connector_policy:
+      <<: *api_info
+      name: test_device_connector_policy_lockout
+      description: "Test Device Connector Policy with lockout enabled"
+      enable_lockout: true
+      tags:
+        - Key: Environment
+          Value: Test
+    register: lockout_creation_ide
+
+  - name: Verify Device Connector Policy creation (idempotency check)
+    ansible.builtin.assert:
+      that:
+        - not lockout_creation_ide.changed
+
+  - name: Create Device Connector Policy with lockout disabled
+    cisco.intersight.intersight_device_connector_policy:
+      <<: *api_info
+      name: test_device_connector_policy_no_lockout
+      description: "Test Device Connector Policy with lockout disabled"
+      enable_lockout: false
+      tags:
+        - Key: Environment
+          Value: Test
+    register: no_lockout_creation
+
+  - name: Fetch info after Device Connector Policy with no lockout creation
+    cisco.intersight.intersight_device_connector_policy_info:
+      <<: *api_info
+      name: test_device_connector_policy_no_lockout
+    register: no_lockout_info
+
+  - name: Verify Device Connector Policy creation with lockout disabled
+    ansible.builtin.assert:
+      that:
+        - no_lockout_creation.changed
+        - no_lockout_info.api_response[0].Name == 'test_device_connector_policy_no_lockout'
+        - no_lockout_info.api_response[0].LockoutEnabled == false
+        - no_lockout_info.api_response[0].Description == 'Test Device Connector Policy with lockout disabled'
+
+  - name: Create Device Connector Policy with lockout disabled (idempotency check)
+    cisco.intersight.intersight_device_connector_policy:
+      <<: *api_info
+      name: test_device_connector_policy_no_lockout
+      description: "Test Device Connector Policy with lockout disabled"
+      enable_lockout: false
+      tags:
+        - Key: Environment
+          Value: Test
+    register: no_lockout_creation_ide
+
+  - name: Verify Device Connector Policy with no lockout creation (idempotency check)
+    ansible.builtin.assert:
+      that:
+        - not no_lockout_creation_ide.changed
+
+  - name: Update Device Connector Policy - change lockout setting
+    cisco.intersight.intersight_device_connector_policy:
+      <<: *api_info
+      name: test_device_connector_policy_no_lockout
+      description: "Updated Device Connector Policy"
+      enable_lockout: true
+      tags:
+        - Key: Updated
+          Value: "True"
+    register: update_policy
+
+  - name: Fetch info after Device Connector Policy update
+    cisco.intersight.intersight_device_connector_policy_info:
+      <<: *api_info
+      name: test_device_connector_policy_no_lockout
+    register: update_info
+
+  - name: Verify Device Connector Policy update
+    ansible.builtin.assert:
+      that:
+        - update_policy.changed
+        - update_info.api_response[0].Name == 'test_device_connector_policy_no_lockout'
+        - update_info.api_response[0].LockoutEnabled == true
+        - update_info.api_response[0].Description == 'Updated Device Connector Policy'
+
+  - name: Test Device Connector Policy info - fetch all policies
+    cisco.intersight.intersight_device_connector_policy_info:
+      <<: *api_info
+    register: all_policies_info
+
+  - name: Verify all policies are returned
+    ansible.builtin.assert:
+      that:
+        - all_policies_info.api_response | length >= 2
+
+  - name: Delete Device Connector Policy with lockout enabled
+    cisco.intersight.intersight_device_connector_policy:
+      <<: *api_info
+      name: test_device_connector_policy_lockout
+      state: absent
+    register: delete_lockout
+
+  - name: Verify Device Connector Policy deletion
+    ansible.builtin.assert:
+      that:
+        - delete_lockout.changed
+
+  always:
+  - name: Cleanup - Delete all test Device Connector Policies
+    cisco.intersight.intersight_device_connector_policy:
+      <<: *api_info
+      name: "{{ item }}"
+      state: absent
+    loop:
+      - test_device_connector_policy_lockout
+      - test_device_connector_policy_no_lockout
