@@ -249,6 +249,14 @@
           ports:
             - port_id: "36"
             - port_id: "37"
+          eth_network_group_policy_names:
+            - "test-eth-network-group-for-port-policy"
+          state: present
+        - pc_id: 2
+          admin_speed: "25Gbps"
+          fec: "Auto"
+          user_label: "Ethernet Uplink PC 2 - Breakout"
+          ports:
             - port_id: "49/1"
             - port_id: "49/2"
           eth_network_group_policy_names:

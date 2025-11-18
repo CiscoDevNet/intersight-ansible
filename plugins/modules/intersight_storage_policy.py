@@ -771,9 +771,13 @@ def main():
             # Create the drive group
             resource_path = '/storage/DriveGroups'
             intersight.api_body = drive_group_api_body
-            intersight.configure_secondary_resource(resource_path=resource_path,
-                                                    resource_name=drive_group_config['name'],
-                                                    state=drive_group_config.get('state', 'present'))
+            # Filter by both DriveGroup name AND StoragePolicy to avoid affecting DriveGroups in other policies
+            custom_filter = f"Name eq '{drive_group_config['name']}' and StoragePolicy.Moid eq '{storage_policy_moid}'"
+            intersight.configure_secondary_resource(
+                resource_path=resource_path,
+                state=drive_group_config.get('state', 'present'),
+                custom_filter=custom_filter
+            )
 
             # Save the drive group response
             drive_groups_response.append(intersight.result['api_response'])
