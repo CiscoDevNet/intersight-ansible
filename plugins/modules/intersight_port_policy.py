@@ -2800,10 +2800,12 @@ def configure_pin_groups(intersight, port_policy_moid, pin_groups, uplink_pc_moi
             resource_path = '/fabric/SanPinGroups'
 
         # Configure the pin group
+        # Filter by both pin group name AND PortPolicy to avoid affecting pin groups in other policies
+        custom_filter = f"Name eq '{resource_name}' and PortPolicy.Moid eq '{port_policy_moid}'"
         intersight.configure_secondary_resource(
             resource_path=resource_path,
-            resource_name=resource_name,
-            state=pin_group_state
+            state=pin_group_state,
+            custom_filter=custom_filter
         )
 
 

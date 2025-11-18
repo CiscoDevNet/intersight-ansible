@@ -503,7 +503,13 @@ def main():
                 # Create the VLAN
                 resource_path = '/fabric/Vlans'
                 intersight.api_body = vlan_attach_api_body
-                intersight.configure_secondary_resource(resource_path=resource_path, resource_name=vlan_name, state=vlan_state)
+                # Filter by both VLAN name AND EthNetworkPolicy to avoid affecting VLANs in other policies
+                custom_filter = f"Name eq '{vlan_name}' and EthNetworkPolicy.Moid eq '{vlan_policy_moid}'"
+                intersight.configure_secondary_resource(
+                    resource_path=resource_path,
+                    state=vlan_state,
+                    custom_filter=custom_filter
+                )
                 # Store the VLAN response
                 final_response['vlans'].append(intersight.result['api_response'])
                 # Save the changed state and reset for next operation

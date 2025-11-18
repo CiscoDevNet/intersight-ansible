@@ -320,7 +320,13 @@ def main():
 
             # Create or delete the VSAN
             resource_path = '/fabric/Vsans'
-            intersight.configure_secondary_resource(resource_path=resource_path, resource_name=vsan_name, state=vsan_state)
+            # Filter by both VSAN name AND FcNetworkPolicy to avoid affecting VSANs in other policies
+            custom_filter = f"Name eq '{vsan_name}' and FcNetworkPolicy.Moid eq '{vsan_policy_moid}'"
+            intersight.configure_secondary_resource(
+                resource_path=resource_path,
+                state=vsan_state,
+                custom_filter=custom_filter
+            )
 
             # Store the VSAN response
             if intersight.result.get('api_response'):
