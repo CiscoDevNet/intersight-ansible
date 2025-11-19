@@ -1,0 +1,150 @@
+---
+- block:
+  - name: Define anchor for Intersight API login info
+    ansible.builtin.set_fact:
+      api_info: &api_info
+        api_private_key: "{{ api_private_key }}"
+        api_key_id: "{{ api_key_id }}"
+        api_uri: "{{ api_uri | default(omit) }}"
+        validate_certs: "{{ validate_certs | default(omit) }}"
+        organization: "{{ organization }}"
+
+  - name: Make sure Env is clean
+    cisco.intersight.intersight_adapter_config_policy:
+      <<: *api_info
+      name: "{{ item }}"
+      state: absent
+    loop:
+      - test_adapter_config_policy
+      - test_adapter_config_policy_update
+
+  - name: Create Adapter Config Policy - check-mode
+    cisco.intersight.intersight_adapter_config_policy:
+      <<: *api_info
+      name: test_adapter_config_policy
+      description: "Test Adapter Config Policy"
+      settings:
+        - slot_id: "2"
+          enable_lldp: true
+          enable_fip: true
+          enable_port_channel: true
+          dce_interface_1_fec_mode: "cl91"
+          dce_interface_2_fec_mode: "cl91"
+          dce_interface_3_fec_mode: "cl91"
+          dce_interface_4_fec_mode: "off"
+      tags:
+        - Key: Environment
+          Value: Test
+    check_mode: true
+    register: creation_check_mode
+
+  - name: Verify Adapter Config Policy was not created - check-mode
+    ansible.builtin.assert:
+      that:
+        - creation_check_mode is changed
+        - creation_check_mode.api_response == {}
+
+  - name: Create Adapter Config Policy
+    cisco.intersight.intersight_adapter_config_policy:
+      <<: *api_info
+      name: test_adapter_config_policy
+      description: "Test Adapter Config Policy"
+      settings:
+        - slot_id: "2"
+          enable_lldp: true
+          enable_fip: true
+          enable_port_channel: true
+          dce_interface_1_fec_mode: "cl91"
+          dce_interface_2_fec_mode: "cl91"
+          dce_interface_3_fec_mode: "cl91"
+          dce_interface_4_fec_mode: "off"
+      tags:
+        - Key: Environment
+          Value: Test
+    register: creation
+
+  - name: Fetch info after creation
+    cisco.intersight.intersight_adapter_config_policy_info:
+      <<: *api_info
+      name: test_adapter_config_policy
+    register: info
+
+  - name: Verify creation
+    ansible.builtin.assert:
+      that:
+        - creation.changed
+        - info.api_response[0].Name == 'test_adapter_config_policy'
+        - info.api_response[0].Description == 'Test Adapter Config Policy'
+        - info.api_response[0].Settings[0].SlotId == '2'
+        - info.api_response[0].Settings[0].EthSettings.LldpEnabled == true
+        - info.api_response[0].Settings[0].FcSettings.FipEnabled == true
+        - info.api_response[0].Settings[0].PortChannelSettings.Enabled == true
+        - info.api_response[0].Settings[0].DceInterfaceSettings | length == 4
+
+  - name: Create Adapter Config Policy (idempotency check)
+    cisco.intersight.intersight_adapter_config_policy:
+      <<: *api_info
+      name: test_adapter_config_policy
+      description: "Test Adapter Config Policy"
+      settings:
+        - slot_id: "2"
+          enable_lldp: true
+          enable_fip: true
+          enable_port_channel: true
+          dce_interface_1_fec_mode: "cl91"
+          dce_interface_2_fec_mode: "cl91"
+          dce_interface_3_fec_mode: "cl91"
+          dce_interface_4_fec_mode: "off"
+      tags:
+        - Key: Environment
+          Value: Test
+    register: creation_ide
+
+  - name: Verify idempotency
+    ansible.builtin.assert:
+      that:
+        - not creation_ide.changed
+
+  - name: Update Adapter Config Policy
+    cisco.intersight.intersight_adapter_config_policy:
+      <<: *api_info
+      name: test_adapter_config_policy
+      description: "Updated Adapter Config Policy"
+      settings:
+        - slot_id: "2"
+          enable_lldp: false
+          enable_fip: false
+          enable_port_channel: false
+          dce_interface_1_fec_mode: "cl74"
+          dce_interface_2_fec_mode: "cl74"
+          dce_interface_3_fec_mode: "cl74"
+          dce_interface_4_fec_mode: "cl74"
+      tags:
+        - Key: Environment
+          Value: Updated
+    register: update
+
+  - name: Fetch info after update
+    cisco.intersight.intersight_adapter_config_policy_info:
+      <<: *api_info
+      name: test_adapter_config_policy
+    register: update_info
+
+  - name: Verify update
+    ansible.builtin.assert:
+      that:
+        - update.changed
+        - update_info.api_response[0].Description == 'Updated Adapter Config Policy'
+        - update_info.api_response[0].Settings[0].EthSettings.LldpEnabled == false
+        - update_info.api_response[0].Settings[0].FcSettings.FipEnabled == false
+        - update_info.api_response[0].Settings[0].PortChannelSettings.Enabled == false
+
+  always:
+  - name: Remove all test Adapter Config Policies
+    cisco.intersight.intersight_adapter_config_policy:
+      <<: *api_info
+      name: "{{ item }}"
+      state: absent
+    loop:
+      - test_adapter_config_policy
+      - test_adapter_config_policy_update
