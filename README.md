@@ -41,8 +41,8 @@ See [using Ansible collections](https://docs.ansible.com/ansible/devel/user_guid
 
 ## Use Cases
 
-Authentication with the Intersight API requires the use of API keys that should be generated within the Intersight UI.  See (https://intersight.com/help) or (https://communities.cisco.com/docs/DOC-76947) for more information on generating and using API keys.
-If you do not have an Intersight account, Cisco's dCloud provides an Intersight demo that you can use: https://dcloud2-rtp.cisco.com/content/instantdemo/cisco-intersight-infrastructure-services.
+Authentication with the Intersight API requires the use of API keys that should be generated within the Intersight UI.  See [Intersight help center](https://intersight.com/help) or the [Cisco Intersight API Overview](https://communities.cisco.com/docs/DOC-76947) for more information on generating and using API keys.
+If you do not have an Intersight account, Cisco's dCloud provides an Intersight demo that you can use: [this link](https://dcloud2-rtp.cisco.com/content/instantdemo/cisco-intersight-infrastructure-services).
 Minimal setup is required in playbooks or variables to access the API.  By default modules use an api_uri for Intersight's US instance `https://intersight.com/api/v1`.  If you need to use Intersight's EU instance you'll need to set `api_uri: https://eu-central-1.intersight.com/api/v1`.  Here's an example playbook with other required API parameters:
 ```
 ---
@@ -113,7 +113,7 @@ This collection is tested using the examples in the playbooks directory.
 
 ## Contributing
 
-To contribute to this collection, please see the [Development Guide](./Development.md) for guidelines that describe the process.
+To contribute to this collection, please see the [Development Guide](https://github.com/CiscoDevNet/intersight-ansible/blob/main/Development.md) for guidelines that describe the process.
 
 ## Support
 
@@ -121,11 +121,11 @@ Use the Create issue link in the upper-right corner of the [Automation Hub Colle
 
 ## Release Notes
 
-See the [Changelog](./CHANGELOG.md) for information on what's changed in each release of this collection.
+See the [Changelog](https://github.com/CiscoDevNet/intersight-ansible/blob/main/CHANGELOG.md) for information on what's changed in each release of this collection.
 
 ## Related Information
 
-Cisco's DevNet includes a Learning Lab on using this collection at https://developer.cisco.com/learning/labs/cisco-intersight-rest-api-ansible/.
+Cisco's DevNet includes a [Learning Lab on using this collection](https://developer.cisco.com/learning/labs/cisco-intersight-rest-api-ansible/).
 
 ## License Information
 
