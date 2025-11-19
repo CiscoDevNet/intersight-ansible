@@ -2,7 +2,7 @@
 
 ## Description
 
-Ansible collection for managing and automating Cisco Intersight environments.  Modules and roles are provided for common Cisco Intersight tasks.  Detailed installation and usage examples are included in a lab guide in the misc directory of this collection at https://github.com/CiscoDevNet/intersight-ansible/blob/master/misc/CL2020%20EMEAR%20DEVWKS-1542%20Intersight%20Ansible%20Lab%20Guide.pdf 
+Ansible collection for managing and automating Cisco Intersight environments.  Modules and roles are provided for common Cisco Intersight tasks.  Detailed installation and usage examples are included in a lab guide in the misc directory of this collection in the [Intersight Ansible Lab Guide](https://github.com/CiscoDevNet/intersight-ansible/blob/master/misc/CL2020%20EMEAR%20DEVWKS-1542%20Intersight%20Ansible%20Lab%20Guide.pdf).
 
 ## Requirements
 
@@ -42,7 +42,7 @@ See [using Ansible collections](https://docs.ansible.com/ansible/devel/user_guid
 ## Use Cases
 
 Authentication with the Intersight API requires the use of API keys that should be generated within the Intersight UI.  See [Intersight help center](https://intersight.com/help) or the [Cisco Intersight API Overview](https://communities.cisco.com/docs/DOC-76947) for more information on generating and using API keys.
-If you do not have an Intersight account, Cisco's dCloud provides an Intersight demo that you can use: [this link](https://dcloud2-rtp.cisco.com/content/instantdemo/cisco-intersight-infrastructure-services).
+If you do not have an Intersight account, Cisco's dCloud provides an Intersight demo that you can use [this link](https://dcloud2-rtp.cisco.com/content/instantdemo/cisco-intersight-infrastructure-services).
 Minimal setup is required in playbooks or variables to access the API.  By default modules use an api_uri for Intersight's US instance `https://intersight.com/api/v1`.  If you need to use Intersight's EU instance you'll need to set `api_uri: https://eu-central-1.intersight.com/api/v1`.  Here's an example playbook with other required API parameters:
 ```
 ---
@@ -117,7 +117,10 @@ To contribute to this collection, please see the [Development Guide](https://git
 
 ## Support
 
-Use the Create issue link in the upper-right corner of the [Automation Hub Collection page](https://console.redhat.com/ansible/automation-hub/repo/published/cisco/intersight/) for any defects, feature requests, or questions on usage.
+As Red Hat Ansible Certified Content, this collection is entitled to support through Ansible Automation Platform (AAP).
+Use the **Create issue** button on the top right corner of the [Automation Hub Collection page](https://console.redhat.com/ansible/automation-hub/repo/published/cisco/intersight/) for any defects, feature requests, or questions on usage.
+
+If a support case cannot be opened with Red Hat and the collection has been obtained either from Galaxy or GitHub, there may community help available on the [Ansible Forum](https://forum.ansible.com/).
 
 ## Release Notes
 
