@@ -62,3 +62,8 @@ build_ignore:
   - releases
   - debug
   - playbooks
+  - docs
+  - .github
+  - .ansible-lint
+  - .vscode
+  - .DS_Store
