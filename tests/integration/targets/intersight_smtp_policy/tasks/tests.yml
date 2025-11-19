@@ -1,0 +1,169 @@
+---
+- block:
+  - name: Define anchor for Intersight API login info
+    ansible.builtin.set_fact:
+      api_info: &api_info
+        api_private_key: "{{ api_private_key }}"
+        api_key_id: "{{ api_key_id }}"
+        api_uri: "{{ api_uri | default(omit) }}"
+        validate_certs: "{{ validate_certs | default(omit) }}"
+        organization: "{{ organization }}"
+
+  - name: Make sure Env is clean
+    cisco.intersight.intersight_smtp_policy:
+      <<: *api_info
+      name: "{{ item }}"
+      state: absent
+    loop:
+      - test_smtp_policy_minimal
+      - test_smtp_policy_full
+      - test_smtp_policy_disabled
+
+  - name: Create SMTP Policy with minimal parameters (check-mode)
+    cisco.intersight.intersight_smtp_policy:
+      <<: *api_info
+      name: test_smtp_policy_minimal
+      description: "Test SMTP Policy Minimal"
+      state: present
+      smtp_server: "smtp.example.com"
+    check_mode: true
+    register: minimal_creation_check_mode
+
+  - name: Verify SMTP Policy was not created (check-mode)
+    ansible.builtin.assert:
+      that:
+        - minimal_creation_check_mode is changed
+        - minimal_creation_check_mode.api_response == {}
+
+  - name: Create SMTP Policy with minimal parameters
+    cisco.intersight.intersight_smtp_policy:
+      <<: *api_info
+      name: test_smtp_policy_minimal
+      description: "Test SMTP Policy Minimal"
+      smtp_server: "smtp.example.com"
+      state: present
+    register: minimal_creation
+
+  - name: Fetch info after Minimal SMTP Policy creation
+    cisco.intersight.intersight_smtp_policy_info:
+      <<: *api_info
+      name: test_smtp_policy_minimal
+    register: minimal_info
+
+  - name: Verify Minimal SMTP Policy creation
+    ansible.builtin.assert:
+      that:
+        - minimal_creation.changed
+        - minimal_info.api_response[0].Name == 'test_smtp_policy_minimal'
+        - minimal_info.api_response[0].Enabled == true
+        - minimal_info.api_response[0].SmtpServer == 'smtp.example.com'
+        - minimal_info.api_response[0].SmtpPort == 25
+        - minimal_info.api_response[0].MinSeverity == 'critical'
+
+  - name: Create SMTP Policy with minimal parameters (idempotency check)
+    cisco.intersight.intersight_smtp_policy:
+      <<: *api_info
+      name: test_smtp_policy_minimal
+      description: "Test SMTP Policy Minimal"
+      smtp_server: "smtp.example.com"
+      state: present
+    register: minimal_creation_ide
+
+  - name: Verify Minimal SMTP Policy creation (idempotency check)
+    ansible.builtin.assert:
+      that:
+        - not minimal_creation_ide.changed
+
+  - name: Create SMTP Policy with full parameters
+    cisco.intersight.intersight_smtp_policy:
+      <<: *api_info
+      name: test_smtp_policy_full
+      description: "Test SMTP Policy Full"
+      enabled: true
+      smtp_server: "1.2.3.4"
+      smtp_port: 2525
+      min_severity: "warning"
+      sender_email: "sender@example.com"
+      smtp_recipients:
+        - "user1@example.com"
+        - "user2@example.com"
+      tags:
+        - Key: Environment
+          Value: Test
+      state: present
+    register: full_creation
+
+  - name: Fetch info after Full SMTP Policy creation
+    cisco.intersight.intersight_smtp_policy_info:
+      <<: *api_info
+      name: test_smtp_policy_full
+    register: full_info
+
+  - name: Verify Full SMTP Policy creation
+    ansible.builtin.assert:
+      that:
+        - full_creation.changed
+        - full_info.api_response[0].Name == 'test_smtp_policy_full'
+        - full_info.api_response[0].Enabled == true
+        - full_info.api_response[0].SmtpServer == '1.2.3.4'
+        - full_info.api_response[0].SmtpPort == 2525
+        - full_info.api_response[0].MinSeverity == 'warning'
+        - full_info.api_response[0].SenderEmail == 'sender@example.com'
+        - full_info.api_response[0].SmtpRecipients | length == 2
+
+  - name: Update SMTP Policy
+    cisco.intersight.intersight_smtp_policy:
+      <<: *api_info
+      name: test_smtp_policy_full
+      description: "Updated Description"
+      min_severity: "major"
+      smtp_server: "1.2.3.4"
+      smtp_recipients:
+        - "user3@example.com"
+    register: policy_update
+
+  - name: Fetch info after Update
+    cisco.intersight.intersight_smtp_policy_info:
+      <<: *api_info
+      name: test_smtp_policy_full
+    register: update_info
+
+  - name: Verify Update
+    ansible.builtin.assert:
+      that:
+        - policy_update.changed
+        - update_info.api_response[0].Description == 'Updated Description'
+        - update_info.api_response[0].MinSeverity == 'major'
+        - update_info.api_response[0].SmtpRecipients | length == 1
+        - update_info.api_response[0].SmtpRecipients[0] == 'user3@example.com'
+
+  - name: Create Disabled SMTP Policy
+    cisco.intersight.intersight_smtp_policy:
+      <<: *api_info
+      name: test_smtp_policy_disabled
+      enabled: false
+      state: present
+    register: disabled_creation
+
+  - name: Verify Disabled SMTP Policy
+    cisco.intersight.intersight_smtp_policy_info:
+      <<: *api_info
+      name: test_smtp_policy_disabled
+    register: disabled_info
+
+  - name: Verify Disabled status
+    ansible.builtin.assert:
+      that:
+        - disabled_creation.changed
+        - disabled_info.api_response[0].Enabled == false
+
+  always:
+  - name: Remove all test SMTP Policies
+    cisco.intersight.intersight_smtp_policy:
+      <<: *api_info
+      name: "{{ item }}"
+      state: absent
+    loop:
+      - test_smtp_policy_minimal
+      - test_smtp_policy_full
+      - test_smtp_policy_disabled
