@@ -1,0 +1,143 @@
+---
+# Workload Definition Playbook
+- name: Workload Definition
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  vars:
+    # Create an anchor for api_info that can be used throughout the file
+    api_info: &api_info
+      # if api_key vars are omitted, INTERSIGHT_API_KEY_ID, INTERSIGHT_API_PRIVATE_KEY,
+      # and INTERSIGHT_API_URI environment variables used for API key data
+      api_private_key: "{{ api_private_key | default(omit) }}"
+      api_key_id: "{{ api_key_id | default(omit) }}"
+      api_uri: "{{ api_uri | default(omit) }}"
+      validate_certs: "{{ validate_certs | default(omit) }}"
+  tasks:
+    # Get Demo-DevNet Organization MOID
+    - name: "Get Organization Moid"
+      cisco.intersight.intersight_rest_api:
+        <<: *api_info
+        resource_path: /organization/Organizations
+        query_params:
+          $filter: "Name eq 'Demo-DevNet'"
+      register: org_resp
+    - name: Define Workload
+      cisco.intersight.intersight_rest_api:
+        <<: *api_info
+        resource_path: /workload/WorkloadDefinitions
+        query_params:
+          $filter: "Name eq 'DevNet-Demo' and Organization.Moid eq '{{ org_resp.api_response.Moid }}'"
+        api_body:
+          Blueprints:
+            - Blueprint:
+                Moid: "68dc8a046e75733101ab708a"
+                ObjectType: "workload.Blueprint"
+                ClassId: "cmrf.CmRf"
+              Input:
+                OsDetails:
+                  DeriveHostname: false
+                  Hostname: "localhost1"
+                  Name: "Red Hat"
+                  Password: ""
+                  Vendor:
+                    Moid: "5b7370f16836726e35cc7026"
+                    ObjectType: "hcl.OperatingSystemVendor"
+                    ClassId: "mo.MoRef"
+                  Version: "Red Hat Enterprise Linux 9.6"
+                OsNetworkConfig:
+                  DhcpVersionType: "IPv4"
+                  IpConfigType: "DHCP"
+                ServerFirmwareOptions: "OnNextBoot"
+                ServerFirmwareVersion: "6.0(1.251026)"
+                ServerVlanSettings:
+                  NativeVlan: 248
+                  VlanList: "248"
+              InputOverride: []
+              Name: "Red Hat Server 1"
+              ResourceConstraint:
+                Input: {}
+                ObjectType: "workload.ResourceConstraint"
+                ClassId: "workload.ResourceConstraint"
+              ObjectType: "workload.BlueprintReference"
+              ClassId: "workload.BlueprintReference"
+            - Blueprint:
+                Moid: "68dc8a046e75733101ab708a"
+                ObjectType: "workload.Blueprint"
+                ClassId: "cmrf.CmRf"
+              Input:
+                OsDetails:
+                  DeriveHostname: true
+                  Name: "Red Hat"
+                  Password: ""
+                  Vendor:
+                    Moid: "5b7370f16836726e35cc7026"
+                    ObjectType: "hcl.OperatingSystemVendor"
+                    ClassId: "mo.MoRef"
+                  Version: "Red Hat Enterprise Linux 9.6"
+                OsNetworkConfig:
+                  DhcpVersionType: "IPv4"
+                  IpConfigType: "DHCP"
+                ServerFirmwareOptions: "OnNextBoot"
+                ServerFirmwareVersion: "6.0(1.251026)"
+                ServerVlanSettings:
+                  NativeVlan: 248
+                  VlanList: "248"
+              InputOverride: []
+              Name: "Red Hat Server 2"
+              ResourceConstraint:
+                Input: {}
+                ObjectType: "workload.ResourceConstraint"
+                ClassId: "workload.ResourceConstraint"
+              ObjectType: "workload.BlueprintReference"
+              ClassId: "workload.BlueprintReference"
+            - Blueprint:
+                Moid: "68dc8a036e75733101ab7068"
+                ObjectType: "workload.Blueprint"
+                ClassId: "cmrf.CmRf"
+              Input:
+                Dns:
+                  PrimaryDnsServer: "172.22.248.235"
+                ImcAccessConfiguration:
+                  VlanId: 248
+                LocalUsers:
+                  ObjectType: "iam.EndPointUserPolicy"
+                  SourceMoid: "66cdf7b0627572310158ef40"
+                  ClassId: "iam.EndPointUserPolicy"
+                PortConfiguration:
+                  UnifiedEdgePortSpeed: "Auto"
+                  UplinkPorts: "1"
+                SerialOverLanPolicy:
+                  SolEnabled: false
+                SwitchConfiguration:
+                  EnableJumboFrame: false
+                  MacAgingSettings:
+                    MacAgingOption: "Default"
+                SwitchFirmwareVersion: "6.0(100.250004)"
+                SyslogConfiguration:
+                  SyslogServers:
+                    - Enabled: false
+                Timezone: "UTC"
+              InputOverride: []
+              Name: "UnifiedEdgeChassis"
+              ResourceConstraint:
+                Input:
+                  DeviceModel: "UCSXE-ECMC-G1"
+                ObjectType: "workload.ResourceConstraint"
+                ClassId: "workload.ResourceConstraint"
+              ObjectType: "workload.BlueprintReference"
+              ClassId: "workload.BlueprintReference"
+          Name: "DevNet-Demo"
+          Organization:
+            Moid: "6418bfd46972652d30a596ef"
+            ObjectType: "organization.Organization"
+            ClassId: "mo.MoRef"
+          PlatformType:
+            - "UnifiedEdge"
+          Tags: []
+          Version: 1
+      register: workload_definition_result
+
+    - name: Display Workload Definition Result
+      debug:
+        var: workload_definition_result
