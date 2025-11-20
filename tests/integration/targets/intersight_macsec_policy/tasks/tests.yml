@@ -1,0 +1,301 @@
+---
+- block:
+  - name: Define anchor for Intersight API login info
+    ansible.builtin.set_fact:
+      api_info: &api_info
+        api_private_key: "{{ api_private_key }}"
+        api_key_id: "{{ api_key_id }}"
+        api_uri: "{{ api_uri | default(omit) }}"
+        validate_certs: "{{ validate_certs | default(omit) }}"
+        organization: "{{ organization }}"
+
+  - name: Make sure Env is clean
+    cisco.intersight.intersight_macsec_policy:
+      <<: *api_info
+      name: "{{ item }}"
+      state: absent
+    loop:
+      - test_macsec_policy_minimal
+      - test_macsec_policy_fallback
+      - test_macsec_policy_custom
+
+  - name: Create MACsec Policy with minimal parameters - check-mode
+    cisco.intersight.intersight_macsec_policy:
+      <<: *api_info
+      name: test_macsec_policy_minimal
+      description: "Test MACsec Policy - Minimal Config"
+      primary_keychain_name: "primary-keychain-minimal"
+      primary_keys:
+        - id: "1234"
+          cryptographic_algorithm: "aes-256-cmac"
+          secret: "Ja1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9bd2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c122222222222222222222222222222222222222222222"
+          key_lifetime_always_active: true
+      tags:
+        - Key: Environment
+          Value: Test
+    check_mode: true
+    register: minimal_creation_check_mode
+
+  - name: Verify MACsec Policy was not created - check-mode
+    ansible.builtin.assert:
+      that:
+        - minimal_creation_check_mode is changed
+        - minimal_creation_check_mode.api_response == {}
+
+  - name: Create MACsec Policy with minimal parameters
+    cisco.intersight.intersight_macsec_policy:
+      <<: *api_info
+      name: test_macsec_policy_minimal
+      description: "Test MACsec Policy - Minimal Config"
+      primary_keychain_name: "primary-keychain-minimal"
+      primary_keys:
+        - id: "1234"
+          cryptographic_algorithm: "aes-256-cmac"
+          secret: "Ja1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9bd2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c122222222222222222222222222222222222222222222"
+          key_lifetime_always_active: true
+      tags:
+        - Key: Environment
+          Value: Test
+    register: minimal_creation
+
+  - name: Fetch info after minimal MACsec Policy creation
+    cisco.intersight.intersight_macsec_policy_info:
+      <<: *api_info
+      name: test_macsec_policy_minimal
+    register: minimal_info
+
+  - name: Verify minimal MACsec Policy creation
+    ansible.builtin.assert:
+      that:
+        - minimal_creation.changed
+        - minimal_info.api_response[0].Name == 'test_macsec_policy_minimal'
+        - minimal_info.api_response[0].CipherSuite == 'GCM-AES-XPN-256'
+        - minimal_info.api_response[0].SecurityPolicy == 'Should-secure'
+        - minimal_info.api_response[0].KeyServerPriority == 16
+        - minimal_info.api_response[0].PrimaryKeyChain.Name == 'primary-keychain-minimal'
+
+  - name: Create MACsec Policy with minimal parameters (idempotency check)
+    cisco.intersight.intersight_macsec_policy:
+      <<: *api_info
+      name: test_macsec_policy_minimal
+      description: "Test MACsec Policy - Minimal Config"
+      primary_keychain_name: "primary-keychain-minimal"
+      primary_keys:
+        - id: "1234"
+          cryptographic_algorithm: "aes-256-cmac"
+          secret: "Ja1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9bd2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c122222222222222222222222222222222222222222222"
+          key_lifetime_always_active: true
+      tags:
+        - Key: Environment
+          Value: Test
+    register: minimal_creation_ide
+
+  - name: Verify minimal MACsec Policy creation (idempotency check)
+    ansible.builtin.assert:
+      that:
+        - not minimal_creation_ide.changed
+
+  - name: Create MACsec Policy with Fallback Keychain
+    cisco.intersight.intersight_macsec_policy:
+      <<: *api_info
+      name: test_macsec_policy_fallback
+      description: "Test MACsec Policy - With Fallback"
+      cipher_suite: "gcm-aes-256"
+      security_policy: "must-secure"
+      key_server_priority: 32
+      sak_expiry_time: 3600
+      primary_keychain_name: "primary-keychain-fallback"
+      primary_keys:
+        - id: "ABCD"
+          cryptographic_algorithm: "aes-256-cmac"
+          secret: "Ja1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9bd2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c122222222222222222222222222222222222222222222"
+          key_lifetime_always_active: true
+      configure_fallback_keychain: true
+      fallback_keychain_name: "fallback-keychain"
+      fallback_keys:
+        - id: "EF12"
+          cryptographic_algorithm: "aes-128-cmac"
+          secret: "Ja1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b"
+          key_lifetime_always_active: true
+      tags:
+        - Key: Environment
+          Value: Test
+    register: fallback_creation
+
+  - name: Fetch info after MACsec Policy with fallback creation
+    cisco.intersight.intersight_macsec_policy_info:
+      <<: *api_info
+      name: test_macsec_policy_fallback
+    register: fallback_info
+
+  - name: Verify MACsec Policy with fallback creation
+    ansible.builtin.assert:
+      that:
+        - fallback_creation.changed
+        - fallback_info.api_response[0].Name == 'test_macsec_policy_fallback'
+        - fallback_info.api_response[0].CipherSuite == 'GCM-AES-256'
+        - fallback_info.api_response[0].SecurityPolicy == 'Must-secure'
+        - fallback_info.api_response[0].KeyServerPriority == 32
+        - fallback_info.api_response[0].SakExpiryTime == 3600
+        - fallback_info.api_response[0].PrimaryKeyChain.Name == 'primary-keychain-fallback'
+        - fallback_info.api_response[0].FallbackKeyChain.Name == 'fallback-keychain'
+
+  - name: Create MACsec Policy with Custom Settings
+    cisco.intersight.intersight_macsec_policy:
+      <<: *api_info
+      name: test_macsec_policy_custom
+      description: "Test MACsec Policy - Custom Settings"
+      cipher_suite: "gcm-aes-xpn-128"
+      confidentiality_offset: "conf-offset-30"
+      security_policy: "must-secure"
+      key_server_priority: 64
+      sak_expiry_time: 7200
+      replay_window_size: 200000000
+      include_icv_indicator: true
+      eapol_mac_address: "0180.C200.0004"
+      eapol_ethertype: "0x88e5"
+      primary_keychain_name: "custom-keychain"
+      primary_keys:
+        - id: "2468"
+          cryptographic_algorithm: "aes-256-cmac"
+          secret: "Ja1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9bd2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c122222222222222222222222222222222222222222222"
+          key_lifetime_always_active: true
+    register: custom_creation
+
+  - name: Fetch info after custom MACsec Policy creation
+    cisco.intersight.intersight_macsec_policy_info:
+      <<: *api_info
+      name: test_macsec_policy_custom
+    register: custom_info
+
+  - name: Verify custom MACsec Policy creation
+    ansible.builtin.assert:
+      that:
+        - custom_creation.changed
+        - custom_info.api_response[0].Name == 'test_macsec_policy_custom'
+        - custom_info.api_response[0].CipherSuite == 'GCM-AES-XPN-128'
+        - custom_info.api_response[0].ConfidentialityOffset == 'CONF-OFFSET-30'
+        - custom_info.api_response[0].SecurityPolicy == 'Must-secure'
+        - custom_info.api_response[0].KeyServerPriority == 64
+        - custom_info.api_response[0].SakExpiryTime == 7200
+        - custom_info.api_response[0].ReplayWindowSize == 200000000
+        - custom_info.api_response[0].IncludeIcvIndicator == true
+        - custom_info.api_response[0].MacSecEaPol.EaPolMacAddress == '0180.C200.0004'
+        - custom_info.api_response[0].MacSecEaPol.EaPolEthertype == '0x88e5'
+
+  - name: Update existing MACsec Policy
+    cisco.intersight.intersight_macsec_policy:
+      <<: *api_info
+      name: test_macsec_policy_minimal
+      description: "Updated MACsec Policy Description"
+      primary_keychain_name: "primary-keychain-minimal"
+      primary_keys:
+        - id: "1234"
+          cryptographic_algorithm: "aes-256-cmac"
+          secret: "Ja1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9bd2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c122222222222222222222222222222222222222222222"
+          key_lifetime_always_active: true
+      tags:
+        - Key: Environment
+          Value: Updated
+    register: minimal_update
+
+  - name: Fetch info after policy update
+    cisco.intersight.intersight_macsec_policy_info:
+      <<: *api_info
+      name: test_macsec_policy_minimal
+    register: minimal_update_info
+
+  - name: Verify policy update
+    ansible.builtin.assert:
+      that:
+        - minimal_update.changed
+        - minimal_update_info.api_response[0].Description == 'Updated MACsec Policy Description'
+
+  - name: Fetch all MACsec Policies under selected organization
+    cisco.intersight.intersight_macsec_policy_info:
+      <<: *api_info
+    register: all_policies_info
+
+  - name: Check that there are MACsec Policies under this organization
+    ansible.builtin.assert:
+      that:
+        - all_policies_info.api_response | length >= 3
+
+  - name: Test validation - Missing primary keychain name (should fail)
+    cisco.intersight.intersight_macsec_policy:
+      <<: *api_info
+      name: test_validation_fail
+    register: validation_fail_1
+    failed_when:
+      - "'primary_keychain_name is required' not in validation_fail_1.msg"
+      - not validation_fail_1.failed
+
+  - name: Test validation - Invalid key_server_priority (should fail)
+    cisco.intersight.intersight_macsec_policy:
+      <<: *api_info
+      name: test_validation_fail
+      primary_keychain_name: "test-keychain"
+      key_server_priority: 300
+    register: validation_fail_2
+    failed_when:
+      - "'key_server_priority must be between 0 and 255' not in validation_fail_2.msg"
+      - not validation_fail_2.failed
+
+  - name: Test validation - Invalid sak_expiry_time (should fail)
+    cisco.intersight.intersight_macsec_policy:
+      <<: *api_info
+      name: test_validation_fail
+      primary_keychain_name: "test-keychain"
+      sak_expiry_time: 50
+    register: validation_fail_3
+    failed_when:
+      - "'sak_expiry_time must be between 60 and 2592000' not in validation_fail_3.msg"
+      - not validation_fail_3.failed
+
+  - name: Test validation - Invalid key ID (odd number of characters) (should fail)
+    cisco.intersight.intersight_macsec_policy:
+      <<: *api_info
+      name: test_validation_fail
+      primary_keychain_name: "test-keychain"
+      primary_keys:
+        - id: "123"
+          secret: "Jtest"
+    register: validation_fail_4
+    failed_when:
+      - "'even number of characters' not in validation_fail_4.msg"
+      - not validation_fail_4.failed
+
+  - name: Test validation - Invalid octet string (should fail)
+    cisco.intersight.intersight_macsec_policy:
+      <<: *api_info
+      name: test_validation_fail
+      primary_keychain_name: "test-keychain"
+      primary_keys:
+        - id: "1234"
+          secret: "Atest"
+    register: validation_fail_5
+    failed_when:
+      - "'must start with the character' not in validation_fail_5.msg"
+      - not validation_fail_5.failed
+
+  - name: Test validation - Missing fallback keychain name (should fail)
+    cisco.intersight.intersight_macsec_policy:
+      <<: *api_info
+      name: test_validation_fail
+      primary_keychain_name: "test-keychain"
+      configure_fallback_keychain: true
+    register: validation_fail_6
+    failed_when:
+      - "'fallback_keychain_name is required' not in validation_fail_6.msg"
+      - not validation_fail_6.failed
+
+  always:
+    - name: Remove all test MACsec Policies
+      cisco.intersight.intersight_macsec_policy:
+        <<: *api_info
+        name: "{{ item }}"
+        state: absent
+      loop:
+        - test_macsec_policy_minimal
+        - test_macsec_policy_fallback
+        - test_macsec_policy_custom

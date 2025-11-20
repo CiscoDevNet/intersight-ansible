@@ -129,9 +129,20 @@ def compare_values(expected, actual):
         if isinstance(expected, list) and isinstance(actual, list):
             return compare_lists(expected, actual)
         for (key, value) in iteritems(expected):
-            if re.search(r'P(ass)?w(or)?d', key) or key not in actual:
-                # do not compare any password related attributes or attributes that are not in the actual resource
+            if re.search(r'P(ass)?w(or)?d', key) or re.search(r'OctetString', key) or re.search(r'IsOctetStringSet', key) or key not in actual:
+                # do not compare any password related attributes, OctetString (secrets), IsOctetStringSet, or attributes that are not in the actual resource
                 continue
+            # Special handling for SecKeys comparison
+            if key == 'SecKeys':
+                expected_empty = value is None or value == []
+                actual_value = actual.get(key)
+                actual_empty = actual_value is None or actual_value == [] or actual_value == ''
+                if expected_empty and actual_empty:
+                    continue  # Both are "empty", consider them equal
+                # If SecKeys has content, skip deep comparison (contains secrets we can't compare)
+                # Just verify both have content
+                if not expected_empty and not actual_empty:
+                    continue  # Both have keys, consider them equal (can't compare secrets)
             if not compare_values(value, actual[key]):
                 return False
         # loop complete with all items matching
