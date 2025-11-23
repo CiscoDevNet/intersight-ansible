@@ -1,0 +1,437 @@
+---
+- block:
+  - name: Define anchor for Intersight API login info
+    ansible.builtin.set_fact:
+      api_info: &api_info
+        api_private_key: "{{ api_private_key }}"
+        api_key_id: "{{ api_key_id }}"
+        api_uri: "{{ api_uri | default(omit) }}"
+        validate_certs: "{{ validate_certs | default(omit) }}"
+        organization: "{{ organization }}"
+
+  - name: Make sure Env is clean
+    cisco.intersight.intersight_ldap_policy:
+      <<: *api_info
+      name: "{{ item }}"
+      state: absent
+    loop:
+      - test_ldap_policy_minimal
+      - test_ldap_policy_dns
+      - test_ldap_policy_providers
+      - test_ldap_policy_configured_creds
+      - test_ldap_policy_complex
+
+  - name: Create LDAP policy with minimal parameters - check-mode
+    cisco.intersight.intersight_ldap_policy:
+      <<: *api_info
+      name: test_ldap_policy_minimal
+      description: "Test LDAP policy minimal"
+      enable_ldap: true
+      base_dn: "dc=test,dc=com"
+      domain: "test.com"
+      filter: "sAMAccountName"
+      group_attribute: "memberOf"
+      attribute: "CiscoAvPair"
+      enable_dns: false
+      ldap_providers:
+        - server: "10.10.10.10"
+          port: 389
+          vendor: "openldap"
+    check_mode: true
+    register: creation_res_check_mode
+
+  - name: Verify LDAP policy was not created - check-mode
+    ansible.builtin.assert:
+      that:
+        - creation_res_check_mode is changed
+        - creation_res_check_mode.api_response == {}
+
+  - name: Create LDAP policy with minimal parameters
+    cisco.intersight.intersight_ldap_policy:
+      <<: *api_info
+      name: test_ldap_policy_minimal
+      description: "Test LDAP policy minimal"
+      enable_ldap: true
+      base_dn: "dc=test,dc=com"
+      domain: "test.com"
+      filter: "sAMAccountName"
+      group_attribute: "memberOf"
+      attribute: "CiscoAvPair"
+      enable_dns: false
+      ldap_providers:
+        - server: "10.10.10.10"
+          port: 389
+          vendor: "openldap"
+    register: creation_res
+
+  - name: Fetch info after creation
+    cisco.intersight.intersight_ldap_policy_info:
+      <<: *api_info
+      name: test_ldap_policy_minimal
+    register: creation_info_res
+
+  - name: Verify LDAP policy creation by info
+    ansible.builtin.assert:
+      that:
+        - creation_res.changed
+        - creation_info_res.api_response[0].Name == 'test_ldap_policy_minimal'
+        - creation_info_res.api_response[0].Enabled == true
+        - creation_info_res.api_response[0].BaseProperties.BaseDn == 'dc=test,dc=com'
+        - creation_info_res.api_response[0].BaseProperties.Domain == 'test.com'
+        - creation_info_res.api_response[0].BaseProperties.Filter == 'sAMAccountName'
+        - creation_info_res.api_response[0].Groups is defined
+        - creation_info_res.api_response[0].Providers is defined
+        - creation_info_res.api_response[0].Providers | length == 1
+        - creation_info_res.api_response[0].Providers[0].Server == '10.10.10.10'
+
+  - name: Create LDAP policy with minimal parameters (idempotency check)
+    cisco.intersight.intersight_ldap_policy:
+      <<: *api_info
+      name: test_ldap_policy_minimal
+      description: "Test LDAP policy minimal"
+      enable_ldap: true
+      base_dn: "dc=test,dc=com"
+      domain: "test.com"
+      filter: "sAMAccountName"
+      group_attribute: "memberOf"
+      attribute: "CiscoAvPair"
+      enable_dns: false
+      ldap_providers:
+        - server: "10.10.10.10"
+          port: 389
+          vendor: "openldap"
+    register: idempotency_res
+
+  - name: Verify idempotency
+    ansible.builtin.assert:
+      that:
+        - idempotency_res is not changed
+
+  - name: Update LDAP policy description and domain
+    cisco.intersight.intersight_ldap_policy:
+      <<: *api_info
+      name: test_ldap_policy_minimal
+      description: "Updated LDAP policy description"
+      enable_ldap: true
+      base_dn: "dc=test,dc=com"
+      domain: "test.com2"
+      filter: "sAMAccountName"
+      group_attribute: "memberOf"
+      attribute: "CiscoAvPair"
+      enable_dns: false
+      ldap_providers:
+        - server: "10.10.10.10"
+          port: 389
+          vendor: "openldap"
+    register: update_res
+
+  - name: Fetch info after update
+    cisco.intersight.intersight_ldap_policy_info:
+      <<: *api_info
+      name: test_ldap_policy_minimal
+    register: update_info_res
+
+  - name: Verify update
+    ansible.builtin.assert:
+      that:
+        - update_res is changed
+        - update_info_res.api_response[0].Description == 'Updated LDAP policy description'
+        - update_info_res.api_response[0].BaseProperties.Domain == 'test.com2'
+
+  - name: Create LDAP policy with DNS enabled
+    cisco.intersight.intersight_ldap_policy:
+      <<: *api_info
+      name: test_ldap_policy_dns
+      description: "Test LDAP policy with DNS"
+      tags:
+        - Key: Environment
+          Value: Test
+      enable_ldap: true
+      base_dn: "dc=example,dc=com"
+      domain: "example.com"
+      timeout: 30
+      enable_encryption: true
+      bind_method: "logincredentials"
+      filter: "sAMAccountName"
+      group_attribute: "memberOf"
+      attribute: "CiscoAvPair"
+      group_authorization: true
+      nested_group_search: true
+      nested_group_search_depth: 64
+      enable_dns: true
+      dns_source: "configured"
+      search_domain: "example.com"
+      search_forest: "example.com"
+      user_search_precedence: "localuserdb"
+      ldap_groups:
+        - name: "admin-group"
+          group_dn: "cn=admins,ou=groups,dc=example,dc=com"
+          domain: "example.com"
+          role: "admin"
+        - name: "readonly-group"
+          group_dn: "cn=readers,ou=groups,dc=example,dc=com"
+          role: "readonly"
+    register: dns_res
+
+  - name: Fetch info after DNS-enabled LDAP policy creation
+    cisco.intersight.intersight_ldap_policy_info:
+      <<: *api_info
+      name: test_ldap_policy_dns
+    register: dns_info_res
+
+  - name: Verify DNS-enabled LDAP policy creation by info
+    ansible.builtin.assert:
+      that:
+        - dns_info_res.api_response[0].Name == 'test_ldap_policy_dns'
+        - dns_info_res.api_response[0].EnableDns == true
+        - dns_info_res.api_response[0].BaseProperties.EnableEncryption == true
+        - dns_info_res.api_response[0].BaseProperties.Timeout == 30
+        - dns_info_res.api_response[0].BaseProperties.EnableGroupAuthorization == true
+        - dns_info_res.api_response[0].BaseProperties.EnableNestedGroupSearch == true
+        - dns_info_res.api_response[0].BaseProperties.NestedGroupSearchDepth == 64
+        - dns_info_res.api_response[0].Groups is defined
+        - dns_info_res.api_response[0].Groups | length == 2
+
+  - name: Create LDAP policy with providers
+    cisco.intersight.intersight_ldap_policy:
+      <<: *api_info
+      name: test_ldap_policy_providers
+      description: "Test LDAP policy with providers"
+      enable_ldap: true
+      base_dn: "dc=company,dc=local"
+      domain: "company.local"
+      timeout: 0
+      enable_encryption: false
+      bind_method: "anonymous"
+      filter: "uid"
+      group_attribute: "gidNumber"
+      attribute: "description"
+      group_authorization: false
+      nested_group_search: false
+      enable_dns: false
+      user_search_precedence: "localuserdb"
+      ldap_providers:
+        - server: "10.10.10.10"
+          port: 389
+          vendor: "openldap"
+        - server: "10.10.10.11"
+          port: 389
+          vendor: "openldap"
+      ldap_groups:
+        - name: "users-group"
+          group_dn: "cn=users,ou=groups,dc=company,dc=local"
+          role: "user"
+    register: providers_res
+
+  - name: Fetch info after provider-based LDAP policy creation
+    cisco.intersight.intersight_ldap_policy_info:
+      <<: *api_info
+      name: test_ldap_policy_providers
+    register: providers_info_res
+
+  - name: Verify provider-based LDAP policy creation by info
+    ansible.builtin.assert:
+      that:
+        - providers_res is changed
+        - providers_info_res.api_response[0].Name == 'test_ldap_policy_providers'
+        - providers_info_res.api_response[0].EnableDns == false
+        - providers_info_res.api_response[0].BaseProperties.BindMethod == 'Anonymous'
+        - providers_info_res.api_response[0].Providers | length == 2
+        - providers_info_res.api_response[0].Groups | length == 1
+
+  - name: Create LDAP policy with configured credentials
+    cisco.intersight.intersight_ldap_policy:
+      <<: *api_info
+      name: test_ldap_policy_configured_creds
+      description: "Test LDAP policy with configured credentials"
+      enable_ldap: true
+      base_dn: "dc=corp,dc=net"
+      domain: "corp.net"
+      timeout: 60
+      enable_encryption: true
+      bind_method: "configuredcredentials"
+      bind_dn: "cn=admin,dc=corp,dc=net"
+      password: "TestPassword123"
+      filter: "uid"
+      group_attribute: "gidNumber"
+      attribute: "description"
+      group_authorization: true
+      nested_group_search: true
+      nested_group_search_depth: 128
+      enable_dns: false
+      user_search_precedence: "ldapuserdb"
+      ldap_providers:
+        - server: "ldap.corp.net"
+          port: 636
+          vendor: "msad"
+      ldap_groups:
+        - name: "administrators"
+          group_dn: "cn=administrators,ou=groups,dc=corp,dc=net"
+          domain: "corp.net"
+          role: "admin"
+    register: configured_creds_res
+
+  - name: Fetch info after configured credentials LDAP policy creation
+    cisco.intersight.intersight_ldap_policy_info:
+      <<: *api_info
+      name: test_ldap_policy_configured_creds
+    register: configured_creds_info_res
+
+  - name: Verify configured credentials LDAP policy creation
+    ansible.builtin.assert:
+      that:
+        - configured_creds_res is changed
+        - configured_creds_info_res.api_response[0].Name == 'test_ldap_policy_configured_creds'
+        - configured_creds_info_res.api_response[0].BaseProperties.BindMethod == 'ConfiguredCredentials'
+        - configured_creds_info_res.api_response[0].BaseProperties.BindDn == 'cn=admin,dc=corp,dc=net'
+        - configured_creds_info_res.api_response[0].UserSearchPrecedence == 'LDAPUserDb'
+        - configured_creds_info_res.api_response[0].Groups is defined
+        - configured_creds_info_res.api_response[0].Groups | length == 1
+        - configured_creds_info_res.api_response[0].Providers is defined
+        - configured_creds_info_res.api_response[0].Providers | length == 1
+
+  - name: Test LDAP policy with missing required parameter
+    cisco.intersight.intersight_ldap_policy:
+      <<: *api_info
+      name: test_ldap_policy_invalid
+      base_dn: "dc=test,dc=com"
+    register: test_missing_required_result
+    failed_when:
+      - test_missing_required_result.failed == false
+      - "'required' not in test_missing_required_result.msg"
+
+  - name: Test LDAP policy with invalid timeout
+    cisco.intersight.intersight_ldap_policy:
+      <<: *api_info
+      name: test_ldap_policy_invalid_timeout
+      base_dn: "dc=test,dc=com"
+      domain: "test.com"
+      filter: "sAMAccountName"
+      group_attribute: "memberOf"
+      attribute: "CiscoAvPair"
+      timeout: 200
+    register: test_invalid_timeout_result
+    failed_when:
+      - test_invalid_timeout_result.failed == false
+      - "'timeout' not in test_invalid_timeout_result.msg"
+
+  - name: Test LDAP policy with providers when DNS is enabled (should fail)
+    cisco.intersight.intersight_ldap_policy:
+      <<: *api_info
+      name: test_ldap_policy_invalid_dns_providers
+      base_dn: "dc=test,dc=com"
+      domain: "test.com"
+      filter: "sAMAccountName"
+      group_attribute: "memberOf"
+      attribute: "CiscoAvPair"
+      enable_dns: true
+      ldap_providers:
+        - server: "10.10.10.10"
+          port: 389
+          vendor: "openldap"
+    register: test_dns_providers_conflict_result
+    failed_when:
+      - test_dns_providers_conflict_result.failed == false
+      - "'cannot be specified when enable_dns is true' not in test_dns_providers_conflict_result.msg"
+
+  - name: Test LDAP policy without providers when DNS is disabled (should fail)
+    cisco.intersight.intersight_ldap_policy:
+      <<: *api_info
+      name: test_ldap_policy_no_providers
+      base_dn: "dc=test,dc=com"
+      domain: "test.com"
+      filter: "sAMAccountName"
+      group_attribute: "memberOf"
+      attribute: "CiscoAvPair"
+      enable_dns: false
+    register: test_no_providers_result
+    failed_when:
+      - test_no_providers_result.failed == false
+      - "'required when enable_dns is false' not in test_no_providers_result.msg"
+
+  - name: Update LDAP policy - manage group states
+    cisco.intersight.intersight_ldap_policy:
+      <<: *api_info
+      name: test_ldap_policy_dns
+      description: "Updated with mixed group states"
+      enable_ldap: true
+      base_dn: "dc=example,dc=com"
+      domain: "example.com"
+      filter: "sAMAccountName"
+      group_attribute: "memberOf"
+      attribute: "CiscoAvPair"
+      enable_dns: true
+      ldap_groups:
+        - name: "admin-group"
+          group_dn: "cn=admins,ou=groups,dc=example,dc=com"
+          role: "admin"
+          state: present
+        - name: "readonly-group"
+          state: absent
+        - name: "new-group"
+          group_dn: "cn=new,ou=groups,dc=example,dc=com"
+          role: "user"
+          state: present
+    register: mixed_groups_res
+
+  - name: Fetch info after mixed group states update
+    cisco.intersight.intersight_ldap_policy_info:
+      <<: *api_info
+      name: test_ldap_policy_dns
+    register: mixed_groups_info_res
+
+  - name: Verify mixed group states update
+    ansible.builtin.assert:
+      that:
+        - mixed_groups_res is changed
+        - mixed_groups_res.api_response.Groups | length == 2
+        - mixed_groups_info_res.api_response[0].Groups | length == 2
+        - mixed_groups_info_res.api_response[0].Groups[0].Name == 'admin-group'
+        - mixed_groups_info_res.api_response[0].Groups[1].Name == 'new-group'
+
+  - name: Fetch all LDAP policies
+    cisco.intersight.intersight_ldap_policy_info:
+      <<: *api_info
+    register: all_policies_res
+
+  - name: Verify multiple policies exist
+    ansible.builtin.assert:
+      that:
+        - all_policies_res.api_response | length >= 4
+
+  - name: Delete LDAP policy
+    cisco.intersight.intersight_ldap_policy:
+      <<: *api_info
+      name: test_ldap_policy_minimal
+      state: absent
+    register: deletion_res
+
+  - name: Verify deletion
+    ansible.builtin.assert:
+      that:
+        - deletion_res is changed
+
+  - name: Delete LDAP policy (idempotency check)
+    cisco.intersight.intersight_ldap_policy:
+      <<: *api_info
+      name: test_ldap_policy_minimal
+      state: absent
+    register: deletion_idempotency_res
+
+  - name: Verify deletion idempotency
+    ansible.builtin.assert:
+      that:
+        - deletion_idempotency_res is not changed
+
+  always:
+    - name: Clean up all test LDAP policies
+      cisco.intersight.intersight_ldap_policy:
+        <<: *api_info
+        name: "{{ item }}"
+        state: absent
+      loop:
+        - test_ldap_policy_minimal
+        - test_ldap_policy_dns
+        - test_ldap_policy_providers
+        - test_ldap_policy_configured_creds
+        - test_ldap_policy_complex
