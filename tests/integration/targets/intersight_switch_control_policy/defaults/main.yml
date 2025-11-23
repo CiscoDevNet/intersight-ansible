@@ -1,0 +1,4 @@
+---
+api_private_key: "{{ lookup('env', 'INTERSIGHT_API_PRIVATE_KEY') }}"
+api_key_id: "{{ lookup('env', 'INTERSIGHT_API_KEY_ID') }}"
+organization: "Demo-DevNet" 
