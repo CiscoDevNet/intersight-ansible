@@ -1,0 +1,227 @@
+---
+- block:
+  - name: Define anchor for Intersight API login info
+    ansible.builtin.set_fact:
+      api_info: &api_info
+        api_private_key: "{{ api_private_key }}"
+        api_key_id: "{{ api_key_id }}"
+        api_uri: "{{ api_uri | default(omit) }}"
+        validate_certs: "{{ validate_certs | default(omit) }}"
+        organization: "{{ organization }}"
+
+  - name: Make sure Env is clean
+    cisco.intersight.intersight_flow_control_policy:
+      <<: *api_info
+      name: "{{ item }}"
+      state: absent
+    loop:
+      - test_flow_control_policy
+      - test_flow_control_policy_auto
+      - test_flow_control_policy_on
+      - test_flow_control_policy_off
+      - test_flow_control_policy_minimal
+
+  - name: Create flow control policy - check-mode
+    cisco.intersight.intersight_flow_control_policy:
+      <<: *api_info
+      name: test_flow_control_policy
+      description: "Test flow control policy description"
+      tags:
+        - Key: Site
+          Value: Test
+        - Key: Environment
+          Value: Testing
+      priority_flow_control_mode: auto
+    check_mode: true
+    register: creation_res_check_mode
+
+  - name: Verify flow control policy was not created - check-mode
+    ansible.builtin.assert:
+      that:
+        - creation_res_check_mode is changed
+        - creation_res_check_mode.api_response == {}
+
+  - name: Create flow control policy with auto PFC mode
+    cisco.intersight.intersight_flow_control_policy:
+      <<: *api_info
+      name: test_flow_control_policy_auto
+      description: "Test flow control policy with auto PFC"
+      tags:
+        - Key: Site
+          Value: Test
+      priority_flow_control_mode: auto
+    register: creation_res_auto
+
+  - name: Fetch info after auto PFC policy creation
+    cisco.intersight.intersight_flow_control_policy_info:
+      <<: *api_info
+      name: test_flow_control_policy_auto
+    register: creation_info_res_auto
+
+  - name: Verify flow control policy creation with auto PFC mode
+    ansible.builtin.assert:
+      that:
+        - creation_res_auto.changed
+        - creation_info_res_auto.api_response[0].Name == 'test_flow_control_policy_auto'
+        - creation_info_res_auto.api_response[0].PriorityFlowControlMode == 'auto'
+        - creation_info_res_auto.api_response[0].ObjectType == 'fabric.FlowControlPolicy'
+        - creation_info_res_auto.api_response[0].ReceiveDirection == 'Disabled'
+        - creation_info_res_auto.api_response[0].SendDirection == 'Disabled'
+
+  - name: Verify flow control policy creation response aligns with info response
+    ansible.builtin.assert:
+      that:
+        - creation_res_auto.api_response.Name == creation_info_res_auto.api_response[0].Name
+        - creation_res_auto.api_response.PriorityFlowControlMode == creation_info_res_auto.api_response[0].PriorityFlowControlMode
+
+  - name: Create flow control policy with auto PFC mode (idempotency check)
+    cisco.intersight.intersight_flow_control_policy:
+      <<: *api_info
+      name: test_flow_control_policy_auto
+      description: "Test flow control policy with auto PFC"
+      tags:
+        - Key: Site
+          Value: Test
+      priority_flow_control_mode: auto
+    register: creation_res_auto_idempotent
+
+  - name: Verify flow control policy idempotency
+    ansible.builtin.assert:
+      that:
+        - not creation_res_auto_idempotent.changed
+        - creation_res_auto_idempotent.api_response.Name == 'test_flow_control_policy_auto'
+
+  - name: Create flow control policy with PFC on
+    cisco.intersight.intersight_flow_control_policy:
+      <<: *api_info
+      name: test_flow_control_policy_on
+      description: "Test flow control policy with PFC on"
+      priority_flow_control_mode: on
+    register: creation_res_on
+
+  - name: Fetch info after PFC on policy creation
+    cisco.intersight.intersight_flow_control_policy_info:
+      <<: *api_info
+      name: test_flow_control_policy_on
+    register: creation_info_res_on
+
+  - name: Verify flow control policy creation with PFC on
+    ansible.builtin.assert:
+      that:
+        - creation_res_on.changed
+        - creation_info_res_on.api_response[0].Name == 'test_flow_control_policy_on'
+        - creation_info_res_on.api_response[0].PriorityFlowControlMode == 'on'
+        - creation_info_res_on.api_response[0].ReceiveDirection == 'Disabled'
+        - creation_info_res_on.api_response[0].SendDirection == 'Disabled'
+
+  - name: Create flow control policy with link-level flow control
+    cisco.intersight.intersight_flow_control_policy:
+      <<: *api_info
+      name: test_flow_control_policy_off
+      description: "Test flow control policy with link-level settings"
+      priority_flow_control_mode: off
+      receive_direction: enabled
+      send_direction: enabled
+    register: creation_res_off
+
+  - name: Fetch info after link-level policy creation
+    cisco.intersight.intersight_flow_control_policy_info:
+      <<: *api_info
+      name: test_flow_control_policy_off
+    register: creation_info_res_off
+
+  - name: Verify flow control policy creation with link-level settings
+    ansible.builtin.assert:
+      that:
+        - creation_res_off.changed
+        - creation_info_res_off.api_response[0].Name == 'test_flow_control_policy_off'
+        - creation_info_res_off.api_response[0].PriorityFlowControlMode == 'off'
+        - creation_info_res_off.api_response[0].ReceiveDirection == 'Enabled'
+        - creation_info_res_off.api_response[0].SendDirection == 'Enabled'
+
+  - name: Update flow control policy - change PFC mode from auto to off
+    cisco.intersight.intersight_flow_control_policy:
+      <<: *api_info
+      name: test_flow_control_policy_auto
+      description: "Updated flow control policy"
+      priority_flow_control_mode: off
+      receive_direction: disabled
+      send_direction: disabled
+    register: update_res
+
+  - name: Fetch info after update
+    cisco.intersight.intersight_flow_control_policy_info:
+      <<: *api_info
+      name: test_flow_control_policy_auto
+    register: update_info_res
+
+  - name: Verify flow control policy update
+    ansible.builtin.assert:
+      that:
+        - update_res.changed
+        - update_info_res.api_response[0].PriorityFlowControlMode == 'off'
+        - update_info_res.api_response[0].ReceiveDirection == 'Disabled'
+        - update_info_res.api_response[0].SendDirection == 'Disabled'
+        - update_info_res.api_response[0].Description == 'Updated flow control policy'
+
+  - name: Create flow control policy with minimal parameters
+    cisco.intersight.intersight_flow_control_policy:
+      <<: *api_info
+      name: test_flow_control_policy_minimal
+    register: creation_res_minimal
+
+  - name: Verify minimal flow control policy creation
+    ansible.builtin.assert:
+      that:
+        - creation_res_minimal.changed
+        - creation_res_minimal.api_response.Name == 'test_flow_control_policy_minimal'
+        - creation_res_minimal.api_response.PriorityFlowControlMode == 'auto'
+        - creation_res_minimal.api_response.ReceiveDirection == 'Disabled'
+        - creation_res_minimal.api_response.SendDirection == 'Disabled'
+
+  - name: Fetch all flow control policies
+    cisco.intersight.intersight_flow_control_policy_info:
+      <<: *api_info
+    register: all_policies_info
+
+  - name: Verify multiple policies exist
+    ansible.builtin.assert:
+      that:
+        - all_policies_info.api_response | length >= 3
+
+  - name: Delete flow control policy - auto
+    cisco.intersight.intersight_flow_control_policy:
+      <<: *api_info
+      name: test_flow_control_policy_auto
+      state: absent
+    register: deletion_res_auto
+
+  - name: Verify flow control policy deletion - auto
+    ansible.builtin.assert:
+      that:
+        - deletion_res_auto.changed
+
+  - name: Delete flow control policy - non-existent (idempotency check)
+    cisco.intersight.intersight_flow_control_policy:
+      <<: *api_info
+      name: test_flow_control_policy_auto
+      state: absent
+    register: deletion_res_idempotent
+
+  - name: Verify deletion idempotency
+    ansible.builtin.assert:
+      that:
+        - not deletion_res_idempotent.changed
+
+  always:
+  - name: Remove flow control policies
+    cisco.intersight.intersight_flow_control_policy:
+      <<: *api_info
+      name: "{{ item }}"
+      state: absent
+    loop:
+      - test_flow_control_policy
+      - test_flow_control_policy_auto
+      - test_flow_control_policy_on
+      - test_flow_control_policy_off
+      - test_flow_control_policy_minimal
