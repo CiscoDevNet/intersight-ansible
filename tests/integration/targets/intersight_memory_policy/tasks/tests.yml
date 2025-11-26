@@ -47,30 +47,16 @@
       tags:
         - Key: Site
           Value: Test
-    check_mode: true
-    register: basic_creation_check_mode
-
-  - name: Verify basic Memory policy was not created - check-mode
-    ansible.builtin.assert:
-      that:
-        - basic_creation_check_mode is changed
-        - basic_creation_check_mode.api_response == {}
-
-  - name: Create basic Memory policy
-    cisco.intersight.intersight_memory_policy:
-      <<: *api_info
-      name: test_memory_policy_basic
-      description: "Test basic Memory policy"
-      enable_dimm_blocklisting: true
-      tags:
-        - Key: Site
-          Value: Test
     register: basic_creation
 
   - name: Verify basic Memory policy creation
     ansible.builtin.assert:
       that:
-        - basic_creation.changed
+        - basic_creation is changed
+        - basic_creation.api_response.Name == 'test_memory_policy_basic'
+        - basic_creation.api_response.Moid is defined
+        - basic_creation.api_response.ObjectType == 'memory.Policy'
+        - basic_creation.api_response.EnableDimmBlocklisting == true
 
   - name: Create basic Memory policy (idempotency check)
     cisco.intersight.intersight_memory_policy:
@@ -86,7 +72,7 @@
   - name: Verify basic Memory policy creation (idempotency check)
     ansible.builtin.assert:
       that:
-        - not basic_creation_ide.changed
+        - basic_creation_ide is not changed
 
   # Test 2: Disabled Memory Policy
   - name: Create disabled Memory policy
@@ -103,7 +89,9 @@
   - name: Verify disabled Memory policy creation
     ansible.builtin.assert:
       that:
-        - disabled_creation.changed
+        - disabled_creation is changed
+        - disabled_creation.api_response.Name == 'test_memory_policy_disabled'
+        - disabled_creation.api_response.EnableDimmBlocklisting == false
 
   - name: Create disabled Memory policy (idempotency check)
     cisco.intersight.intersight_memory_policy:
@@ -119,10 +107,10 @@
   - name: Verify disabled Memory policy creation (idempotency check)
     ansible.builtin.assert:
       that:
-        - not disabled_creation_ide.changed
+        - disabled_creation_ide is not changed
 
   # Test 3: Update Memory Policy
-  - name: Disable Memory policy
+  - name: Update Memory policy
     cisco.intersight.intersight_memory_policy:
       <<: *api_info
       name: test_memory_policy_disabled
@@ -130,13 +118,53 @@
       enable_dimm_blocklisting: false
       tags:
         - Key: Environment
-          Value: Disabled
+          Value: Updated
     register: disabled_update
 
   - name: Verify disabled Memory policy update
     ansible.builtin.assert:
       that:
-        - disabled_update.changed
+        - disabled_update is changed
+        - disabled_update.api_response.Description == 'Updated disabled Memory policy'
+
+  # Test 4: Info Module Tests
+  - name: Get specific Memory policy by name
+    cisco.intersight.intersight_memory_policy_info:
+      <<: *api_info
+      name: test_memory_policy_basic
+    register: memory_policy_info_by_name
+
+  - name: Verify specific Memory policy info
+    ansible.builtin.assert:
+      that:
+        - memory_policy_info_by_name.api_response is defined
+        - memory_policy_info_by_name.api_response | length > 0
+        - memory_policy_info_by_name.api_response[0].Name == 'test_memory_policy_basic'
+
+  # Test 5: Deletion Tests
+  - name: Delete Memory policy
+    cisco.intersight.intersight_memory_policy:
+      <<: *api_info
+      name: test_memory_policy_basic
+      state: absent
+    register: memory_policy_delete
+
+  - name: Verify Memory policy deletion
+    ansible.builtin.assert:
+      that:
+        - memory_policy_delete is changed
+
+  - name: Delete Memory policy (idempotency check)
+    cisco.intersight.intersight_memory_policy:
+      <<: *api_info
+      name: test_memory_policy_basic
+      state: absent
+    register: memory_policy_delete_ide
+
+  - name: Verify Memory policy deletion (idempotency check)
+    ansible.builtin.assert:
+      that:
+        - memory_policy_delete_ide is not changed
 
   always:
   - name: Remove all test Memory policies

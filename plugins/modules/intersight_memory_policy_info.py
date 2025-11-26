@@ -60,8 +60,9 @@ api_repsonse:
     "api_response": [
     {
         "Name": "memory_policy_1",
-        "ObjectType": "fabric.MemoryPolicy",
-        "EnableDimmBlocklisting": "Enabled",
+        "ObjectType": "memory.Policy",
+        "EnableDimmBlocklisting": true,
+        "Description": "Memory policy for production servers",
         "Tags": [
             {
                 "Key": "Site",
@@ -71,8 +72,9 @@ api_repsonse:
     },
     {
         "Name": "memory_policy_2",
-        "ObjectType": "fabric.MemoryPolicy",
-        "EnableDimmBlocklisting": "Disabled",
+        "ObjectType": "memory.Policy",
+        "EnableDimmBlocklisting": false,
+        "Description": "Memory policy without blocklisting",
         "Tags": [
             {
                 "Key": "Environment",

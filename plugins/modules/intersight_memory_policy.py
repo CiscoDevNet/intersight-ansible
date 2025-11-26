@@ -54,7 +54,7 @@ options:
     description:
       - Enable or disable DIMM blocklisting.
     type: bool
-    default: true
+    default: false
 author:
   - Vincent Esposito (@vesposito)
 '''
@@ -112,7 +112,7 @@ def main():
         name=dict(type='str', required=True),
         description=dict(type='str', aliases=['descr']),
         tags=dict(type='list', elements='dict'),
-        enable_dimm_blocklisting=dict(type='bool', default=True),
+        enable_dimm_blocklisting=dict(type='bool', default=False),
     )
 
     module = AnsibleModule(
