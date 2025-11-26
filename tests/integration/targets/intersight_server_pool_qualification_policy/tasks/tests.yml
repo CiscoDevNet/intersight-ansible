@@ -1,0 +1,453 @@
+---
+- block:
+  - name: Define anchor for Intersight API login info
+    ansible.builtin.set_fact:
+      api_info: &api_info
+        api_private_key: "{{ api_private_key }}"
+        api_key_id: "{{ api_key_id }}"
+        api_uri: "{{ api_uri | default(omit) }}"
+        validate_certs: "{{ validate_certs | default(omit) }}"
+        organization: "{{ organization }}"
+
+  - name: Make sure Environment is clean
+    cisco.intersight.intersight_server_pool_qualification_policy:
+      <<: *api_info
+      name: "{{ item }}"
+      state: absent
+    loop:
+      - test_server_pool_qual_minimal
+      - test_server_pool_qual_domain
+      - test_server_pool_qual_rack
+      - test_server_pool_qual_blade
+      - test_server_pool_qual_memory
+      - test_server_pool_qual_gpu
+      - test_server_pool_qual_processor
+      - test_server_pool_qual_tags
+      - test_server_pool_qual_comprehensive
+
+  - name: Create server pool qualification policy - check-mode
+    cisco.intersight.intersight_server_pool_qualification_policy:
+      <<: *api_info
+      name: test_server_pool_qual_minimal
+      description: "Test server pool qualification policy"
+      tags:
+        - Key: Environment
+          Value: Test
+    check_mode: true
+    register: creation_res_check_mode
+
+  - name: Verify policy was not created - check-mode
+    ansible.builtin.assert:
+      that:
+        - creation_res_check_mode is changed
+        - creation_res_check_mode.api_response == {}
+
+  - name: Create minimal server pool qualification policy
+    cisco.intersight.intersight_server_pool_qualification_policy:
+      <<: *api_info
+      name: test_server_pool_qual_minimal
+      description: "Minimal test policy"
+    register: creation_res_minimal
+
+  - name: Fetch info after minimal policy creation
+    cisco.intersight.intersight_server_pool_qualification_policy_info:
+      <<: *api_info
+      name: test_server_pool_qual_minimal
+    register: creation_info_res_minimal
+
+  - name: Verify minimal policy creation
+    ansible.builtin.assert:
+      that:
+        - creation_res_minimal.changed
+        - creation_info_res_minimal.api_response[0].Name == 'test_server_pool_qual_minimal'
+        - creation_info_res_minimal.api_response[0].ObjectType == 'resourcepool.QualificationPolicy'
+        - creation_info_res_minimal.api_response[0].Description == 'Minimal test policy'
+        - creation_info_res_minimal.api_response[0].Qualifiers is defined
+        - creation_info_res_minimal.api_response[0].Qualifiers[0].ObjectType == 'resource.GpuQualifier'
+        - creation_info_res_minimal.api_response[0].Qualifiers[0].GpuEvaluationType == 'ServerWithoutGpu'
+
+  - name: Create minimal policy again (idempotency check)
+    cisco.intersight.intersight_server_pool_qualification_policy:
+      <<: *api_info
+      name: test_server_pool_qual_minimal
+      description: "Minimal test policy"
+    register: creation_res_minimal_idempotent
+
+  - name: Verify policy idempotency
+    ansible.builtin.assert:
+      that:
+        - not creation_res_minimal_idempotent.changed
+        - creation_res_minimal_idempotent.api_response.Name == 'test_server_pool_qual_minimal'
+
+  - name: Update minimal policy description
+    cisco.intersight.intersight_server_pool_qualification_policy:
+      <<: *api_info
+      name: test_server_pool_qual_minimal
+      description: "Updated minimal test policy"
+    register: update_res_minimal
+
+  - name: Verify policy update
+    ansible.builtin.assert:
+      that:
+        - update_res_minimal.changed
+        - update_res_minimal.api_response.Description == 'Updated minimal test policy'
+
+  - name: Create policy with domain qualifier
+    cisco.intersight.intersight_server_pool_qualification_policy:
+      <<: *api_info
+      name: test_server_pool_qual_domain
+      description: "Policy with domain qualifier"
+      domain_qualifier:
+        fabric_interconnect_pids:
+          - ucs-fi-6454
+          - ucs-fi-64108
+          - ucs-fi-6664
+        domain_names:
+          - "test-domain-1"
+          - "test-domain-2"
+    register: creation_res_domain
+
+  - name: Fetch info after domain policy creation
+    cisco.intersight.intersight_server_pool_qualification_policy_info:
+      <<: *api_info
+      name: test_server_pool_qual_domain
+    register: creation_info_res_domain
+
+  - name: Verify domain qualifier policy creation
+    ansible.builtin.assert:
+      that:
+        - creation_res_domain.changed
+        - creation_info_res_domain.api_response[0].Name == 'test_server_pool_qual_domain'
+        - creation_info_res_domain.api_response[0].Qualifiers is defined
+        - creation_info_res_domain.api_response[0].Qualifiers | length >= 1
+        - creation_info_res_domain.api_response[0].Qualifiers | selectattr('ObjectType', 'equalto', 'resource.DomainQualifier') | list | length == 1
+
+  - name: Create policy with rack server qualifier
+    cisco.intersight.intersight_server_pool_qualification_policy:
+      <<: *api_info
+      name: test_server_pool_qual_rack
+      description: "Policy with rack server qualifier"
+      rack_server_qualifier:
+        rack_id_ranges:
+          - min_value: 2
+            max_value: 4
+          - min_value: 5
+            max_value: 8
+        pids:
+          - "UCSC-C245-M8SX"
+          - "UCSC-C220-M8S"
+        asset_tags:
+          - "production"
+          - "staging"
+        user_labels:
+          - "datacenter-a"
+    register: creation_res_rack
+
+  - name: Fetch info after rack policy creation
+    cisco.intersight.intersight_server_pool_qualification_policy_info:
+      <<: *api_info
+      name: test_server_pool_qual_rack
+    register: creation_info_res_rack
+
+  - name: Verify rack server qualifier policy creation
+    ansible.builtin.assert:
+      that:
+        - creation_res_rack.changed
+        - creation_info_res_rack.api_response[0].Name == 'test_server_pool_qual_rack'
+        - creation_info_res_rack.api_response[0].Qualifiers | selectattr('ObjectType', 'equalto', 'resource.RackServerQualifier') | list | length == 1
+
+  - name: Create policy with blade qualifier
+    cisco.intersight.intersight_server_pool_qualification_policy:
+      <<: *api_info
+      name: test_server_pool_qual_blade
+      description: "Policy with blade qualifier"
+      blade_qualifier:
+        pids:
+          - "UCSB-B480-M5"
+          - "UCSB-B200-M5"
+        chassis_pids:
+          - "N20-C6508"
+        asset_tags:
+          - "blade-prod"
+        user_labels:
+          - "blade-dc1"
+        chassis_slot_ranges:
+          - chassis_id_range:
+              min_value: 2
+              max_value: 10
+            slot_id_ranges:
+              - min_value: 4
+                max_value: 6
+              - min_value: 7
+                max_value: 8
+    register: creation_res_blade
+
+  - name: Fetch info after blade policy creation
+    cisco.intersight.intersight_server_pool_qualification_policy_info:
+      <<: *api_info
+      name: test_server_pool_qual_blade
+    register: creation_info_res_blade
+
+  - name: Verify blade qualifier policy creation
+    ansible.builtin.assert:
+      that:
+        - creation_res_blade.changed
+        - creation_info_res_blade.api_response[0].Name == 'test_server_pool_qual_blade'
+        - creation_info_res_blade.api_response[0].Qualifiers | selectattr('ObjectType', 'equalto', 'resource.BladeQualifier') | list | length == 1
+
+  - name: Create policy with memory qualifier
+    cisco.intersight.intersight_server_pool_qualification_policy:
+      <<: *api_info
+      name: test_server_pool_qual_memory
+      description: "Policy with memory qualifier"
+      memory_qualifier:
+        capacity_range:
+          min_value: 64
+          max_value: 512
+        units_range:
+          min_value: 10
+          max_value: 20
+    register: creation_res_memory
+
+  - name: Fetch info after memory policy creation
+    cisco.intersight.intersight_server_pool_qualification_policy_info:
+      <<: *api_info
+      name: test_server_pool_qual_memory
+    register: creation_info_res_memory
+
+  - name: Verify memory qualifier policy creation
+    ansible.builtin.assert:
+      that:
+        - creation_res_memory.changed
+        - creation_info_res_memory.api_response[0].Name == 'test_server_pool_qual_memory'
+        - creation_info_res_memory.api_response[0].Qualifiers | selectattr('ObjectType', 'equalto', 'resource.MemoryQualifier') | list | length == 1
+        - (creation_info_res_memory.api_response[0].Qualifiers | selectattr('ObjectType', 'equalto', 'resource.MemoryQualifier') | list | first).MemoryCapacityRange.MinValue == 64
+        - (creation_info_res_memory.api_response[0].Qualifiers | selectattr('ObjectType', 'equalto', 'resource.MemoryQualifier') | list | first).MemoryCapacityRange.MaxValue == 512
+        - (creation_info_res_memory.api_response[0].Qualifiers | selectattr('ObjectType', 'equalto', 'resource.MemoryQualifier') | list | first).MemoryUnitsRange.MinValue == 10
+        - (creation_info_res_memory.api_response[0].Qualifiers | selectattr('ObjectType', 'equalto', 'resource.MemoryQualifier') | list | first).MemoryUnitsRange.MaxValue == 20
+
+  - name: Create policy with GPU qualifier - servers without GPU
+    cisco.intersight.intersight_server_pool_qualification_policy:
+      <<: *api_info
+      name: test_server_pool_qual_gpu
+      description: "Policy with GPU qualifier"
+      gpu_qualifier:
+        evaluation_type: servers_without_gpu
+    register: creation_res_gpu
+
+  - name: Fetch info after GPU policy creation
+    cisco.intersight.intersight_server_pool_qualification_policy_info:
+      <<: *api_info
+      name: test_server_pool_qual_gpu
+    register: creation_info_res_gpu
+
+  - name: Verify GPU qualifier policy creation
+    ansible.builtin.assert:
+      that:
+        - creation_res_gpu.changed
+        - creation_info_res_gpu.api_response[0].Name == 'test_server_pool_qual_gpu'
+        - creation_info_res_gpu.api_response[0].Qualifiers | selectattr('ObjectType', 'equalto', 'resource.GpuQualifier') | list | length == 1
+        - (creation_info_res_gpu.api_response[0].Qualifiers | selectattr('ObjectType', 'equalto', 'resource.GpuQualifier') | list | first).GpuEvaluationType == 'ServerWithoutGpu'
+
+  - name: Update GPU policy to servers with GPU
+    cisco.intersight.intersight_server_pool_qualification_policy:
+      <<: *api_info
+      name: test_server_pool_qual_gpu
+      description: "Policy with GPU qualifier - servers with GPU"
+      gpu_qualifier:
+        evaluation_type: servers_with_gpu
+        gpu_count_range:
+          min_value: 2
+          max_value: 4
+        vendor: nvidia
+    register: update_res_gpu
+
+  - name: Fetch info after GPU policy update
+    cisco.intersight.intersight_server_pool_qualification_policy_info:
+      <<: *api_info
+      name: test_server_pool_qual_gpu
+    register: update_info_res_gpu
+
+  - name: Verify GPU qualifier policy update
+    ansible.builtin.assert:
+      that:
+        - update_res_gpu.changed
+        - (update_info_res_gpu.api_response[0].Qualifiers | selectattr('ObjectType', 'equalto', 'resource.GpuQualifier') | list | first).GpuEvaluationType == 'ServerWithGpu'
+        - (update_info_res_gpu.api_response[0].Qualifiers | selectattr('ObjectType', 'equalto', 'resource.GpuQualifier') | list | first).Vendor == 'NVIDIA'
+
+  - name: Create policy with processor qualifier
+    cisco.intersight.intersight_server_pool_qualification_policy:
+      <<: *api_info
+      name: test_server_pool_qual_processor
+      description: "Policy with processor qualifier"
+      processor_qualifier:
+        cores_range:
+          min_value: 16
+          max_value: 64
+        speed_range:
+          min_value: 2
+          max_value: 4
+        pids:
+          - "UCS-CPU-I6430"
+          - "UCS-CPU-I6414U"
+        vendor: intel
+    register: creation_res_processor
+
+  - name: Fetch info after processor policy creation
+    cisco.intersight.intersight_server_pool_qualification_policy_info:
+      <<: *api_info
+      name: test_server_pool_qual_processor
+    register: creation_info_res_processor
+
+  - name: Verify processor qualifier policy creation
+    ansible.builtin.assert:
+      that:
+        - creation_res_processor.changed
+        - creation_info_res_processor.api_response[0].Name == 'test_server_pool_qual_processor'
+        - creation_info_res_processor.api_response[0].Qualifiers | selectattr('ObjectType', 'equalto', 'resource.ProcessorQualifier') | list | length == 1
+
+  - name: Verify processor qualifier details
+    ansible.builtin.assert:
+      that:
+        - (creation_info_res_processor.api_response[0].Qualifiers | selectattr('ObjectType', 'equalto', 'resource.ProcessorQualifier') | list | first).CpuCoresRange.MinValue == 16
+        - (creation_info_res_processor.api_response[0].Qualifiers | selectattr('ObjectType', 'equalto', 'resource.ProcessorQualifier') | list | first).Vendor == 'Intel(R) Corporation'
+        - (creation_info_res_processor.api_response[0].Qualifiers | selectattr('ObjectType', 'equalto', 'resource.ProcessorQualifier') | list | first).Pids | length == 2
+
+  - name: Create policy with tag qualifier
+    cisco.intersight.intersight_server_pool_qualification_policy:
+      <<: *api_info
+      name: test_server_pool_qual_tags
+      description: "Policy with tag qualifier"
+      tag_qualifier:
+        server_tags:
+          - key: "environment"
+            value: "production"
+          - key: "tier"
+            value: "1"
+        chassis_tags:
+          - key: "location"
+            value: "datacenter-a"
+        domain_profile_tags:
+          - key: "domain_type"
+            value: "production"
+    register: creation_res_tags
+
+  - name: Fetch info after tags policy creation
+    cisco.intersight.intersight_server_pool_qualification_policy_info:
+      <<: *api_info
+      name: test_server_pool_qual_tags
+    register: creation_info_res_tags
+
+  - name: Verify tag qualifier policy creation
+    ansible.builtin.assert:
+      that:
+        - creation_res_tags.changed
+        - creation_info_res_tags.api_response[0].Name == 'test_server_pool_qual_tags'
+        - creation_info_res_tags.api_response[0].Qualifiers | selectattr('ObjectType', 'equalto', 'resource.TagQualifier') | list | length == 1
+
+  - name: Verify tag qualifier details
+    ansible.builtin.assert:
+      that:
+        - (creation_info_res_tags.api_response[0].Qualifiers | selectattr('ObjectType', 'equalto', 'resource.TagQualifier') | list | first).ServerTags | length == 2
+        - (creation_info_res_tags.api_response[0].Qualifiers | selectattr('ObjectType', 'equalto', 'resource.TagQualifier') | list | first).ChassisTags | length == 1
+
+  - name: Create comprehensive policy with multiple qualifiers
+    cisco.intersight.intersight_server_pool_qualification_policy:
+      <<: *api_info
+      name: test_server_pool_qual_comprehensive
+      description: "Comprehensive policy with all qualifier types"
+      tags:
+        - Key: Environment
+          Value: Production
+      domain_qualifier:
+        fabric_interconnect_pids:
+          - ucs-fi-6454
+      rack_server_qualifier:
+        pids:
+          - "UCSC-C220-M6S"
+      blade_qualifier:
+        pids:
+          - "UCSX-210C-M7"
+      memory_qualifier:
+        capacity_range:
+          min_value: 128
+          max_value: 1024
+      processor_qualifier:
+        cores_range:
+          min_value: 32
+          max_value: 128
+        vendor: intel
+      gpu_qualifier:
+        evaluation_type: all_servers
+      network_adaptor_qualifier:
+        adaptors_range:
+          min_value: 2
+          max_value: 4
+    register: creation_res_comprehensive
+
+  - name: Fetch info after comprehensive policy creation
+    cisco.intersight.intersight_server_pool_qualification_policy_info:
+      <<: *api_info
+      name: test_server_pool_qual_comprehensive
+    register: creation_info_res_comprehensive
+
+  - name: Verify comprehensive policy creation
+    ansible.builtin.assert:
+      that:
+        - creation_res_comprehensive.changed
+        - creation_info_res_comprehensive.api_response[0].Name == 'test_server_pool_qual_comprehensive'
+        - creation_info_res_comprehensive.api_response[0].Qualifiers | length >= 7
+        - creation_info_res_comprehensive.api_response[0].Tags | length == 1
+
+  - name: Verify all qualifier types are present in comprehensive policy
+    ansible.builtin.assert:
+      that:
+        - creation_info_res_comprehensive.api_response[0].Qualifiers | selectattr('ObjectType', 'equalto', 'resource.DomainQualifier') | list | length == 1
+        - creation_info_res_comprehensive.api_response[0].Qualifiers | selectattr('ObjectType', 'equalto', 'resource.RackServerQualifier') | list | length == 1
+        - creation_info_res_comprehensive.api_response[0].Qualifiers | selectattr('ObjectType', 'equalto', 'resource.BladeQualifier') | list | length == 1
+        - creation_info_res_comprehensive.api_response[0].Qualifiers | selectattr('ObjectType', 'equalto', 'resource.MemoryQualifier') | list | length == 1
+        - creation_info_res_comprehensive.api_response[0].Qualifiers | selectattr('ObjectType', 'equalto', 'resource.ProcessorQualifier') | list | length == 1
+        - creation_info_res_comprehensive.api_response[0].Qualifiers | selectattr('ObjectType', 'equalto', 'resource.GpuQualifier') | list | length == 1
+        - creation_info_res_comprehensive.api_response[0].Qualifiers | selectattr('ObjectType', 'equalto', 'resource.NetworkAdaptorQualifier') | list | length == 1
+        - (creation_info_res_comprehensive.api_response[0].Qualifiers | selectattr('ObjectType', 'equalto', 'resource.GpuQualifier') | list | first).GpuEvaluationType == 'Unspecified'
+
+  - name: Delete minimal policy
+    cisco.intersight.intersight_server_pool_qualification_policy:
+      <<: *api_info
+      name: test_server_pool_qual_minimal
+      state: absent
+    register: deletion_res_minimal
+
+  - name: Verify minimal policy deletion
+    ansible.builtin.assert:
+      that:
+        - deletion_res_minimal.changed
+
+  - name: Delete minimal policy again (idempotency check)
+    cisco.intersight.intersight_server_pool_qualification_policy:
+      <<: *api_info
+      name: test_server_pool_qual_minimal
+      state: absent
+    register: deletion_res_minimal_idempotent
+
+  - name: Verify deletion idempotency
+    ansible.builtin.assert:
+      that:
+        - not deletion_res_minimal_idempotent.changed
+
+  always:
+  - name: Cleanup all test policies
+    cisco.intersight.intersight_server_pool_qualification_policy:
+      <<: *api_info
+      name: "{{ item }}"
+      state: absent
+    loop:
+      - test_server_pool_qual_minimal
+      - test_server_pool_qual_domain
+      - test_server_pool_qual_rack
+      - test_server_pool_qual_blade
+      - test_server_pool_qual_memory
+      - test_server_pool_qual_gpu
+      - test_server_pool_qual_processor
+      - test_server_pool_qual_tags
+      - test_server_pool_qual_comprehensive
