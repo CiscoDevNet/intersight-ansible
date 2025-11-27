@@ -1,0 +1,213 @@
+---
+- block:
+  - name: Define anchor for Intersight API login info
+    ansible.builtin.set_fact:
+      api_info: &api_info
+        api_private_key: "{{ api_private_key }}"
+        api_key_id: "{{ api_key_id }}"
+        api_uri: "{{ api_uri | default(omit) }}"
+        validate_certs: "{{ validate_certs | default(omit) }}"
+        organization: "{{ organization }}"
+
+  - name: Make sure Env is clean
+    cisco.intersight.intersight_ssh_policy:
+      <<: *api_info
+      name: "{{ item }}"
+      state: absent
+    loop:
+      - test_ssh_policy
+      - test_ssh_policy_custom
+      - test_ssh_policy_disabled
+
+  - name: Create SSH policy - check-mode
+    cisco.intersight.intersight_ssh_policy:
+      <<: *api_info
+      name: test_ssh_policy
+      description: "Test SSH policy description"
+      tags:
+        - Key: Site
+          Value: Test
+        - Key: Environment
+          Value: CI
+      enable_ssh: true
+      ssh_port: 22
+      ssh_timeout: 1800
+    check_mode: true
+    register: creation_res_check_mode
+
+  - name: Verify SSH policy was not created - check-mode
+    ansible.builtin.assert:
+      that:
+        - creation_res_check_mode is changed
+        - creation_res_check_mode.api_response == {}
+
+  - name: Create SSH policy with default settings
+    cisco.intersight.intersight_ssh_policy:
+      <<: *api_info
+      name: test_ssh_policy
+      description: "Test SSH policy description"
+      tags:
+        - Key: Site
+          Value: Test
+        - Key: Environment
+          Value: CI
+      enable_ssh: true
+      ssh_port: 22
+      ssh_timeout: 1800
+    register: creation_res
+
+  - name: Fetch info after creation
+    cisco.intersight.intersight_ssh_policy_info:
+      <<: *api_info
+      name: test_ssh_policy
+    register: creation_info_res
+
+  - name: Verify SSH policy creation by info
+    ansible.builtin.assert:
+      that:
+        - creation_res.changed
+        - creation_info_res.api_response[0].Name == 'test_ssh_policy'
+        - creation_info_res.api_response[0].Enabled == true
+        - creation_info_res.api_response[0].Port == 22
+        - creation_info_res.api_response[0].Timeout == 1800
+
+  - name: Verify SSH policy creation response aligns with info response
+    ansible.builtin.assert:
+      that:
+        - creation_res.api_response.Name == creation_info_res.api_response[0].Name
+        - creation_res.api_response.Enabled == creation_info_res.api_response[0].Enabled
+        - creation_res.api_response.Port == creation_info_res.api_response[0].Port
+        - creation_res.api_response.Timeout == creation_info_res.api_response[0].Timeout
+
+  - name: Create SSH policy (idempotency check)
+    cisco.intersight.intersight_ssh_policy:
+      <<: *api_info
+      name: test_ssh_policy
+      description: "Test SSH policy description"
+      tags:
+        - Key: Site
+          Value: Test
+        - Key: Environment
+          Value: CI
+      enable_ssh: true
+      ssh_port: 22
+      ssh_timeout: 1800
+    register: creation_res_ide
+
+  - name: Verify SSH policy creation (idempotency check)
+    ansible.builtin.assert:
+      that:
+        - not creation_res_ide.changed
+
+  - name: Change settings on existing SSH policy
+    cisco.intersight.intersight_ssh_policy:
+      <<: *api_info
+      name: test_ssh_policy
+      description: "Updated SSH policy description"
+      enable_ssh: true
+      ssh_port: 2222
+      ssh_timeout: 3600
+    register: changed_res
+
+  - name: Fetch info after change
+    cisco.intersight.intersight_ssh_policy_info:
+      <<: *api_info
+      name: test_ssh_policy
+    register: change_info_res
+
+  - name: Verify SSH policy change by info
+    ansible.builtin.assert:
+      that:
+        - changed_res.changed
+        - change_info_res.api_response[0].Name == 'test_ssh_policy'
+        - change_info_res.api_response[0].Description == 'Updated SSH policy description'
+        - change_info_res.api_response[0].Port == 2222
+        - change_info_res.api_response[0].Timeout == 3600
+
+  - name: Create SSH policy with custom port and timeout
+    cisco.intersight.intersight_ssh_policy:
+      <<: *api_info
+      name: test_ssh_policy_custom
+      description: "SSH policy with custom settings"
+      enable_ssh: true
+      ssh_port: 8022
+      ssh_timeout: 7200
+    register: creation_res_custom
+
+  - name: Verify custom SSH policy creation
+    cisco.intersight.intersight_ssh_policy_info:
+      <<: *api_info
+      name: test_ssh_policy_custom
+    register: creation_info_res_custom
+
+  - name: Verify custom SSH policy has correct settings
+    ansible.builtin.assert:
+      that:
+        - creation_info_res_custom.api_response[0].Enabled == true
+        - creation_info_res_custom.api_response[0].Port == 8022
+        - creation_info_res_custom.api_response[0].Timeout == 7200
+
+  - name: Create SSH policy with SSH disabled
+    cisco.intersight.intersight_ssh_policy:
+      <<: *api_info
+      name: test_ssh_policy_disabled
+      description: "SSH policy with SSH disabled"
+      enable_ssh: false
+    register: creation_res_disabled
+
+  - name: Verify disabled SSH policy creation
+    cisco.intersight.intersight_ssh_policy_info:
+      <<: *api_info
+      name: test_ssh_policy_disabled
+    register: creation_info_res_disabled
+
+  - name: Verify disabled SSH policy has correct settings
+    ansible.builtin.assert:
+      that:
+        - creation_info_res_disabled.api_response[0].Enabled == false
+        - creation_info_res_disabled.api_response[0].Name == 'test_ssh_policy_disabled'
+
+  - name: Test enabling SSH on disabled policy
+    cisco.intersight.intersight_ssh_policy:
+      <<: *api_info
+      name: test_ssh_policy_disabled
+      description: "SSH policy now enabled"
+      enable_ssh: true
+      ssh_port: 22
+      ssh_timeout: 1800
+    register: enable_ssh_res
+
+  - name: Verify SSH was enabled correctly
+    cisco.intersight.intersight_ssh_policy_info:
+      <<: *api_info
+      name: test_ssh_policy_disabled
+    register: enable_ssh_info
+
+  - name: Assert SSH was enabled with correct parameters
+    ansible.builtin.assert:
+      that:
+        - enable_ssh_res.changed
+        - enable_ssh_info.api_response[0].Enabled == true
+        - enable_ssh_info.api_response[0].Port == 22
+        - enable_ssh_info.api_response[0].Timeout == 1800
+
+  - name: Fetch all SSH policies under selected organization
+    cisco.intersight.intersight_ssh_policy_info:
+      <<: *api_info
+    register: creation_info_res_final
+
+  - name: Check that there are at least three SSH policies under this organization
+    ansible.builtin.assert:
+      that:
+        - creation_info_res_final.api_response | length >= 3
+
+  always:
+  - name: Remove SSH policies
+    cisco.intersight.intersight_ssh_policy:
+      <<: *api_info
+      name: "{{ item }}"
+      state: absent
+    loop:
+      - test_ssh_policy
+      - test_ssh_policy_custom
+      - test_ssh_policy_disabled
