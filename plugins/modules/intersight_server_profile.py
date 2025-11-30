@@ -200,7 +200,7 @@ EXAMPLES = r'''
 '''
 
 RETURN = r'''
-api_repsonse:
+api_response:
   description: The API response output returned by the specified resource.
   returned: always
   type: dict
@@ -355,9 +355,7 @@ def main():
     intersight = IntersightModule(module)
     intersight.result['api_response'] = {}
     intersight.result['trace_id'] = ''
-    #
-    # Argument spec above, resource path, and API body should be the only code changed in this module
-    #
+
     resource_path = '/server/Profiles'
     # Define API body used in compares or create
     intersight.api_body = {

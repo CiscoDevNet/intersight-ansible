@@ -20,7 +20,6 @@
       - test_ntp_policy_with_servers
       - test_ntp_policy_updated
 
-  # Test 1: Basic NTP Policy Creation
   - name: Create basic NTP policy - check-mode
     cisco.intersight.intersight_ntp_policy:
       <<: *api_info
@@ -79,7 +78,6 @@
       that:
         - not basic_creation_ide.changed
 
-  # Test 2: Disabled NTP Policy
   - name: Create disabled NTP policy
     cisco.intersight.intersight_ntp_policy:
       <<: *api_info
@@ -112,7 +110,6 @@
       that:
         - not disabled_creation_ide.changed
 
-  # Test 3: NTP Policy with servers and timezone
   - name: Create NTP policy with servers and timezone
     cisco.intersight.intersight_ntp_policy:
       <<: *api_info
@@ -155,7 +152,6 @@
       that:
         - not servers_creation_ide.changed
 
-  # Test 4: Update NTP Policy
   - name: Update basic NTP policy description
     cisco.intersight.intersight_ntp_policy:
       <<: *api_info

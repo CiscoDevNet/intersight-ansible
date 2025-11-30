@@ -132,7 +132,7 @@ EXAMPLES = r'''
 '''
 
 RETURN = r'''
-api_repsonse:
+api_response:
   description: The API response output returned by the specified resource.
   returned: always
   type: dict
@@ -216,9 +216,6 @@ def main():
             if intersight.module.params['querier_ip_address_peer']:
                 intersight.api_body['QuerierIpAddressPeer'] = intersight.module.params['querier_ip_address_peer']
 
-    #
-    # Code below should be common across all policy modules
-    #
     intersight.configure_policy_or_profile(resource_path=resource_path)
 
     module.exit_json(**intersight.result)

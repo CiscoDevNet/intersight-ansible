@@ -140,7 +140,7 @@ EXAMPLES = r'''
 '''
 
 RETURN = r'''
-api_repsonse:
+api_response:
   description: The API response output returned by the specified resource.
   returned: always
   type: dict

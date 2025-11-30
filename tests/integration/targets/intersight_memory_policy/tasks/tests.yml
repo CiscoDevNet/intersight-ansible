@@ -19,7 +19,6 @@
       - test_memory_policy_disabled
       - test_memory_policy_updated
 
-  # Test 1: Basic Memory Policy Creation
   - name: Create basic Memory policy - check-mode
     cisco.intersight.intersight_memory_policy:
       <<: *api_info
@@ -74,7 +73,6 @@
       that:
         - basic_creation_ide is not changed
 
-  # Test 2: Disabled Memory Policy
   - name: Create disabled Memory policy
     cisco.intersight.intersight_memory_policy:
       <<: *api_info
@@ -109,7 +107,6 @@
       that:
         - disabled_creation_ide is not changed
 
-  # Test 3: Update Memory Policy
   - name: Update Memory policy
     cisco.intersight.intersight_memory_policy:
       <<: *api_info
@@ -127,7 +124,6 @@
         - disabled_update is changed
         - disabled_update.api_response.Description == 'Updated disabled Memory policy'
 
-  # Test 4: Info Module Tests
   - name: Get specific Memory policy by name
     cisco.intersight.intersight_memory_policy_info:
       <<: *api_info
@@ -141,7 +137,6 @@
         - memory_policy_info_by_name.api_response | length > 0
         - memory_policy_info_by_name.api_response[0].Name == 'test_memory_policy_basic'
 
-  # Test 5: Deletion Tests
   - name: Delete Memory policy
     cisco.intersight.intersight_memory_policy:
       <<: *api_info

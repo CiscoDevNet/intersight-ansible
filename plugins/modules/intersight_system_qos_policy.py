@@ -385,9 +385,7 @@ def main():
     intersight = IntersightModule(module)
     intersight.result['api_response'] = {}
     intersight.result['trace_id'] = ''
-    #
-    # Argument spec above, resource path, and API body should be the only code changed in each policy module
-    #
+
     # Resource path used to configure policy
     resource_path = '/fabric/SystemQosPolicies'
     # Define API body used in compares or create
@@ -403,9 +401,7 @@ def main():
         formatted_classes = format_qos_classes(module.params.get('classes'), module)
         intersight.api_body['Classes'] = formatted_classes
         intersight.set_tags_and_description()
-    #
-    # Code below should be common across all policy modules
-    #
+
     intersight.configure_policy_or_profile(resource_path=resource_path)
 
     module.exit_json(**intersight.result)
