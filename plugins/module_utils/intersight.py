@@ -442,17 +442,20 @@ class IntersightModule():
 
     def configure_policy_or_profile(self, resource_path, filter_key=None, filter_value=None):
         # Configure (create, update, or delete) the policy or profile
-        organization_moid = self.get_moid_by_name(resource_path='/organization/Organizations', resource_name=self.module.params['organization'])
+        organization_name = self.module.params['organization']
+        organization_moid = self.get_moid_by_name(resource_path='/organization/Organizations', resource_name=organization_name)
+
+        if organization_moid is None:
+            self.module.fail_json(
+                msg=f"Organization '{organization_name}' not found. Please verify the organization name exists in Intersight and that you have access to it."
+            )
 
         self.result['api_response'] = {}
         # Get the current state of the resource
         filter_str = "Name eq '" + self.module.params['name'] + "'"
         if filter_value and filter_key:
             filter_str += " and " + filter_key + " eq '" + filter_value + "'"
-        try:
-            filter_str += "and Organization.Moid eq '" + organization_moid + "'"
-        except Exception as e:
-            self.module.fail_json(msg="Error getting organization, verify the given organization exists")
+        filter_str += " and Organization.Moid eq '" + organization_moid + "'"
         self.get_resource(
             resource_path=resource_path,
             query_params={
