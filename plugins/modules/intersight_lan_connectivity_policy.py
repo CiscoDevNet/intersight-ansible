@@ -256,6 +256,12 @@ options:
           - Relationship to the boot iSCSI Policy.
           - Only applicable for attached target platform.
         type: str
+      pin_group_name:
+        description:
+          - Pingroup name associated to vNIC for static pinning.
+          - LCP deploy will resolve pingroup name and fetches the corresponding uplink port/port channel to pin the vNIC traffic.
+          - Only applicable for attached target platform.
+        type: str
       usnic_settings:
         description:
           - USNIC settings when connection_type is 'usnic'.
@@ -429,6 +435,37 @@ EXAMPLES = r'''
         fabric_eth_network_control_policy_name: "default-network-control"
         eth_qos_policy_name: "default-qos-policy"
         eth_adapter_policy_name: "default-adapter-policy"
+        connection_type: "none"
+        state: present
+    state: present
+
+- name: Create a LAN Connectivity Policy with pin group for static pinning
+  cisco.intersight.intersight_lan_connectivity_policy:
+    api_private_key: "{{ api_private_key }}"
+    api_key_id: "{{ api_key_id }}"
+    organization: "default"
+    name: "fi-attached-pinned-policy"
+    description: "LAN connectivity policy with static uplink pinning"
+    target_platform: "attached"
+    azure_qos_enabled: false
+    iqn_allocation_type: "None"
+    placement_mode: "custom"
+    vnics:
+      - name: "pinned-vnic"
+        order: 0
+        cdn_source: "vnic"
+        mac_address_type: "pool"
+        mac_pool_name: "default-mac-pool"
+        auto_slot_id: true
+        auto_pci_link: true
+        auto_vnic_placement_enabled: false
+        switch_id: "A"
+        failover_enabled: false
+        fabric_eth_network_group_policy_name: "default-network-group"
+        fabric_eth_network_control_policy_name: "default-network-control"
+        eth_qos_policy_name: "default-qos-policy"
+        eth_adapter_policy_name: "default-adapter-policy"
+        pin_group_name: "pingroup-a"
         connection_type: "none"
         state: present
     state: present
@@ -982,6 +1019,10 @@ def build_fi_attached_vnic_api_body(intersight, policy_cache, module, vnic_confi
     connection_settings = build_connection_settings(intersight, policy_cache, module, vnic_config, organization_name)
     vnic_api_body.update(connection_settings)
 
+    # Add pin group name if specified
+    if vnic_config.get('pin_group_name'):
+        vnic_api_body['PinGroupName'] = vnic_config['pin_group_name']
+
     return vnic_api_body
 
 
@@ -1051,6 +1092,7 @@ def main():
         auto_pci_link=dict(type='bool', default=True),
         pci_link_assignment_mode=dict(type='str', choices=['Custom', 'Load-Balanced']),
         auto_vnic_placement_enabled=dict(type='bool', default=False),
+        pin_group_name=dict(type='str'),
     )
     # Add connection settings argument specs
     vnic_options.update(get_common_settings_argument_spec())
