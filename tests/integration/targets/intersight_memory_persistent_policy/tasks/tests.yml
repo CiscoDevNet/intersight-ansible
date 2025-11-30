@@ -1,0 +1,268 @@
+---
+- block:
+  - name: Define anchor for Intersight API login info
+    ansible.builtin.set_fact:
+      api_info: &api_info
+        api_private_key: "{{ api_private_key }}"
+        api_key_id: "{{ api_key_id }}"
+        api_uri: "{{ api_uri | default(omit) }}"
+        validate_certs: "{{ validate_certs | default(omit) }}"
+        organization: "{{ organization }}"
+
+  - name: Make sure Env is clean
+    cisco.intersight.intersight_memory_persistent_policy:
+      <<: *api_info
+      name: "{{ item }}"
+      state: absent
+    loop:
+      - test_pmem_policy_intersight
+      - test_pmem_policy_os_managed
+      - test_pmem_policy_with_namespaces
+      - test_pmem_policy_non_interleaved
+
+  - name: Create memory persistent policy - check-mode
+    cisco.intersight.intersight_memory_persistent_policy:
+      <<: *api_info
+      name: test_pmem_policy_intersight
+      description: "Test persistent memory policy - Intersight managed"
+      management_mode: configured-from-intersight
+      enable_security_passphrase: true
+      secure_passphrase: "TestPass123!"
+      enable_goal: true
+      memory_mode_percentage: 0
+      persistent_memory_type: app-direct
+      retain_namespaces: true
+    check_mode: true
+    register: creation_res_check_mode
+
+  - name: Verify memory persistent policy was not created - check-mode
+    ansible.builtin.assert:
+      that:
+        - creation_res_check_mode is changed
+        - creation_res_check_mode.api_response == {}
+
+  - name: Create memory persistent policy with Intersight management
+    cisco.intersight.intersight_memory_persistent_policy:
+      <<: *api_info
+      name: test_pmem_policy_intersight
+      description: "Test persistent memory policy - Intersight managed"
+      tags:
+        - Key: Environment
+          Value: Test
+        - Key: Purpose
+          Value: Integration
+      management_mode: configured-from-intersight
+      enable_security_passphrase: true
+      secure_passphrase: "TestPass123!"
+      enable_goal: true
+      memory_mode_percentage: 0
+      persistent_memory_type: app-direct
+      retain_namespaces: true
+    register: creation_res
+
+  - name: Fetch info after creation
+    cisco.intersight.intersight_memory_persistent_policy_info:
+      <<: *api_info
+      name: test_pmem_policy_intersight
+    register: creation_info_res
+
+  - name: Verify memory persistent policy creation by info
+    ansible.builtin.assert:
+      that:
+        - creation_res.changed
+        - creation_info_res.api_response[0].Name == 'test_pmem_policy_intersight'
+        - creation_info_res.api_response[0].ManagementMode == 'configured-from-intersight'
+        - creation_info_res.api_response[0].LocalSecurity.Enabled == true
+        - creation_info_res.api_response[0].Goals is defined
+        - creation_info_res.api_response[0].Goals[0].MemoryModePercentage == 0
+        - creation_info_res.api_response[0].Goals[0].PersistentMemoryType == 'app-direct'
+        - creation_info_res.api_response[0].RetainNamespaces == true
+
+  - name: Verify memory persistent policy creation response aligns with info response
+    ansible.builtin.assert:
+      that:
+        - creation_res.api_response.Name == creation_info_res.api_response[0].Name
+        - creation_res.api_response.ManagementMode == creation_info_res.api_response[0].ManagementMode
+
+  - name: Create memory persistent policy (idempotency check)
+    cisco.intersight.intersight_memory_persistent_policy:
+      <<: *api_info
+      name: test_pmem_policy_intersight
+      description: "Test persistent memory policy - Intersight managed"
+      tags:
+        - Key: Environment
+          Value: Test
+        - Key: Purpose
+          Value: Integration
+      management_mode: configured-from-intersight
+      enable_security_passphrase: true
+      secure_passphrase: "TestPass123!"
+      enable_goal: true
+      memory_mode_percentage: 0
+      persistent_memory_type: app-direct
+      retain_namespaces: true
+    register: creation_res_ide
+
+  - name: Verify memory persistent policy creation (idempotency check)
+    ansible.builtin.assert:
+      that:
+        - not creation_res_ide.changed
+
+  - name: Change settings on existing memory persistent policy
+    cisco.intersight.intersight_memory_persistent_policy:
+      <<: *api_info
+      name: test_pmem_policy_intersight
+      description: "Updated persistent memory policy description"
+      management_mode: configured-from-intersight
+      enable_security_passphrase: false
+      enable_goal: true
+      memory_mode_percentage: 10
+      persistent_memory_type: app-direct
+      retain_namespaces: false
+    register: changed_res
+
+  - name: Fetch info after change
+    cisco.intersight.intersight_memory_persistent_policy_info:
+      <<: *api_info
+      name: test_pmem_policy_intersight
+    register: change_info_res
+
+  - name: Verify memory persistent policy change by info
+    ansible.builtin.assert:
+      that:
+        - changed_res.changed
+        - change_info_res.api_response[0].Description == 'Updated persistent memory policy description'
+        - change_info_res.api_response[0].LocalSecurity.Enabled == false
+        - change_info_res.api_response[0].Goals[0].MemoryModePercentage == 10
+        - change_info_res.api_response[0].RetainNamespaces == false
+
+  - name: Create OS-managed memory persistent policy
+    cisco.intersight.intersight_memory_persistent_policy:
+      <<: *api_info
+      name: test_pmem_policy_os_managed
+      description: "Test persistent memory policy - OS managed"
+      management_mode: configured-from-operating-system
+    register: creation_res_os
+
+  - name: Fetch info for OS-managed policy
+    cisco.intersight.intersight_memory_persistent_policy_info:
+      <<: *api_info
+      name: test_pmem_policy_os_managed
+    register: os_managed_info
+
+  - name: Verify OS-managed policy has correct management mode
+    ansible.builtin.assert:
+      that:
+        - creation_res_os.changed
+        - os_managed_info.api_response[0].ManagementMode == 'configured-from-operating-system'
+        - os_managed_info.api_response[0].Name == 'test_pmem_policy_os_managed'
+
+  - name: Create memory persistent policy with namespaces
+    cisco.intersight.intersight_memory_persistent_policy:
+      <<: *api_info
+      name: test_pmem_policy_with_namespaces
+      description: "Policy with logical namespaces"
+      management_mode: configured-from-intersight
+      enable_security_passphrase: true
+      secure_passphrase: "SecurePass456!"
+      enable_goal: true
+      memory_mode_percentage: 0
+      persistent_memory_type: app-direct
+      retain_namespaces: true
+      namespaces:
+        - name: "ns1"
+          socket_id: 1
+          capacity: 100000
+          mode: raw
+        - name: "ns2"
+          socket_id: 2
+          capacity: 200000
+          mode: block
+    register: creation_res_ns
+
+  - name: Fetch info for policy with namespaces
+    cisco.intersight.intersight_memory_persistent_policy_info:
+      <<: *api_info
+      name: test_pmem_policy_with_namespaces
+    register: ns_policy_info
+
+  - name: Verify policy with namespaces was created correctly
+    ansible.builtin.assert:
+      that:
+        - creation_res_ns.changed
+        - ns_policy_info.api_response[0].LogicalNamespaces is defined
+        - ns_policy_info.api_response[0].LogicalNamespaces | length == 2
+        - ns_policy_info.api_response[0].LogicalNamespaces[0].Name == 'ns1'
+        - ns_policy_info.api_response[0].LogicalNamespaces[0].SocketId == 1
+        - ns_policy_info.api_response[0].LogicalNamespaces[0].SocketMemoryId == 'Not Applicable'
+        - ns_policy_info.api_response[0].LogicalNamespaces[0].Capacity == 100000
+        - ns_policy_info.api_response[0].LogicalNamespaces[0].Mode == 'raw'
+        - ns_policy_info.api_response[0].LogicalNamespaces[1].Name == 'ns2'
+        - ns_policy_info.api_response[0].LogicalNamespaces[1].SocketId == 2
+        - ns_policy_info.api_response[0].LogicalNamespaces[1].SocketMemoryId == 'Not Applicable'
+        - ns_policy_info.api_response[0].LogicalNamespaces[1].Capacity == 200000
+        - ns_policy_info.api_response[0].LogicalNamespaces[1].Mode == 'block'
+
+  - name: Create memory persistent policy with non-interleaved type and socket_memory_id
+    cisco.intersight.intersight_memory_persistent_policy:
+      <<: *api_info
+      name: test_pmem_policy_non_interleaved
+      description: "Non-interleaved persistent memory configuration"
+      management_mode: configured-from-intersight
+      enable_security_passphrase: true
+      secure_passphrase: "NonInterleavedPass789!"
+      enable_goal: true
+      memory_mode_percentage: 0
+      persistent_memory_type: app-direct-non-interleaved
+      retain_namespaces: true
+      namespaces:
+        - name: "ns_ni_1"
+          socket_id: 1
+          socket_memory_id: 2
+          capacity: 150000
+          mode: raw
+        - name: "ns_ni_2"
+          socket_id: 2
+          socket_memory_id: 4
+          capacity: 250000
+          mode: block
+    register: creation_res_ni
+
+  - name: Fetch info for non-interleaved policy
+    cisco.intersight.intersight_memory_persistent_policy_info:
+      <<: *api_info
+      name: test_pmem_policy_non_interleaved
+    register: ni_policy_info
+
+  - name: Verify non-interleaved policy configuration with socket_memory_id
+    ansible.builtin.assert:
+      that:
+        - creation_res_ni.changed
+        - ni_policy_info.api_response[0].Goals[0].PersistentMemoryType == 'app-direct-non-interleaved'
+        - ni_policy_info.api_response[0].Name == 'test_pmem_policy_non_interleaved'
+        - ni_policy_info.api_response[0].LogicalNamespaces is defined
+        - ni_policy_info.api_response[0].LogicalNamespaces | length == 2
+        - ni_policy_info.api_response[0].LogicalNamespaces[0].SocketMemoryId == '2'
+        - ni_policy_info.api_response[0].LogicalNamespaces[1].SocketMemoryId == '4'
+
+  - name: Fetch all memory persistent policies under selected organization
+    cisco.intersight.intersight_memory_persistent_policy_info:
+      <<: *api_info
+    register: all_policies_info
+
+  - name: Check that there are at least four memory persistent policies under this organization
+    ansible.builtin.assert:
+      that:
+        - all_policies_info.api_response | length >= 4
+
+  always:
+  - name: Remove memory persistent policies
+    cisco.intersight.intersight_memory_persistent_policy:
+      <<: *api_info
+      name: "{{ item }}"
+      state: absent
+    loop:
+      - test_pmem_policy_intersight
+      - test_pmem_policy_os_managed
+      - test_pmem_policy_with_namespaces
+      - test_pmem_policy_non_interleaved
