@@ -111,6 +111,11 @@ options:
     description:
       - Relationship to the boot iSCSI Policy.
     type: str
+  pin_group_name:
+    description:
+      - Pingroup name associated to vNIC for static pinning.
+      - LCP deploy will resolve pingroup name and fetches the corresponding uplink port/port channel to pin the vNIC traffic.
+    type: str
   connection_type:
     description:
       - Type of connection for the vNIC.
@@ -350,6 +355,25 @@ EXAMPLES = r'''
       int_count_per_vf: 8
     state: present
 
+- name: Create a vNIC Template with pin group
+  cisco.intersight.intersight_vnic_template:
+    api_private_key: "{{ api_private_key }}"
+    api_key_id: "{{ api_key_id }}"
+    organization: "default"
+    name: "vnic-pinned-template"
+    description: "vNIC template with static pinning"
+    enable_override: false
+    switch_id: "A"
+    failover_enabled: false
+    mac_pool_name: "default-mac-pool"
+    fabric_eth_network_group_policy_name: "default-network-group"
+    fabric_eth_network_control_policy_name: "default-network-control"
+    eth_qos_policy_name: "default-qos-policy"
+    eth_adapter_policy_name: "default-adapter-policy"
+    pin_group_name: "pingroup-a"
+    connection_type: "none"
+    state: present
+
 - name: Delete a vNIC Template
   cisco.intersight.intersight_vnic_template:
     api_private_key: "{{ api_private_key }}"
@@ -472,6 +496,7 @@ def main():
         enable_override=dict(type='bool', default=False),
         eth_qos_policy_name=dict(type='str'),
         eth_adapter_policy_name=dict(type='str'),
+        pin_group_name=dict(type='str'),
     )
     # Add connection settings argument specs
     argument_spec.update(get_common_settings_argument_spec())
@@ -520,6 +545,10 @@ def main():
         organization_name = intersight.module.params['organization']
         connection_settings = build_connection_settings(intersight, policy_cache, intersight.module, intersight.module.params, organization_name)
         intersight.api_body.update(connection_settings)
+
+        # Add pin group name if specified
+        if intersight.module.params.get('pin_group_name'):
+            intersight.api_body['PinGroupName'] = intersight.module.params['pin_group_name']
 
     intersight.configure_policy_or_profile(resource_path=resource_path)
 
