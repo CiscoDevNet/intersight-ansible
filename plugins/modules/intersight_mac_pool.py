@@ -97,7 +97,7 @@ EXAMPLES = r'''
 '''
 
 RETURN = r'''
-api_repsonse:
+api_response:
   description: The API response output returned by the specified resource.
   returned: always
   type: dict
@@ -148,9 +148,7 @@ def main():
     intersight = IntersightModule(module)
     intersight.result['api_response'] = {}
     intersight.result['trace_id'] = ''
-    #
-    # Argument spec above, resource path, and API body should be the only code changed in each policy module
-    #
+
     # Resource path used to configure policy
     resource_path = '/macpool/Pools'
     # Define API body used in compares or create
@@ -174,9 +172,7 @@ def main():
                 "Size": mac_block['size']
             })
         intersight.api_body['MacBlocks'] = mac_blocks_dict
-    #
-    # Code below should be common across all policy modules
-    #
+
     intersight.configure_policy_or_profile(resource_path=resource_path)
 
     module.exit_json(**intersight.result)

@@ -24,7 +24,6 @@
       - test_validation_fail
       - test_validation_success
 
-  # Test 1: Disabled SNMP Policy
   - name: Create disabled SNMP policy - check-mode
     cisco.intersight.intersight_snmp_policy:
       <<: *api_info
@@ -83,7 +82,6 @@
       that:
         - not disabled_creation_ide.changed
 
-  # Test 2: SNMPv2 Only Policy
   - name: Create SNMPv2 only SNMP policy
     cisco.intersight.intersight_snmp_policy:
       <<: *api_info
@@ -118,7 +116,6 @@
         - v2_only_info.api_response[0].AccessCommunityString == "public"
         - v2_only_info.api_response[0].TrapCommunity == "trapcomm"
 
-  # Test 3: SNMPv3 Only Policy
   - name: Create SNMPv3 only SNMP policy
     cisco.intersight.intersight_snmp_policy:
       <<: *api_info
@@ -161,7 +158,6 @@
         - v3_only_info.api_response[0].SnmpUsers[0].AuthType == "SHA"
         - v3_only_info.api_response[0].SnmpUsers[0].PrivacyType == "AES"
 
-  # Test 4: Mixed SNMPv2 and SNMPv3 Policy
   - name: Create mixed SNMP policy
     cisco.intersight.intersight_snmp_policy:
       <<: *api_info
@@ -206,7 +202,6 @@
         - mixed_info.api_response[0].SnmpUsers[0].SecurityLevel == "AuthNoPriv"
         - mixed_info.api_response[0].SnmpUsers[0].AuthType == "SHA"
 
-  # Test 5: Policy with multiple SNMP users
   - name: Create SNMP policy with multiple users
     cisco.intersight.intersight_snmp_policy:
       <<: *api_info
@@ -250,7 +245,6 @@
         - users_info.api_response[0].SnmpUsers[1].SecurityLevel == "AuthNoPriv"
         - users_info.api_response[0].SnmpUsers[1].AuthType == "SHA"
 
-  # Test 6: Policy with SNMP traps (corrected V3 trap type)
   - name: Create SNMP policy with traps
     cisco.intersight.intersight_snmp_policy:
       <<: *api_info
@@ -321,7 +315,6 @@
         - traps_info.api_response[0].SnmpTraps[2].Type == "Trap"
         - traps_info.api_response[0].SnmpTraps[3].Enabled == false
 
-  # Test 7: Modify existing policy
   - name: Modify existing SNMP policy
     cisco.intersight.intersight_snmp_policy:
       <<: *api_info
@@ -354,7 +347,6 @@
         - modified_info.api_response[0].SysLocation == "Modified Location"
         - modified_info.api_response[0].AccessCommunityString == "modified"
 
-  # Test 8: Fetch all SNMP policies
   - name: Fetch all SNMP policies under selected organization
     cisco.intersight.intersight_snmp_policy_info:
       <<: *api_info
@@ -365,9 +357,6 @@
       that:
         - all_policies_info.api_response | length >= 5
 
-  # VALIDATION TESTS - Testing expected failures #
-  
-  # Test 9: Both v2c and v3 disabled while SNMP is enabled
   - name: Test validation - Both v2c and v3 disabled (should fail)
     cisco.intersight.intersight_snmp_policy:
       <<: *api_info
@@ -382,7 +371,6 @@
       - "'At least one of v2c_enabled or v3_enabled must be true when SNMP is enabled' not in validation_fail_1.msg"
       - not validation_fail_1.failed
 
-  # Test 10: Missing sys_contact when SNMP is enabled
   - name: Test validation - Missing sys_contact (should fail)
     cisco.intersight.intersight_snmp_policy:
       <<: *api_info
@@ -396,7 +384,6 @@
       - "'sys_contact and sys_location are required when SNMP is enabled' not in validation_fail_2.msg"
       - not validation_fail_2.failed
 
-  # Test 11: Missing sys_location when SNMP is enabled
   - name: Test validation - Missing sys_location (should fail)
     cisco.intersight.intersight_snmp_policy:
       <<: *api_info
@@ -410,7 +397,6 @@
       - "'sys_contact and sys_location are required when SNMP is enabled' not in validation_fail_3.msg"
       - not validation_fail_3.failed
 
-  # Test 12: SNMP users with v3_enabled=false
   - name: Test validation - SNMP users without v3_enabled (should fail)
     cisco.intersight.intersight_snmp_policy:
       <<: *api_info
@@ -429,7 +415,6 @@
       - "'snmp_users cannot be specified when v3_enabled is false' not in validation_fail_4.msg"
       - not validation_fail_4.failed
 
-  # Test 13: V3-only with non-disabled community access
   - name: Test validation - V3-only with non-disabled community access (should fail)
     cisco.intersight.intersight_snmp_policy:
       <<: *api_info
@@ -446,7 +431,6 @@
       - "'Disabled' not in validation_fail_5.msg"
       - not validation_fail_5.failed
 
-  # Test 14: AuthPriv user missing privacy_password
   - name: Test validation - AuthPriv user missing privacy_password (should fail)
     cisco.intersight.intersight_snmp_policy:
       <<: *api_info
@@ -465,7 +449,6 @@
       - "'privacy_password is required for security_level' not in validation_fail_6.msg"
       - not validation_fail_6.failed
 
-  # Test 15: V2 trap without v2c_enabled
   - name: Test validation - V2 trap without v2c_enabled (should fail)
     cisco.intersight.intersight_snmp_policy:
       <<: *api_info
@@ -487,7 +470,6 @@
       - "'v2c_enabled is false' not in validation_fail_7.msg"
       - not validation_fail_7.failed
 
-  # Test 16: V3 trap without v3_enabled
   - name: Test validation - V3 trap without v3_enabled (should fail)
     cisco.intersight.intersight_snmp_policy:
       <<: *api_info
@@ -510,7 +492,6 @@
       - "'v3_enabled is false' not in validation_fail_8.msg"
       - not validation_fail_8.failed
 
-  # Test 17: V2 trap missing community
   - name: Test validation - V2 trap missing community (should fail)
     cisco.intersight.intersight_snmp_policy:
       <<: *api_info
@@ -531,7 +512,6 @@
       - "'community is required for SNMP trap version' not in validation_fail_9.msg"
       - not validation_fail_9.failed
 
-  # Test 18: V3 trap missing user
   - name: Test validation - V3 trap missing user (should fail)
     cisco.intersight.intersight_snmp_policy:
       <<: *api_info
@@ -552,7 +532,6 @@
       - "'user is required for SNMP trap version' not in validation_fail_10.msg"
       - not validation_fail_10.failed
 
-  # Test 19: V3 trap with Inform type (NEW validation)
   - name: Test validation - V3 trap with Inform type (should fail)
     cisco.intersight.intersight_snmp_policy:
       <<: *api_info
@@ -581,7 +560,6 @@
       - "'Trap' not in validation_fail_11.msg"
       - not validation_fail_11.failed
 
-  # Test 20: Valid mixed configuration (should succeed)
   - name: Test validation - Valid mixed SNMPv2 and SNMPv3 configuration (should succeed)
     cisco.intersight.intersight_snmp_policy:
       <<: *api_info
