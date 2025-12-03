@@ -1,5 +1,8 @@
 # cisco.intersight Ansible Collection Changelog
 
+## Version 2.9.0
+- Adds support for switch control, ssh, memory, link aggregation, ldap, flow control, server pool, and certificate management policies.
+
 ## Version 2.8.0
 - Fixes incorrect updates for Port, Storage, LAN, and SAN Connectivity Policies.
 - Adds support for Device Connector, Drive Security, and Memory Policies.
