@@ -1,5 +1,8 @@
 # cisco.intersight Ansible Collection Changelog
 
+## Version 2.10.0
+- Fixes #204 with support for api_response when resource_path contains a Moid.
+
 ## Version 2.9.0
 - Adds support for switch control, ssh, memory, link aggregation, ldap, flow control, server pool, and certificate management policies.
 
