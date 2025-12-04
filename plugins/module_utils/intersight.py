@@ -379,11 +379,15 @@ class IntersightModule():
                 # return the 1st list element
                 self.result['api_response'] = response['Results'][0]
         else:
-            # Clear api_response when no results found to prevent returning stale data
-            if return_list:
-                self.result['api_response'] = []
+            # Return a dict if no Results array (handles case where resource_path contains a Moid)
+            if isinstance(response, dict):
+                self.result['api_response'] = response
             else:
-                self.result['api_response'] = {}
+                # Clear api_response when no results found to prevent returning stale data
+                if return_list:
+                    self.result['api_response'] = []
+                else:
+                    self.result['api_response'] = {}
         self.result['count'] = response.get('Count', 0)
         self.result['trace_id'] = response.get('trace_id')
 
