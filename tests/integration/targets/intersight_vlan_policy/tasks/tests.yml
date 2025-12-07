@@ -40,7 +40,7 @@
       that:
         - creation_res_check_mode is changed
         - creation_res_check_mode.api_response.vlan_policy == {}
-        - creation_res_check_mode.api_response.vlans == []
+        - creation_res_check_mode.api_response.vlans | length == 0
 
   - name: Create vlan policy
     cisco.intersight.intersight_vlan_policy:
@@ -318,7 +318,7 @@
     ansible.builtin.assert:
       that:
         - specific_policy_info.api_response.vlan_policy.Name == 'test_vlan_policy_with_vlans'
-        - specific_policy_info.api_response.vlans | length == 4
+        - specific_policy_info.api_response.vlans | length == 4  # 3 created + 1 default VLAN
 
   - name: Test info module - fetch all policies
     cisco.intersight.intersight_vlan_policy_info:
@@ -378,8 +378,7 @@
       that:
         - vlan_removal_result.changed
         - vlan_removal_result.api_response.vlan_policy.Name == 'test_vlan_policy_with_vlans'
-        - vlan_removal_result.api_response.vlans | length == 3
-
+        - vlan_removal_result.api_response.vlans | length == 2
   always:
   - name: Remove vlan policies
     cisco.intersight.intersight_vlan_policy:
