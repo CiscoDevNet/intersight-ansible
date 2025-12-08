@@ -802,7 +802,7 @@ class IntersightModule():
                                 self.module.warn(f"Resource update failed: {error_msg}")
                                 bulk_results.append({})
                     else:
-                        bulk_results = [{}] * len(resources_data)
+                        bulk_results = [{}] * len(bulk_requests)
 
                 self.result['changed'] = True
 

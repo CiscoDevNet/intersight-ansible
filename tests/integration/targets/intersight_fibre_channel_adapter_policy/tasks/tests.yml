@@ -406,7 +406,7 @@
 - name: Verify no policy exists
   ansible.builtin.assert:
     that:
-      - check_result.api_response | length == 0
+      - check_result.api_response.Results | default(check_result.api_response) | length == 0
 
 - name: Test info module - get all policies
   cisco.intersight.intersight_fibre_channel_adapter_policy_info:
@@ -465,7 +465,7 @@
 - name: Verify policy no longer exists
   ansible.builtin.assert:
     that:
-      - deleted_policy_info.api_response | length == 0
+      - deleted_policy_info.api_response.Results | default(deleted_policy_info.api_response) | length == 0
 
 - name: Delete same policy again (idempotency)
   cisco.intersight.intersight_fibre_channel_adapter_policy:
@@ -488,7 +488,7 @@
 - name: Verify policy still does not exist
   ansible.builtin.assert:
     that:
-      - deleted_policy_info_idem.api_response | length == 0
+      - deleted_policy_info_idem.api_response.Results | default(deleted_policy_info_idem.api_response) | length == 0
 
 - name: Cleanup all test policies
   cisco.intersight.intersight_fibre_channel_adapter_policy:
