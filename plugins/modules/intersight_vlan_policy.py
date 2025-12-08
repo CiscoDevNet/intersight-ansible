@@ -493,148 +493,157 @@ def main():
 
     # Process VLANs if provided
     if intersight.module.params['state'] == 'present' and intersight.module.params['vlans']:
-        # Cache for multicast policy MOIDs to avoid redundant API calls
-        multicast_policy_cache = {}
-        total_vlans_to_create = 0
+        # Check if we have a valid VLAN policy MOID before processing VLANs
+        if not vlan_policy_moid:
+            if intersight.module.check_mode:
+                # In check mode, policy doesn't exist yet, skip VLAN processing
+                final_response['vlans'] = []
+            else:
+                # This shouldn't happen - policy should exist before processing VLANs
+                module.fail_json(msg="VLAN policy MOID is missing, verify vlan policy was created by the module")
+        else:
+            # Cache for multicast policy MOIDs to avoid redundant API calls
+            multicast_policy_cache = {}
+            total_vlans_to_create = 0
 
-        # Build all VLAN configurations and validate
-        vlan_operations = {'create': [], 'update': [], 'delete': []}
+            # Build all VLAN configurations and validate
+            vlan_operations = {'create': [], 'update': [], 'delete': []}
 
-        for vlan_config in intersight.module.params['vlans']:
-            # Parse VLAN ID range to get list of individual VLAN IDs
-            try:
-                vlan_ids = parse_vlan_id_range(vlan_config['vlan_id'])
-            except ValueError as e:
-                module.fail_json(msg=f"Error parsing vlan_id '{vlan_config['vlan_id']}': {str(e)}")
-
-            # Validate each VLAN ID
-            for vlan_id in vlan_ids:
+            for vlan_config in intersight.module.params['vlans']:
+                # Parse VLAN ID range to get list of individual VLAN IDs
                 try:
-                    validate_vlan_id(vlan_id)
+                    vlan_ids = parse_vlan_id_range(vlan_config['vlan_id'])
                 except ValueError as e:
-                    module.fail_json(msg=str(e))
+                    module.fail_json(msg=f"Error parsing vlan_id '{vlan_config['vlan_id']}': {str(e)}")
 
-            # Extract configuration
-            prefix = vlan_config['prefix']
-            auto_allow_on_uplinks = vlan_config.get('auto_allow_on_uplinks')
-            enable_sharing = vlan_config.get('enable_sharing')
-            is_native = vlan_config.get('is_native')
-            vlan_state = vlan_config.get('state', 'present')
+                # Validate each VLAN ID
+                for vlan_id in vlan_ids:
+                    try:
+                        validate_vlan_id(vlan_id)
+                    except ValueError as e:
+                        module.fail_json(msg=str(e))
 
-            # Process each VLAN ID in the range
-            for vlan_id in vlan_ids:
-                # Check if we exceed the maximum VLAN limit (only for VLANs being created)
-                if vlan_state == 'present':
-                    total_vlans_to_create += 1
-                    if total_vlans_to_create > 3000:
-                        module.fail_json(msg="Total number of VLANs exceeds the maximum limit of 3000")
+                # Extract configuration
+                prefix = vlan_config['prefix']
+                auto_allow_on_uplinks = vlan_config.get('auto_allow_on_uplinks')
+                enable_sharing = vlan_config.get('enable_sharing')
+                is_native = vlan_config.get('is_native')
+                vlan_state = vlan_config.get('state', 'present')
 
-                # Generate VLAN name: prefix_vlan_id
-                vlan_name = f"{prefix}_{vlan_id}"
+                # Process each VLAN ID in the range
+                for vlan_id in vlan_ids:
+                    # Check if we exceed the maximum VLAN limit (only for VLANs being created)
+                    if vlan_state == 'present':
+                        total_vlans_to_create += 1
+                        if total_vlans_to_create > 3000:
+                            module.fail_json(msg="Total number of VLANs exceeds the maximum limit of 3000")
 
-                # Resolve multicast policy MOID if needed
-                multicast_policy_moid = None
-                sharing_type = None
-                primary_vlan_id_value = 0
+                    # Generate VLAN name: prefix_vlan_id
+                    vlan_name = f"{prefix}_{vlan_id}"
 
-                if enable_sharing:
-                    sharing_type = vlan_config.get('sharing_type')
-                    if sharing_type in ['Isolated', 'Community']:
-                        if 'primary_vlan_id' not in vlan_config:
-                            module.fail_json(msg=f"primary_vlan_id is required when sharing_type is {sharing_type}")
-                        primary_vlan_id_value = vlan_config['primary_vlan_id']
-                else:
-                    # Get multicast policy name from vlan config
-                    multicast_policy_name = vlan_config.get('multicast_policy_name')
-                    if not multicast_policy_name:
-                        module.fail_json(msg="multicast_policy_name is required when enable_sharing is false")
-                    # Check if multicast policy MOID is already cached
-                    if multicast_policy_name in multicast_policy_cache:
-                        multicast_policy_moid = multicast_policy_cache[multicast_policy_name]
+                    # Resolve multicast policy MOID if needed
+                    multicast_policy_moid = None
+                    sharing_type = None
+                    primary_vlan_id_value = 0
+
+                    if enable_sharing:
+                        sharing_type = vlan_config.get('sharing_type')
+                        if sharing_type in ['Isolated', 'Community']:
+                            if 'primary_vlan_id' not in vlan_config:
+                                module.fail_json(msg=f"primary_vlan_id is required when sharing_type is {sharing_type}")
+                            primary_vlan_id_value = vlan_config['primary_vlan_id']
                     else:
-                        # Fetch multicast policy MOID and cache it
-                        multicast_policy_moid = intersight.get_moid_by_name_and_org(
-                            resource_path='/fabric/MulticastPolicies',
-                            resource_name=multicast_policy_name,
-                            organization_name=intersight.module.params['organization']
-                        )
-                        if not multicast_policy_moid:
-                            module.fail_json(
-                                msg=f"Multicast policy '{multicast_policy_name}' not found in organization '{intersight.module.params['organization']}'"
+                        # Get multicast policy name from vlan config
+                        multicast_policy_name = vlan_config.get('multicast_policy_name')
+                        if not multicast_policy_name:
+                            module.fail_json(msg="multicast_policy_name is required when enable_sharing is false")
+                        # Check if multicast policy MOID is already cached
+                        if multicast_policy_name in multicast_policy_cache:
+                            multicast_policy_moid = multicast_policy_cache[multicast_policy_name]
+                        else:
+                            # Fetch multicast policy MOID and cache it
+                            multicast_policy_moid = intersight.get_moid_by_name_and_org(
+                                resource_path='/fabric/MulticastPolicies',
+                                resource_name=multicast_policy_name,
+                                organization_name=intersight.module.params['organization']
                             )
-                        multicast_policy_cache[multicast_policy_name] = multicast_policy_moid
+                            if not multicast_policy_moid:
+                                module.fail_json(
+                                    msg=f"Multicast policy '{multicast_policy_name}' not found in organization '{intersight.module.params['organization']}'"
+                                )
+                            multicast_policy_cache[multicast_policy_name] = multicast_policy_moid
 
-                # Check if VLAN already exists
-                custom_filter = f"Name eq '{vlan_name}' and EthNetworkPolicy.Moid eq '{vlan_policy_moid}'"
-                intersight.get_resource(
-                    resource_path='/fabric/Vlans',
-                    query_params={'$filter': custom_filter}
-                )
+                    # Check if VLAN already exists
+                    custom_filter = f"Name eq '{vlan_name}' and EthNetworkPolicy.Moid eq '{vlan_policy_moid}'"
+                    intersight.get_resource(
+                        resource_path='/fabric/Vlans',
+                        query_params={'$filter': custom_filter}
+                    )
 
-                existing_vlan = intersight.result.get('api_response', {})
-                existing_moid = existing_vlan.get('Moid')
+                    existing_vlan = intersight.result.get('api_response', {})
+                    existing_moid = existing_vlan.get('Moid')
 
-                # Determine operation type
-                if vlan_state == 'present':
-                    if existing_moid:
-                        # VLAN exists, check if update is needed
-                        # Build body for PATCH (without EthNetworkPolicy, proper object references)
-                        vlan_patch_body = build_vlan_body_for_patch(
-                            vlan_name=vlan_name,
-                            vlan_id=vlan_id,
-                            auto_allow_on_uplinks=auto_allow_on_uplinks,
-                            is_native=is_native,
-                            enable_sharing=enable_sharing,
-                            sharing_type=sharing_type,
-                            primary_vlan_id=primary_vlan_id_value,
-                            multicast_policy_moid=multicast_policy_moid
-                        )
-                        if not compare_values(vlan_patch_body, existing_vlan):
-                            vlan_operations['update'].append({
-                                'body': vlan_patch_body,
-                                'moid': existing_moid,
+                    # Determine operation type
+                    if vlan_state == 'present':
+                        if existing_moid:
+                            # VLAN exists, check if update is needed
+                            # Build body for PATCH (without EthNetworkPolicy, proper object references)
+                            vlan_patch_body = build_vlan_body_for_patch(
+                                vlan_name=vlan_name,
+                                vlan_id=vlan_id,
+                                auto_allow_on_uplinks=auto_allow_on_uplinks,
+                                is_native=is_native,
+                                enable_sharing=enable_sharing,
+                                sharing_type=sharing_type,
+                                primary_vlan_id=primary_vlan_id_value,
+                                multicast_policy_moid=multicast_policy_moid
+                            )
+                            if not compare_values(vlan_patch_body, existing_vlan):
+                                vlan_operations['update'].append({
+                                    'body': vlan_patch_body,
+                                    'moid': existing_moid,
+                                    'name': vlan_name,
+                                    'filter': custom_filter
+                                })
+                            else:
+                                # VLAN exists and matches, add to response but no change needed
+                                final_response['vlans'].append(existing_vlan)
+                        else:
+                            # VLAN doesn't exist, needs to be created
+                            # Build body for POST (includes EthNetworkPolicy)
+                            vlan_post_body = build_vlan_body_for_post(
+                                vlan_name=vlan_name,
+                                vlan_id=vlan_id,
+                                auto_allow_on_uplinks=auto_allow_on_uplinks,
+                                is_native=is_native,
+                                enable_sharing=enable_sharing,
+                                sharing_type=sharing_type,
+                                primary_vlan_id=primary_vlan_id_value,
+                                multicast_policy_moid=multicast_policy_moid,
+                                vlan_policy_moid=vlan_policy_moid
+                            )
+                            vlan_operations['create'].append({
+                                'body': vlan_post_body,
                                 'name': vlan_name,
                                 'filter': custom_filter
                             })
-                        else:
-                            # VLAN exists and matches, add to response but no change needed
-                            final_response['vlans'].append(existing_vlan)
-                    else:
-                        # VLAN doesn't exist, needs to be created
-                        # Build body for POST (includes EthNetworkPolicy)
-                        vlan_post_body = build_vlan_body_for_post(
-                            vlan_name=vlan_name,
-                            vlan_id=vlan_id,
-                            auto_allow_on_uplinks=auto_allow_on_uplinks,
-                            is_native=is_native,
-                            enable_sharing=enable_sharing,
-                            sharing_type=sharing_type,
-                            primary_vlan_id=primary_vlan_id_value,
-                            multicast_policy_moid=multicast_policy_moid,
-                            vlan_policy_moid=vlan_policy_moid
-                        )
-                        vlan_operations['create'].append({
-                            'body': vlan_post_body,
-                            'name': vlan_name,
-                            'filter': custom_filter
-                        })
-                else:  # state == 'absent'
-                    if existing_moid:
-                        vlan_operations['delete'].append({
-                            'moid': existing_moid,
-                            'name': vlan_name,
-                            'body': {
-                                'VlanId': vlan_id
-                            }
-                        })
+                    else:  # state == 'absent'
+                        if existing_moid:
+                            vlan_operations['delete'].append({
+                                'moid': existing_moid,
+                                'name': vlan_name,
+                                'body': {
+                                    'VlanId': vlan_id
+                                }
+                            })
 
-        # Execute bulk operations
-        bulk_results = intersight.execute_bulk_operations(
-            resource_path='/fabric/Vlans',
-            operations_dict=vlan_operations,
-            changed_states=changed_states
-        )
-        final_response['vlans'].extend(bulk_results)
+            # Execute bulk operations
+            bulk_results = intersight.execute_bulk_operations(
+                resource_path='/fabric/Vlans',
+                operations_dict=vlan_operations,
+                changed_states=changed_states
+            )
+            final_response['vlans'].extend(bulk_results)
 
     # Set the final structured response
     intersight.result['api_response'] = final_response

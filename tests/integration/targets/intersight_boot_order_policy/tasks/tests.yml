@@ -396,7 +396,7 @@
   - name: Check that deleted policy is not found
     ansible.builtin.assert:
       that:
-        - deleted_policy_info.api_response | length == 0
+        - deleted_policy_info.api_response.Results | default(deleted_policy_info.api_response) | length == 0
 
   always:
   - name: Remove Boot Order policies

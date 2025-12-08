@@ -339,7 +339,7 @@
   - name: Verify policy no longer exists
     ansible.builtin.assert:
       that:
-        - deleted_policy_info.api_response == []
+        - deleted_policy_info.api_response.Results | default(deleted_policy_info.api_response) | length == 0
 
   always:
   - name: Remove iSCSI Boot policies

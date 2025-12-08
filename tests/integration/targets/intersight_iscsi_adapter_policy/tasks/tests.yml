@@ -272,7 +272,7 @@
 - name: Verify policy was not created
   ansible.builtin.assert:
     that:
-      - result.api_response | length == 0
+      - result.api_response.Results | default(result.api_response) | length == 0
 
 - name: Get all iSCSI Adapter Policies
   cisco.intersight.intersight_iscsi_adapter_policy_info:

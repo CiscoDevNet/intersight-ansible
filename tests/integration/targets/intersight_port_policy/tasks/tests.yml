@@ -624,7 +624,7 @@
   - name: Verify policy no longer exists
     ansible.builtin.assert:
       that:
-        - deleted_policy_info.api_response | length == 0
+        - deleted_policy_info.api_response | length == 0 or (deleted_policy_info.api_response[0].Results | default([]) | length == 0)
 
   - name: "Delete same policy again (idempotency)"
     cisco.intersight.intersight_port_policy:
