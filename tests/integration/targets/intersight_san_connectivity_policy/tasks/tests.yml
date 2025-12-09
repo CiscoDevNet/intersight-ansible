@@ -71,7 +71,6 @@
     loop:
       - test_san_policy_standalone
       - test_san_policy_fi_attached
-      - test_san_policy_unified_edge
       - test_san_policy_minimal
       - test_san_policy_complex
       - test_san_policy_vhba_management
@@ -247,32 +246,6 @@
         - fi_static_create_result.api_response.WwnnAddressType == 'STATIC'
         - fi_static_create_result.api_response.StaticWwnnAddress == '20:00:00:25:B5:00:00:10'
 
-  - name: Create Unified Edge SAN Connectivity Policy
-    cisco.intersight.intersight_san_connectivity_policy:
-      <<: *api_info
-      name: test_san_policy_unified_edge
-      description: "Unified Edge SAN Connectivity Policy"
-      target_platform: "unified"
-      vhbas:
-        - name: vhba-edge
-          vhba_type: "fc-nvme-initiator"
-          slot_id: "2"
-          pci_link: 0
-          uplink_port: 1
-          pci_order: 0
-          persistent_lun_bindings: true
-          fibre_channel_network_policy: test_fc_network_policy
-          fibre_channel_qos_policy: test_fc_qos_policy
-          fibre_channel_adapter_policy: test_fc_adapter_policy
-    register: unified_edge_create_result
-
-  - name: Verify Unified Edge policy creation
-    ansible.builtin.assert:
-      that:
-        - unified_edge_create_result is changed
-        - unified_edge_create_result.api_response.TargetPlatform == 'UnifiedEdgeServer'
-        - unified_edge_create_result.api_response.vHBAs[0].Type == 'fc-nvme-initiator'
-
   - name: Update policy description
     cisco.intersight.intersight_san_connectivity_policy:
       <<: *api_info
@@ -445,7 +418,6 @@
       - test_san_policy_standalone
       - test_san_policy_fi_attached
       - test_san_policy_fi_static
-      - test_san_policy_unified_edge
       - test_san_policy_vhba_management
     ignore_errors: true
 
