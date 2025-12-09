@@ -17,7 +17,8 @@ short_description: Manage SAN Connectivity Policies and vHBAs for Cisco Intersig
 description:
   - Create, update, and delete SAN Connectivity Policies on Cisco Intersight.
   - Manage individual vHBAs (virtual Host Bus Adapters) within SAN Connectivity policies.
-  - Supports Standalone, FIAttached, and UnifiedEdgeServer target platforms with different configuration options.
+  - Supports Standalone and FIAttached target platforms with different configuration options.
+  - Note SAN Connectivity policies are not supported on Unified Edge Servers.
   - SAN Connectivity policies define storage connectivity settings for server profiles.
   - For more information see L(Cisco Intersight,https://intersight.com/apidocs/vnic/SanConnectivityPolicy/get/).
 extends_documentation_fragment: intersight
@@ -59,9 +60,9 @@ options:
       - The platform type for which the SAN Connectivity policy is intended.
       - C(standalone) for standalone servers.
       - C(fiattached) for fabric interconnect attached servers.
-      - C(unified) for unified edge servers.
+      - Note SAN Connectivity policies are not supported on unified edge servers.
     type: str
-    choices: ['standalone', 'fiattached', 'unified']
+    choices: ['standalone', 'fiattached']
     default: 'standalone'
   placement_mode:
     description:
@@ -126,7 +127,7 @@ options:
         description:
           - PCIe Slot where the VIC adapter is installed.
           - Supported values are (1-15) and MLOM.
-          - Required for Standalone and UnifiedEdgeServer when vHBA state is present and auto_slot_id is false.
+          - Required for Standalone when vHBA state is present.
           - Required for FIAttached when vHBA state is present and auto_slot_id is false.
         type: str
       pci_link:
@@ -134,7 +135,7 @@ options:
           - The PCI Link used as transport for the virtual interface.
           - PCI Link is only applicable for select Cisco UCS VIC 1300 models (UCSC-PCIE-C40Q-03, UCSB-MLOM-40G-03, UCSB-VIC-M83-8P) that support two PCI links.
           - The value, if specified, for any other VIC model will be ignored.
-          - For Standalone and UnifiedEdgeServer, this is used directly.
+          - For Standalone, this is used directly.
           - For FIAttached, required when pci_link_assignment_mode is Custom.
         type: int
         choices: [0, 1]
@@ -142,7 +143,7 @@ options:
       uplink_port:
         description:
           - Adapter port on which the virtual interface will be created.
-          - Only applicable for Standalone and UnifiedEdgeServer platforms.
+          - Only applicable for Standalone platform.
         type: int
         choices: [0, 1, 2, 3]
         default: 0
@@ -421,27 +422,6 @@ EXAMPLES = r'''
         fibre_channel_adapter_policy: "fc-adapter-policy"
     state: present
 
-- name: Create a SAN Connectivity Policy for Unified Edge Server
-  cisco.intersight.intersight_san_connectivity_policy:
-    api_private_key: "{{ api_private_key }}"
-    api_key_id: "{{ api_key_id }}"
-    organization: "default"
-    name: "unified-edge-san-policy"
-    description: "SAN connectivity policy for unified edge servers"
-    target_platform: "unified"
-    vhbas:
-      - name: "vhba-edge"
-        vhba_type: "fc-initiator"
-        slot_id: "1"
-        pci_link: 0
-        uplink_port: 0
-        pci_order: 0
-        persistent_lun_bindings: false
-        fibre_channel_network_policy: "fc-network-policy"
-        fibre_channel_qos_policy: "fc-qos-policy"
-        fibre_channel_adapter_policy: "fc-adapter-policy"
-    state: present
-
 - name: Update SAN connectivity policy - manage vHBA states
   cisco.intersight.intersight_san_connectivity_policy:
     api_private_key: "{{ api_private_key }}"
@@ -563,7 +543,7 @@ def validate_input(module):
                     module.fail_json(msg=f"{field} is required when vHBA state is 'present' for vHBA '{vhba_name}'")
             if target_platform == 'fiattached':
                 validate_fi_attached_vhba_config(module, vhba_config)
-            elif target_platform in ['standalone', 'unified']:
+            elif target_platform == 'standalone':
                 validate_standalone_vhba_config(module, vhba_config)
 
 
@@ -668,7 +648,7 @@ def main():
         name=dict(type='str', required=True),
         description=dict(type='str', aliases=['descr']),
         tags=dict(type='list', elements='dict'),
-        target_platform=dict(type='str', choices=['standalone', 'fiattached', 'unified'], default='standalone'),
+        target_platform=dict(type='str', choices=['standalone', 'fiattached'], default='standalone'),
         placement_mode=dict(type='str', choices=['custom', 'auto'], default='custom'),
         wwnn_address_type=dict(type='str', choices=['pool', 'static'], default='pool'),
         wwnn_pool=dict(type='str'),
@@ -698,8 +678,7 @@ def main():
         intersight.set_tags_and_description()
         target_platform_map = {
             'standalone': 'Standalone',
-            'fiattached': 'FIAttached',
-            'unified': 'UnifiedEdgeServer'
+            'fiattached': 'FIAttached'
         }
         api_target_platform = target_platform_map[intersight.module.params['target_platform']]
         intersight.api_body['TargetPlatform'] = api_target_platform
@@ -731,8 +710,6 @@ def main():
         elif intersight.module.params['target_platform'] == 'standalone':
             intersight.api_body['PlacementMode'] = 'custom'
             intersight.api_body['WwnnAddressType'] = 'POOL'
-            intersight.api_body['StaticWwnnAddress'] = ''
-        elif intersight.module.params['target_platform'] == 'unified':
             intersight.api_body['StaticWwnnAddress'] = ''
 
     intersight.configure_policy_or_profile(resource_path=resource_path)
