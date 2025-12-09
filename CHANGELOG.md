@@ -1,5 +1,8 @@
 # cisco.intersight Ansible Collection Changelog
 
+## Version 2.11.0
+- UUID pool support added to server profile module.
+
 ## Version 2.10.0
 - Fixes #204 with support for api_response when resource_path contains a Moid.
 
