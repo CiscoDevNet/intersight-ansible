@@ -1,5 +1,8 @@
 # cisco.intersight Ansible Collection Changelog
 
+## Version 2.12.0
+- Repost collection with UUID pool support added to server profile module.
+
 ## Version 2.11.0
 - UUID pool support added to server profile module.
 
