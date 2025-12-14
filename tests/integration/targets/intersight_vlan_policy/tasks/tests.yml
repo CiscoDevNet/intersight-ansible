@@ -21,6 +21,8 @@
       - test_vlan_policy_with_vlans
       - test_private_vlan_policy
       - test_vlan_policy_with_ranges
+      - test_vlan_policy_bulk_chunking
+      - test_vlan_policy_multicast_to_shared
 
   - name: Create vlan policy - check-mode
     cisco.intersight.intersight_vlan_policy:
@@ -203,18 +205,18 @@
         - prefix: "primary"
           vlan_id: 79
           enable_sharing: true
-          sharing_type: "Primary"
+          sharing_type: "primary"
           auto_allow_on_uplinks: true
         - prefix: "isolated"
           vlan_id: 80
           enable_sharing: true
-          sharing_type: "Isolated"
+          sharing_type: "isolated"
           primary_vlan_id: 79
           auto_allow_on_uplinks: true
         - prefix: "community"
           vlan_id: 81
           enable_sharing: true
-          sharing_type: "Community"
+          sharing_type: "community"
           primary_vlan_id: 79
           auto_allow_on_uplinks: true
     register: private_vlan_policy
@@ -307,6 +309,48 @@
       that:
         - not vlan_policy_with_ranges_idempotent.changed
 
+  - name: Create VLAN policy with large VLAN range (bulk chunking test)
+    cisco.intersight.intersight_vlan_policy:
+      <<: *api_info
+      name: test_vlan_policy_bulk_chunking
+      description: "Policy with large VLAN range to test bulk API chunking"
+      vlans:
+        - prefix: "bulk"
+          vlan_id: "100-250"
+          auto_allow_on_uplinks: true
+          enable_sharing: false
+          multicast_policy_name: "multicast_policy_for_vlan_policy"
+    register: vlan_policy_bulk_chunking
+
+  - name: Verify VLAN policy with large range creation (bulk chunking)
+    ansible.builtin.assert:
+      that:
+        - vlan_policy_bulk_chunking.changed
+        - vlan_policy_bulk_chunking.api_response.vlan_policy.Name == 'test_vlan_policy_bulk_chunking'
+        - vlan_policy_bulk_chunking.api_response.vlans | length == 151
+        - vlan_policy_bulk_chunking.api_response.vlans[0].Name == 'bulk_100'
+        - vlan_policy_bulk_chunking.api_response.vlans[0].VlanId == 100
+        - vlan_policy_bulk_chunking.api_response.vlans[150].Name == 'bulk_250'
+        - vlan_policy_bulk_chunking.api_response.vlans[150].VlanId == 250
+
+  - name: Update VLAN policy with large range (idempotency check for bulk operations)
+    cisco.intersight.intersight_vlan_policy:
+      <<: *api_info
+      name: test_vlan_policy_bulk_chunking
+      description: "Policy with large VLAN range to test bulk API chunking"
+      vlans:
+        - prefix: "bulk"
+          vlan_id: "100-250"
+          auto_allow_on_uplinks: true
+          enable_sharing: false
+          multicast_policy_name: "multicast_policy_for_vlan_policy"
+    register: vlan_policy_bulk_chunking_idempotent
+
+  - name: Verify bulk operation idempotency
+    ansible.builtin.assert:
+      that:
+        - not vlan_policy_bulk_chunking_idempotent.changed
+
   # Test info module with various filters
   - name: Test info module - fetch specific policy with VLANs
     cisco.intersight.intersight_vlan_policy_info:
@@ -346,6 +390,70 @@
         - vlan_filtered_info.api_response.vlans[0].VlanId == 100
         - vlan_filtered_info.api_response.vlans[0].IsNative == false
         - vlan_filtered_info.api_response.vlans[0].AutoAllowOnUplinks == true
+
+  # Test converting from multicast-based (non-shared) to shared VLANs
+  - name: Create VLAN policy with multicast-based VLANs
+    cisco.intersight.intersight_vlan_policy:
+      <<: *api_info
+      name: test_vlan_policy_multicast_to_shared
+      description: "Policy with multicast VLANs that will be converted to shared"
+      vlans:
+        - prefix: "convert"
+          vlan_id: "500-505"
+          auto_allow_on_uplinks: true
+          enable_sharing: false
+          multicast_policy_name: "multicast_policy_for_vlan_policy"
+    register: multicast_vlan_creation
+
+  - name: Verify multicast-based VLANs creation
+    ansible.builtin.assert:
+      that:
+        - multicast_vlan_creation.changed
+        - multicast_vlan_creation.api_response.vlan_policy.Name == 'test_vlan_policy_multicast_to_shared'
+        - multicast_vlan_creation.api_response.vlans | length == 6
+        - multicast_vlan_creation.api_response.vlans[0].SharingType == 'None'
+
+  - name: Convert multicast VLANs to shared VLANs (Primary)
+    cisco.intersight.intersight_vlan_policy:
+      <<: *api_info
+      name: test_vlan_policy_multicast_to_shared
+      description: "Policy with VLANs converted to shared"
+      vlans:
+        - prefix: "convert"
+          vlan_id: "500-505"
+          auto_allow_on_uplinks: true
+          enable_sharing: true
+          sharing_type: "primary"
+    register: multicast_to_shared_conversion
+
+  - name: Verify conversion from multicast to shared VLANs
+    ansible.builtin.assert:
+      that:
+        - multicast_to_shared_conversion.changed
+        - multicast_to_shared_conversion.api_response.vlan_policy.Name == 'test_vlan_policy_multicast_to_shared'
+        - multicast_to_shared_conversion.api_response.vlans | length == 6
+        - multicast_to_shared_conversion.api_response.vlans[0].SharingType == 'Primary'
+        - multicast_to_shared_conversion.api_response.vlans[0].Name == 'convert_500'
+        - multicast_to_shared_conversion.api_response.vlans[5].Name == 'convert_505'
+
+  - name: Re-apply shared VLANs configuration (idempotency test)
+    cisco.intersight.intersight_vlan_policy:
+      <<: *api_info
+      name: test_vlan_policy_multicast_to_shared
+      description: "Policy with VLANs converted to shared"
+      vlans:
+        - prefix: "convert"
+          vlan_id: "500-505"
+          auto_allow_on_uplinks: true
+          enable_sharing: true
+          sharing_type: "primary"
+    register: shared_vlans_idempotent
+
+  - name: Verify idempotency of shared VLANs configuration
+    ansible.builtin.assert:
+      that:
+        - not shared_vlans_idempotent.changed
+        - shared_vlans_idempotent.api_response.vlans | length == 6
 
   # Test VLAN removal
   - name: Update VLAN policy - remove one VLAN
@@ -392,6 +500,8 @@
       - test_vlan_policy_with_vlans
       - test_private_vlan_policy
       - test_vlan_policy_with_ranges
+      - test_vlan_policy_bulk_chunking
+      - test_vlan_policy_multicast_to_shared
 
   - name: Remove multicast policy
     cisco.intersight.intersight_multicast_policy:
