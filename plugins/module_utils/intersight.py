@@ -696,10 +696,11 @@ class IntersightModule():
 
     def configure_bulk_resources(self, resource_path, resources_data, http_method='post'):
         """
-        Configure multiple resources in a single bulk operation for better performance.
+        Configure multiple resources in bulk operations with automatic chunking.
 
         This method uses the Intersight bulk API endpoint to create, update, or delete multiple
-        resources in a single API call instead of making individual calls for each resource.
+        resources. It automatically splits large operations into chunks of 100 requests (Intersight API limit)
+        and processes them sequentially.
 
         Args:
             resource_path: API resource path (e.g., '/fabric/Vlans')
@@ -722,20 +723,157 @@ class IntersightModule():
         if not resources_data:
             return []
 
+        # Intersight API limit: maximum 100 requests per bulk operation
+        BULK_CHUNK_SIZE = 100
         bulk_results = []
 
-        # For POST operations - create resources
-        if http_method.lower() == 'post':
-            # Build bulk request body
-            bulk_requests = []
-            for resource_data in resources_data:
+        # Split resources_data into chunks of 100
+        for chunk_start in range(0, len(resources_data), BULK_CHUNK_SIZE):
+            # Prevent index out of range error
+            chunk_end = min(chunk_start + BULK_CHUNK_SIZE, len(resources_data))
+            # Get the chunk of resources data
+            chunk_data = resources_data[chunk_start:chunk_end]
+
+            # Process this chunk based on HTTP method
+            if http_method.lower() == 'post':
+                chunk_results = self._process_bulk_post_chunk(resource_path, chunk_data)
+            elif http_method.lower() == 'patch':
+                chunk_results = self._process_bulk_patch_chunk(resource_path, chunk_data)
+            elif http_method.lower() == 'delete':
+                chunk_results = self._process_bulk_delete_chunk(resource_path, chunk_data)
+
+            bulk_results.extend(chunk_results)
+
+        return bulk_results
+
+    def _process_bulk_response(self, response, chunk_data, operation_type, success_statuses=None):
+        """
+        Process bulk API response and collect failures.
+
+        Args:
+            response: API response dictionary
+            chunk_data: Original chunk data for resource identification
+            operation_type: Type of operation (POST, PATCH, DELETE)
+            success_statuses: List of HTTP status codes considered successful (defaults to [200])
+
+        Returns:
+            List of bulk operation results
+        """
+        if success_statuses is None:
+            success_statuses = [200]
+
+        bulk_results = []
+        failed_count = 0
+        failure_messages = []
+
+        if response.get('Results'):
+            for idx, result in enumerate(response['Results']):
+                if result.get('Status') in success_statuses:
+                    bulk_results.append(result.get('Body', {}))
+                else:
+                    failed_count += 1
+                    error_body = result.get('Body', {})
+                    error_msg = error_body.get('Message', error_body.get('message', 'Unknown error'))
+                    resource_name = chunk_data[idx].get('name', f'resource {idx}')
+                    failure_msg = f"  - {resource_name}: {error_msg}"
+                    if failure_msg not in failure_messages:
+                        failure_messages.append(failure_msg)
+                    bulk_results.append({})
+
+            # Handle any failures
+            self._handle_bulk_failures(failed_count, len(response['Results']), failure_messages, operation_type)
+        else:
+            # If no Results, return empty results for each item
+            bulk_results = [{}] * len(chunk_data)
+
+        return bulk_results
+
+    def _handle_bulk_failures(self, failed_count, total_count, failure_messages, operation_type):
+        """
+        Handle bulk operation failures with consistent error reporting.
+
+        Args:
+            failed_count: Number of failed operations
+            total_count: Total number of operations attempted
+            failure_messages: List of error messages
+            operation_type: Type of operation (POST, PATCH, DELETE)
+        """
+        if failed_count > 0:
+            error_summary = "\n".join(failure_messages[:10])  # Show up to 10 errors
+            self.module.fail_json(
+                msg=f"Bulk {operation_type} operation failed: {failed_count}/{total_count} resources failed. "
+                    f"Errors:\n{error_summary}"
+            )
+
+    def _process_bulk_post_chunk(self, resource_path, chunk_data):
+        """
+        Process a chunk of POST (create) operations.
+
+        Args:
+            resource_path: API resource path
+            chunk_data: List of resources to create (max 100 items)
+
+        Returns:
+            List of API response objects for created resources
+        """
+        bulk_results = []
+
+        # Build bulk request body
+        bulk_requests = []
+        for resource_data in chunk_data:
+            bulk_requests.append({
+                'ObjectType': 'bulk.RestSubRequest',
+                'Body': resource_data['body']
+            })
+
+        bulk_body = {
+            'Verb': 'POST',
+            'Uri': f'/v1{resource_path}',
+            'Requests': bulk_requests
+        }
+
+        if not self.module.check_mode:
+            # Make bulk API call
+            options = {
+                'http_method': 'post',
+                'resource_path': '/bulk/Requests',
+                'body': bulk_body
+            }
+            response = self.call_api(**options)
+            bulk_results = self._process_bulk_response(response, chunk_data, 'POST')
+        else:
+            # In check mode, return empty results
+            bulk_results = [{}] * len(chunk_data)
+
+        self.result['changed'] = True
+        return bulk_results
+
+    def _process_bulk_patch_chunk(self, resource_path, chunk_data):
+        """
+        Process a chunk of PATCH (update) operations.
+
+        Args:
+            resource_path: API resource path
+            chunk_data: List of resources to update (max 100 items)
+
+        Returns:
+            List of API response objects for updated resources
+        """
+        bulk_results = []
+
+        # Build bulk request body
+        bulk_requests = []
+        for resource_data in chunk_data:
+            if 'moid' in resource_data and resource_data['moid']:
                 bulk_requests.append({
                     'ObjectType': 'bulk.RestSubRequest',
+                    'TargetMoid': resource_data['moid'],
                     'Body': resource_data['body']
                 })
 
+        if bulk_requests:
             bulk_body = {
-                'Verb': 'POST',
+                'Verb': 'PATCH',
                 'Uri': f'/v1{resource_path}',
                 'Requests': bulk_requests
             }
@@ -748,104 +886,61 @@ class IntersightModule():
                     'body': bulk_body
                 }
                 response = self.call_api(**options)
-
-                # Process bulk response
-                if response.get('Results'):
-                    for result in response['Results']:
-                        if result.get('Status') == 200:
-                            bulk_results.append(result.get('Body', {}))
-                        else:
-                            # Handle individual resource failures
-                            error_msg = result.get('Body', {}).get('Message', 'Unknown error')
-                            self.module.warn(f"Resource creation failed: {error_msg}")
-                            bulk_results.append({})
-                else:
-                    # If no Results, something went wrong
-                    bulk_results = [{}] * len(resources_data)
+                bulk_results = self._process_bulk_response(response, chunk_data, 'PATCH')
+            else:
+                # In check mode, return empty results
+                bulk_results = [{}] * len(bulk_requests)
 
             self.result['changed'] = True
 
-        # For PATCH operations - update resources
-        elif http_method.lower() == 'patch':
-            bulk_requests = []
-            for resource_data in resources_data:
-                if 'moid' in resource_data and resource_data['moid']:
-                    bulk_requests.append({
-                        'ObjectType': 'bulk.RestSubRequest',
-                        'TargetMoid': resource_data['moid'],
-                        'Body': resource_data['body']
-                    })
+        return bulk_results
 
-            if bulk_requests:
-                bulk_body = {
-                    'Verb': 'PATCH',
-                    'Uri': f'/v1{resource_path}',
-                    'Requests': bulk_requests
+    def _process_bulk_delete_chunk(self, resource_path, chunk_data):
+        """
+        Process a chunk of DELETE operations.
+
+        Args:
+            resource_path: API resource path
+            chunk_data: List of resources to delete (max 100 items)
+
+        Returns:
+            List of empty dicts (delete operations don't return data)
+        """
+        bulk_results = []
+
+        # Build bulk request body
+        bulk_requests = []
+        for resource_data in chunk_data:
+            if 'moid' in resource_data and resource_data['moid']:
+                sub_request = {
+                    'ObjectType': 'bulk.RestSubRequest',
+                    'TargetMoid': resource_data['moid']
                 }
+                # Include any additional fields from resource_data (e.g., VlanId for VLANs)
+                if 'body' in resource_data and resource_data['body']:
+                    sub_request.update(resource_data['body'])
+                bulk_requests.append(sub_request)
 
-                if not self.module.check_mode:
-                    # Make bulk API call
-                    options = {
-                        'http_method': 'post',
-                        'resource_path': '/bulk/Requests',
-                        'body': bulk_body
-                    }
-                    response = self.call_api(**options)
+        if bulk_requests:
+            bulk_body = {
+                'Verb': 'DELETE',
+                'Uri': f'/v1{resource_path}',
+                'Requests': bulk_requests
+            }
 
-                    # Process bulk response
-                    if response.get('Results'):
-                        for result in response['Results']:
-                            if result.get('Status') == 200:
-                                bulk_results.append(result.get('Body', {}))
-                            else:
-                                error_msg = result.get('Body', {}).get('Message', 'Unknown error')
-                                self.module.warn(f"Resource update failed: {error_msg}")
-                                bulk_results.append({})
-                    else:
-                        bulk_results = [{}] * len(bulk_requests)
-
-                self.result['changed'] = True
-
-        # For DELETE operations - delete resources
-        elif http_method.lower() == 'delete':
-            bulk_requests = []
-            for resource_data in resources_data:
-                if 'moid' in resource_data and resource_data['moid']:
-                    sub_request = {
-                        'ObjectType': 'bulk.RestSubRequest',
-                        'TargetMoid': resource_data['moid']
-                    }
-                    # Include any additional fields from resource_data (e.g., VlanId for VLANs)
-                    if 'body' in resource_data and resource_data['body']:
-                        sub_request.update(resource_data['body'])
-                    bulk_requests.append(sub_request)
-
-            if bulk_requests:
-                bulk_body = {
-                    'Verb': 'DELETE',
-                    'Uri': f'/v1{resource_path}',
-                    'Requests': bulk_requests
+            if not self.module.check_mode:
+                # Make bulk API call
+                options = {
+                    'http_method': 'post',
+                    'resource_path': '/bulk/Requests',
+                    'body': bulk_body
                 }
+                response = self.call_api(**options)
+                bulk_results = self._process_bulk_response(response, chunk_data, 'DELETE', success_statuses=[200, 204])
+            else:
+                # In check mode, return empty results
+                bulk_results = [{}] * len(bulk_requests)
 
-                if not self.module.check_mode:
-                    # Make bulk API call
-                    options = {
-                        'http_method': 'post',
-                        'resource_path': '/bulk/Requests',
-                        'body': bulk_body
-                    }
-                    response = self.call_api(**options)
-
-                    # Process bulk response
-                    if response.get('Results'):
-                        for result in response['Results']:
-                            if result.get('Status') in [200, 204]:
-                                bulk_results.append({})
-                            else:
-                                error_msg = result.get('Body', {}).get('Message', 'Unknown error')
-                                self.module.warn(f"Resource deletion failed: {error_msg}")
-                                bulk_results.append({})
-
-                self.result['changed'] = True
+            self.result['changed'] = True
 
         return bulk_results
