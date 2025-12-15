@@ -76,8 +76,8 @@ options:
           - Virtual SAN Identifier in the switch.
           - Valid range is typically 1-4094.
           - Must be unique within the fabric interconnect domain.
-          - Required when state is present.
         type: int
+        required: true
       fcoe_vlan_id:
         description:
           - FCoE VLAN ID associated with the VSAN configuration.
@@ -244,7 +244,7 @@ def main():
         enable_trunking=dict(type='bool', default=False),
         vsans=dict(type='list', elements='dict', options=dict(
             name=dict(type='str', required=True),
-            vsan_id=dict(type='int'),
+            vsan_id=dict(type='int', required=True),
             fcoe_vlan_id=dict(type='int'),
             vsan_scope=dict(type='str', choices=['uplink', 'storage', 'common']),
             state=dict(type='str', choices=['present', 'absent'], default='present')
@@ -289,10 +289,8 @@ def main():
             vsan_name = vsan_config['name']
             vsan_state = vsan_config.get('state', 'present')
 
-            # If VSAN state is present, require vsan_id, fcoe_vlan_id, and vsan_scope
+            # If VSAN state is present, require fcoe_vlan_id and vsan_scope
             if vsan_state == 'present':
-                if not vsan_config.get('vsan_id'):
-                    module.fail_json(msg=f"vsan_id is required for VSAN '{vsan_name}' when state is present")
                 if not vsan_config.get('fcoe_vlan_id'):
                     module.fail_json(msg=f"fcoe_vlan_id is required for VSAN '{vsan_name}' when state is present")
                 if not vsan_config.get('vsan_scope'):
@@ -320,8 +318,8 @@ def main():
 
             # Create or delete the VSAN
             resource_path = '/fabric/Vsans'
-            # Filter by both VSAN name AND FcNetworkPolicy to avoid affecting VSANs in other policies
-            custom_filter = f"Name eq '{vsan_name}' and FcNetworkPolicy.Moid eq '{vsan_policy_moid}'"
+            # Filter by both VSAN ID AND FcNetworkPolicy
+            custom_filter = f"VsanId eq {vsan_id} and FcNetworkPolicy.Moid eq '{vsan_policy_moid}'"
             intersight.configure_secondary_resource(
                 resource_path=resource_path,
                 state=vsan_state,

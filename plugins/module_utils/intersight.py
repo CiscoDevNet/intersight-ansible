@@ -364,6 +364,12 @@ class IntersightModule():
         GET a resource and return the 1st element found or the full Results list
         If return_list is False and more than 1 element is returned, a warning is raised
         '''
+
+        if query_params is None:
+            query_params = {}
+        # Handle pagination, default return list consists of 100 elements.
+        if return_list and '$top' not in query_params:
+            query_params['$top'] = 1000
         options = {
             'http_method': 'get',
             'resource_path': resource_path,
@@ -618,7 +624,7 @@ class IntersightModule():
             filter_conditions.append(f"Organization.Moid eq '{org_moid}'")
 
         if filter_value and filter_key:
-            filter_conditions.append(f"'{filter_key}' eq '{filter_value}'")
+            filter_conditions.append(f"{filter_key} eq '{filter_value}'")
 
         query_params = {}
         if filter_conditions:

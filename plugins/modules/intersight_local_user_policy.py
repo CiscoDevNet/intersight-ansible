@@ -306,7 +306,7 @@ def main():
                 intersight.result['api_response'] = {}
                 # check for existing user in this organization
                 filter_str = "Name eq '" + user['username'] + "'"
-                filter_str += "and Organization.Moid eq '" + organization_moid + "'"
+                filter_str += " and Organization.Moid eq '" + organization_moid + "'"
                 intersight.get_resource(
                     resource_path='/iam/EndPointUsers',
                     query_params={
