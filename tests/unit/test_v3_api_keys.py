@@ -114,3 +114,4 @@ P6D93gUzYoUOPkUUp+M=
 -----END PRIVATE KEY-----
 """)
         self.assertEqual(str(cm.exception), "Unsupported key: DSAPrivateKey")
+
