@@ -80,7 +80,7 @@
       <<: *api_info
       name: test_san_policy_standalone
       description: "Standalone SAN Connectivity Policy"
-      target_platform: "standalone"
+      target_platform: "Standalone"
       tags:
         - Key: Environment
           Value: Test
@@ -109,7 +109,7 @@
       <<: *api_info
       name: test_san_policy_standalone
       description: "Standalone SAN Connectivity Policy"
-      target_platform: "standalone"
+      target_platform: "Standalone"
       tags:
         - Key: Environment
           Value: Test
@@ -140,7 +140,7 @@
       <<: *api_info
       name: test_san_policy_standalone
       description: "Standalone SAN Connectivity Policy"
-      target_platform: "standalone"
+      target_platform: "Standalone"
       tags:
         - Key: Environment
           Value: Test
@@ -167,7 +167,7 @@
       <<: *api_info
       name: test_san_policy_fi_attached
       description: "FI-Attached SAN Connectivity Policy"
-      target_platform: "fiattached"
+      target_platform: "FIAttached"
       wwnn_address_type: "pool"
       wwnn_pool: test_wwnn_pool
       tags:
@@ -218,7 +218,7 @@
       <<: *api_info
       name: test_san_policy_fi_static
       description: "FI-Attached with Static WWNN"
-      target_platform: "fiattached"
+      target_platform: "FIAttached"
       wwnn_address_type: "static"
       static_wwnn_address: "20:00:00:25:B5:00:00:10"
       vhbas:
@@ -251,7 +251,7 @@
       <<: *api_info
       name: test_san_policy_standalone
       description: "Updated Standalone SAN Connectivity Policy"
-      target_platform: "standalone"
+      target_platform: "Standalone"
       tags:
         - Key: Environment
           Value: Production
@@ -279,7 +279,7 @@
       <<: *api_info
       name: test_san_policy_vhba_management
       description: "Policy for testing vHBA state management"
-      target_platform: "standalone"
+      target_platform: "Standalone"
       vhbas:
         - name: vhba-keep
           vhba_type: "fc-initiator"
@@ -316,7 +316,7 @@
       <<: *api_info
       name: test_san_policy_vhba_management
       description: "Policy for testing vHBA state management"
-      target_platform: "standalone"
+      target_platform: "Standalone"
       vhbas:
         - name: vhba-keep
           vhba_type: "fc-initiator"

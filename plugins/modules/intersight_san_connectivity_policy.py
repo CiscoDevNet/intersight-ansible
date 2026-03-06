@@ -58,18 +58,18 @@ options:
   target_platform:
     description:
       - The platform type for which the SAN Connectivity policy is intended.
-      - C(standalone) for standalone servers.
-      - C(fiattached) for fabric interconnect attached servers.
+      - C(Standalone) for Standalone servers.
+      - C(FIAttached) for fabric interconnect attached servers.
       - Note SAN Connectivity policies are not supported on unified edge servers.
     type: str
-    choices: ['standalone', 'fiattached']
-    default: 'standalone'
+    choices: ['Standalone', 'FIAttached']
+    default: 'Standalone'
   placement_mode:
     description:
       - The mode used for placement of vHBAs on network adapters.
       - C(custom) requires manual placement specification for each vHBA.
       - C(auto) automatically distributes vHBAs between adapters during profile deployment.
-      - Only applicable for fiattached target platform.
+      - Only applicable for FIAttached target platform.
     type: str
     choices: ['custom', 'auto']
     default: 'custom'
@@ -78,23 +78,23 @@ options:
       - Type of WWNN address assignment.
       - C(pool) to use a WWNN pool.
       - C(static) to manually assign a static WWNN address.
-      - Only applicable when target_platform is fiattached.
+      - Only applicable when target_platform is FIAttached.
     type: str
     choices: ['pool', 'static']
     default: 'pool'
   wwnn_pool:
     description:
       - The WWNN pool that is assigned for WWNN address assignment.
-      - Required when wwnn_address_type is pool and target platform is fiattached.
-      - Only applicable for fiattached target platform.
+      - Required when wwnn_address_type is pool and target platform is FIAttached.
+      - Only applicable for FIAttached target platform.
     type: str
   static_wwnn_address:
     description:
       - The WWNN address for the server node must be in hexadecimal format xx:xx:xx:xx:xx:xx:xx:xx.
       - Allowed ranges are 20:00:00:00:00:00:00:00 to 20:FF:FF:FF:FF:FF:FF:FF or from 50:00:00:00:00:00:00:00 to 5F:FF:FF:FF:FF:FF:FF:FF.
       - To ensure uniqueness of WWN's in the SAN fabric, you are strongly encouraged to use the WWN prefix - 20:00:00:25:B5:xx:xx:xx.
-      - Required when wwnn_address_type is static and target platform is fiattached.
-      - Only applicable for fiattached target platform.
+      - Required when wwnn_address_type is static and target platform is FIAttached.
+      - Only applicable for FIAttached target platform.
     type: str
   vhbas:
     description:
@@ -187,28 +187,28 @@ options:
           - Type of WWPN address assignment.
           - C(pool) to use a WWPN pool.
           - C(static) to manually assign a static WWPN address.
-          - Only applicable for fiattached target platform.
+          - Only applicable for FIAttached target platform.
         type: str
         choices: ['pool', 'static']
         default: 'pool'
       wwpn_pool:
         description:
           - The WWPN pool used for assigning the WWPN address to the vHBA.
-          - Required when wwpn_address_type is pool and target platform is fiattached.
-          - Only applicable for fiattached target platform.
+          - Required when wwpn_address_type is pool and target platform is FIAttached.
+          - Only applicable for FIAttached target platform.
         type: str
       static_wwpn_address:
         description:
           - The WWPN address must be in hexadecimal format xx:xx:xx:xx:xx:xx:xx:xx.
           - Allowed ranges are 20:00:00:00:00:00:00:00 to 20:FF:FF:FF:FF:FF:FF:FF or from 50:00:00:00:00:00:00:00 to 5F:FF:FF:FF:FF:FF:FF:FF.
           - To ensure uniqueness of WWN's in the SAN fabric, you are strongly encouraged to use the WWN prefix - 20:00:00:25:B5:xx:xx:xx.
-          - Required when wwpn_address_type is static and target platform is fiattached.
-          - Only applicable for fiattached target platform.
+          - Required when wwpn_address_type is static and target platform is FIAttached.
+          - Only applicable for FIAttached target platform.
         type: str
       switch_id:
         description:
           - The fabric port to which the vHBA will be associated.
-          - Only applicable for fiattached target platform.
+          - Only applicable for FIAttached target platform.
         type: str
         choices: ['a', 'b']
         default: 'a'
@@ -236,7 +236,7 @@ options:
           - C(custom) allows manual selection of PCI link via pci_link parameter.
           - C(load-balanced) automatically distributes vHBAs across available PCI links.
           - Required when auto_pci_link is false.
-          - Only applicable for fiattached target platform.
+          - Only applicable for FIAttached target platform.
         type: str
         choices: ['custom', 'load-balanced']
       fibre_channel_zone_policies:
@@ -258,7 +258,7 @@ EXAMPLES = r'''
     organization: "default"
     name: "standalone-san-policy"
     description: "SAN connectivity policy for standalone servers"
-    target_platform: "standalone"
+    target_platform: "Standalone"
     tags:
       - Key: "Environment"
         Value: "Production"
@@ -294,7 +294,7 @@ EXAMPLES = r'''
     organization: "default"
     name: "auto-placement-san-policy"
     description: "SAN policy with automatic vHBA placement"
-    target_platform: "fiattached"
+    target_platform: "FIAttached"
     placement_mode: "auto"
     wwnn_address_type: "pool"
     wwnn_pool: "default-wwnn-pool"
@@ -324,7 +324,7 @@ EXAMPLES = r'''
     organization: "default"
     name: "fi-attached-san-policy"
     description: "SAN connectivity policy for FI-attached servers"
-    target_platform: "fiattached"
+    target_platform: "FIAttached"
     placement_mode: "custom"
     wwnn_address_type: "pool"
     wwnn_pool: "default-wwnn-pool"
@@ -369,7 +369,7 @@ EXAMPLES = r'''
     organization: "default"
     name: "fi-attached-static-san-policy"
     description: "SAN connectivity policy with static addresses"
-    target_platform: "fiattached"
+    target_platform: "FIAttached"
     placement_mode: "custom"
     wwnn_address_type: "pool"
     wwnn_pool: "default-wwnn-pool"
@@ -399,7 +399,7 @@ EXAMPLES = r'''
     organization: "default"
     name: "fi-attached-advanced-placement"
     description: "SAN connectivity with custom placement"
-    target_platform: "fiattached"
+    target_platform: "FIAttached"
     placement_mode: "custom"
     wwnn_address_type: "static"
     static_wwnn_address: "20:00:00:25:B5:00:00:01"
@@ -429,7 +429,7 @@ EXAMPLES = r'''
     organization: "default"
     name: "mixed-vhba-states-policy"
     description: "Policy demonstrating vHBA state management"
-    target_platform: "standalone"
+    target_platform: "Standalone"
     vhbas:
       - name: "vhba0"
         vhba_type: "fc-initiator"
@@ -530,7 +530,7 @@ def validate_input(module):
     Validate module input parameters.
     """
     target_platform = module.params.get('target_platform')
-    if target_platform == 'fiattached':
+    if target_platform == 'FIAttached':
         validate_fi_attached_params(module)
     vhbas = module.params.get('vhbas', [])
     for vhba_config in vhbas:
@@ -541,9 +541,9 @@ def validate_input(module):
             for field in required_fields:
                 if not vhba_config.get(field):
                     module.fail_json(msg=f"{field} is required when vHBA state is 'present' for vHBA '{vhba_name}'")
-            if target_platform == 'fiattached':
+            if target_platform == 'FIAttached':
                 validate_fi_attached_vhba_config(module, vhba_config)
-            elif target_platform == 'standalone':
+            elif target_platform == 'Standalone':
                 validate_standalone_vhba_config(module, vhba_config)
 
 
@@ -612,7 +612,7 @@ def build_vhba_api_body(intersight, policy_cache, module, vhba_config, san_conne
     Build vHBA API body based on target platform.
     """
     target_platform = module.params.get('target_platform')
-    if target_platform == 'fiattached':
+    if target_platform == 'FIAttached':
         return build_fi_attached_vhba_api_body(intersight, policy_cache, module, vhba_config, san_connectivity_policy_moid)
     else:
         return build_standalone_vhba_api_body(intersight, policy_cache, module, vhba_config, san_connectivity_policy_moid)
@@ -648,7 +648,7 @@ def main():
         name=dict(type='str', required=True),
         description=dict(type='str', aliases=['descr']),
         tags=dict(type='list', elements='dict'),
-        target_platform=dict(type='str', choices=['standalone', 'fiattached'], default='standalone'),
+        target_platform=dict(type='str', choices=['Standalone', 'FIAttached'], default='Standalone'),
         placement_mode=dict(type='str', choices=['custom', 'auto'], default='custom'),
         wwnn_address_type=dict(type='str', choices=['pool', 'static'], default='pool'),
         wwnn_pool=dict(type='str'),
@@ -677,13 +677,13 @@ def main():
     if intersight.module.params['state'] == 'present':
         intersight.set_tags_and_description()
         target_platform_map = {
-            'standalone': 'Standalone',
-            'fiattached': 'FIAttached'
+            'Standalone': 'Standalone',
+            'FIAttached': 'FIAttached'
         }
         api_target_platform = target_platform_map[intersight.module.params['target_platform']]
         intersight.api_body['TargetPlatform'] = api_target_platform
 
-        if intersight.module.params['target_platform'] == 'fiattached':
+        if intersight.module.params['target_platform'] == 'FIAttached':
             # PlacementMode is only applicable for FIAttached
             placement_mode_map = {'custom': 'custom', 'auto': 'auto'}
             api_placement_mode = placement_mode_map[intersight.module.params['placement_mode']]
@@ -707,7 +707,7 @@ def main():
             else:
                 intersight.api_body['StaticWwnnAddress'] = intersight.module.params['static_wwnn_address']
 
-        elif intersight.module.params['target_platform'] == 'standalone':
+        elif intersight.module.params['target_platform'] == 'Standalone':
             intersight.api_body['PlacementMode'] = 'custom'
             intersight.api_body['WwnnAddressType'] = 'POOL'
             intersight.api_body['StaticWwnnAddress'] = ''

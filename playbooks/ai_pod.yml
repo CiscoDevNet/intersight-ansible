@@ -1,0 +1,112 @@
+# AI Pod mininal policy and profile configuration
+# Follows the CVD at https://www.cisco.com/c/en/us/td/docs/unified_computing/ucs/UCS_CVDs/AI_defense_on_Cisco_AI_PODs_reference_architecture.html
+---
+- name: Configure AI Pod Policies and Profiles
+  hosts: "{{ group | default('ProjectV_Servers') }}"
+  connection: local
+  gather_facts: false
+  vars:
+    # Create an anchor for api_info that can be used throughout the file
+    api_info: &api_info
+      # if api_key vars are omitted, INTERSIGHT_API_KEY_ID, INTERSIGHT_API_PRIVATE_KEY,
+      # and INTERSIGHT_API_URI environment variables used for API key data
+      api_private_key: "{{ api_private_key | default(omit) }}"
+      api_key_id: "{{ api_key_id | default(omit) }}"
+      api_uri: "{{ api_uri | default(omit) }}"
+      validate_certs: "{{ validate_certs | default(omit) }}"
+      state: "{{ state | default('present') }}"
+    org_name: project-v
+    profile_name: "AI-Pod-{{ inventory_hostname }}"
+  tasks:
+    - name: Configure IMC access policy
+      cisco.intersight.intersight_imc_access_policy:
+        <<: *api_info
+        organization: "{{ org_name }}"
+        name: "{{ imc_access_name | default('project-v-imc-access') }}"
+        tags:
+          - Key: Site
+            Value: SJC07
+        description: Updated IMC access for SJC labs
+        vlan_id: "{{ imc_access_vlan | default(248) }}"
+        ip_pool: "{{ ip_pool | default('project-v-ip') }}"
+      delegate_to: localhost
+      run_once: true
+    - name: Configure LAN Connectivity policy
+      cisco.intersight.intersight_lan_connectivity_policy:
+        <<: *api_info
+        organization: "{{ org_name }}"
+        name: "{{ lan_connectivity_name | default('project-v-lan-connectivity') }}"
+        description: LAN Connectivity policy for Project V AI Pod
+        placement_mode: auto
+        tags:
+          - Key: Site
+            Value: SJC07
+        target_platform: FIAttached
+        vnics:
+          - name: eth0
+            mac_address_type: pool
+            mac_pool_name: project-v-MAC-Pool-A
+            cdn_source: vnic
+            fabric_eth_network_group_policy_name: project-v-eth-net-grp
+            fabric_eth_network_control_policy_name: project-v-Enable-CDP-LLDP
+            eth_qos_policy_name: project-v-eth-qos
+            eth_adapter_policy_name: project-v-eth-adapter
+      delegate_to: localhost
+      run_once: true
+    #
+    # Configure profiles specific to server (run for each server in the inventory)
+    #
+    - name: Set management mode to Standalone
+      ansible.builtin.set_fact:
+        mode: Standalone
+      when: mode is not defined or mode == 'IntersightStandalone'
+    - name: Set management mode to FIAttached
+      ansible.builtin.set_fact:
+        mode: FIAttached
+      when: mode == 'Intersight'
+    - name: "Configure Server Profile"
+      cisco.intersight.intersight_server_profile:
+        <<: *api_info
+        organization: "{{ org_name }}"
+        name: "{{ profile_name }}"
+        target_platform: "{{ mode | default(omit) }}"
+        description: "Updated Profile for server name {{ inventory_hostname }}"
+        tags:
+          - Key: Site
+            Value: SJC07
+        assigned_server: "{{ server_moid | default(omit) }}"
+        bios_policy: "{{ bios_policy | default(omit) }}"
+        boot_order_policy: "{{ boot_order_policy | default('SJC07-ESXi-vlan3-BootOrder-NoSecure') }}"
+        certificate_policy: "{{ certificate_policy | default(omit) }}"
+        drive_security_policy: "{{ drive_security_policy | default(omit) }}"
+        firmware_policy: "{{ firmware_policy | default(omit) }}"
+        imc_access_policy: "{{ imc_access_name | default('project-v-imc-access') }}"
+        ipmi_over_lan_policy: "{{ ipmi_over_lan_policy | default(omit) }}"
+        lan_connectivity_policy: "{{ lan_connectivity_name | default('project-v-lan-connectivity') }}"
+        ldap_policy: "{{ ldap_policy | default(omit) }}"
+        local_user_policy: "{{ local_user_policy | default(omit) }}"
+        network_connectivity_policy: "{{ network_connectivity_policy | default(omit) }}"
+        ntp_policy: "{{ ntp_policy | default(omit) }}"
+        power_policy: "{{ power_policy | default(omit) }}"
+        san_connectivity_policy: "{{ san_connectivity_policy | default(omit) }}"
+        sd_card_policy: "{{ sd_card_policy | default(omit) }}"
+        serial_over_lan_policy: "{{ serial_over_lan_policy | default(omit) }}"
+        smtp_policy: "{{ smtp_policy | default(omit) }}"
+        snmp_policy: "{{ snmp_policy | default(omit) }}"
+        ssh_policy: "{{ ssh_policy | default(omit) }}"
+        storage_policy: "{{ storage_policy | default(omit) }}"
+        syslog_policy: "{{ syslog_policy | default(omit) }}"
+        thermal_policy: "{{ thermal_policy | default(omit) }}"
+        virtual_kvm_policy: "{{ virtual_kvm_policy | default(omit) }}"
+        virtual_media_policy: "{{ virtual_media_policy | default(omit) }}"
+      delegate_to: localhost
+    - name: Deploy Server Profile
+      cisco.intersight.intersight_rest_api:
+        <<: *api_info
+        resource_path: /server/Profiles
+        query_params:
+          $filter: "Name eq '{{ profile_name }}'"
+        api_body: {
+          "Action": "Deploy"
+        }
+      delegate_to: localhost
