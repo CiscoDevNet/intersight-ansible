@@ -55,13 +55,13 @@ options:
       - The platform type for which the power policy is intended. This determines which settings are applicable.
       - This parameter is required when C(state) is C(present).
     type: str
-    choices: ['all', 'standalone-server', 'fi-attached-server', 'chassis']
+    choices: ['All', 'Standalone', 'FIAttached', 'Chassis']
   power_profiling:
     description:
       - Sets the Power Profiling of the Server.
       - If Enabled, this field allows the power manager to run power profiling utility to determine the power needs of the server.
       - This field is only supported for Cisco UCS X series servers.
-      - Applicable for 'fi-attached-server' and 'all' platforms.
+      - Applicable for 'FIAttached' and 'All' platforms.
     type: str
     choices: ['Enabled', 'Disabled']
     default: 'Enabled'
@@ -69,7 +69,7 @@ options:
     description:
       - Sets the Power Priority of the Server. This priority is used to determine the initial power allocation for servers.
       - This field is only supported for Cisco UCS B series and X series servers.
-      - Applicable for 'fi-attached-server' and 'all' platforms.
+      - Applicable for 'FIAttached' and 'All' platforms.
     type: str
     choices: ['Low', 'Medium', 'High']
     default: 'Low'
@@ -77,7 +77,7 @@ options:
     description:
       - Sets the Power Restore State of the Server.
       - In the absence of Intersight connectivity, the chassis/server will use this policy to recover the host power after a power loss event.
-      - Applicable for 'standalone-server', 'fi-attached-server', and 'all' platforms.
+      - Applicable for 'Standalone', 'FIAttached', and 'All' platforms.
     type: str
     choices: ['AlwaysOff', 'AlwaysOn', 'LastState']
     default: 'AlwaysOff'
@@ -85,7 +85,7 @@ options:
     description:
       - Sets the Power Redundancy Mode of the Chassis. Redundancy Mode determines the number of PSUs the chassis keeps as redundant.
       - N+2 mode is only supported for Cisco UCS X series Chassis.
-      - Applicable for 'chassis' and 'all' platforms.
+      - Applicable for 'Chassis' and 'All' platforms.
     type: str
     choices: ['Grid', 'NotRedundant', 'N+1', 'N+2']
     default: 'Grid'
@@ -93,7 +93,7 @@ options:
     description:
       - Sets the Processor Package Power Limit (PPL) of a server. PPL refers to the amount of power that a CPU can draw from the power supply.
       - The Processor Package Power Limit (PPL) feature is currently available exclusively on Cisco UCS C225/C245 M8 servers.
-      - Applicable for 'standalone-server', 'fi-attached-server', and 'all' platforms.
+      - Applicable for 'Standalone', 'FIAttached', and 'All' platforms.
     type: str
     choices: ['Default', 'Maximum', 'Minimum']
     default: 'Default'
@@ -102,7 +102,7 @@ options:
       - Sets the power save mode of the chassis.
       - If the requested power budget is less than available power capacity,
         the additional PSUs not required to comply with redundancy policy are placed in power save mode.
-      - Applicable for 'chassis' and 'all' platforms.
+      - Applicable for 'Chassis' and 'All' platforms.
     type: str
     choices: ['Enabled', 'Disabled']
     default: 'Enabled'
@@ -110,7 +110,7 @@ options:
     description:
       - Sets the dynamic power rebalancing mode of the chassis.
       - If enabled, this mode allows the chassis to dynamically reallocate the power between servers depending on their power usage.
-      - Applicable for 'chassis' and 'all' platforms.
+      - Applicable for 'Chassis' and 'All' platforms.
     type: str
     choices: ['Enabled', 'Disabled']
     default: 'Enabled'
@@ -119,14 +119,14 @@ options:
       - Sets the Extended Power Capacity of the Chassis.
       - If Enabled, this mode allows chassis available power to be increased by borrowing power from redundant power supplies.
       - This option is only supported for Cisco UCS X series Chassis.
-      - Applicable for 'chassis' and 'all' platforms.
+      - Applicable for 'Chassis' and 'All' platforms.
     type: str
     choices: ['Enabled', 'Disabled']
     default: 'Enabled'
   power_allocation:
     description:
       - Sets the limit for the maximum input power consumption by the chassis (in Watts). Set to 0 for no limit.
-      - Applicable for 'chassis' and 'all' platforms.
+      - Applicable for 'Chassis' and 'All' platforms.
     type: int
     default: 0
 author:
@@ -140,7 +140,7 @@ EXAMPLES = r'''
     api_key_id: "{{ api_key_id }}"
     name: "Standalone-Server-Power-Policy"
     description: "Power policy for standalone servers, restores to last state."
-    target_platform: "standalone-server"
+    target_platform: "Standalone"
     power_restore: "LastState"
     processor_package_power_limit: "Minimum"
     tags:
@@ -153,18 +153,18 @@ EXAMPLES = r'''
     api_key_id: "{{ api_key_id }}"
     name: "Chassis-N1-Redundancy"
     description: "Power policy for chassis with N+1 redundancy."
-    target_platform: "chassis"
+    target_platform: "Chassis"
     power_redundancy: "N+1"
     power_save_mode: "Disabled"
     power_allocation: 7500
 
-- name: Create a universal Power Policy for FI-Attached Servers
+- name: Create a universal Power Policy for FIAttached Servers
   cisco.intersight.intersight_power_policy:
     api_private_key: "{{ api_private_key }}"
     api_key_id: "{{ api_key_id }}"
     name: "FI-Attached-Default"
-    description: "Default power policy for all FI-attached servers."
-    target_platform: "fi-attached-server"
+    description: "Default power policy for all FIAttached servers."
+    target_platform: "FIAttached"
     power_profiling: "Enabled"
     power_priority: "Medium"
 
@@ -197,10 +197,10 @@ api_response:
 from ansible.module_utils.basic import AnsibleModule
 from ansible_collections.cisco.intersight.plugins.module_utils.intersight import IntersightModule, intersight_argument_spec
 
-ALL = 'all'
-STANDALONE_SERVER = 'standalone-server'
-FI_ATTACHED_SERVER = 'fi-attached-server'
-CHASSIS = 'chassis'
+ALL = 'All'
+STANDALONE_SERVER = 'Standalone'
+FI_ATTACHED_SERVER = 'FIAttached'
+CHASSIS = 'Chassis'
 
 
 def validate_input(module: AnsibleModule):
@@ -305,14 +305,14 @@ def main():
                 "AllocatedBudget": module.params['power_allocation']
             })
 
-        # Server-specific parameters (Standalone and FI-Attached)
+        # Server-specific parameters (Standalone and FIAttached)
         if platform in [STANDALONE_SERVER, FI_ATTACHED_SERVER, ALL]:
             intersight.api_body.update({
                 "ProcessorPackagePowerLimit": module.params['processor_package_power_limit'],
                 "PowerRestoreState": module.params['power_restore']
             })
 
-        # FI-Attached specific parameters
+        # FIAttached specific parameters
         if platform in [FI_ATTACHED_SERVER, ALL]:
             intersight.api_body.update({
                 "PowerPriority": module.params['power_priority'],

@@ -57,27 +57,27 @@ options:
   target_platform:
     description:
       - The platform type for which the LAN Connectivity policy is intended.
-      - standalone for standalone servers, attached for fabric interconnect attached servers.
+      - Standalone for Standalone servers, FIAttached for fabric interconnect attached servers.
     type: str
-    choices: ['standalone', 'attached']
-    default: 'standalone'
+    choices: ['Standalone', 'FIAttached']
+    default: 'Standalone'
   azure_qos_enabled:
     description:
       - Enable Azure QoS for the LAN Connectivity policy.
-      - Only applicable when target_platform is 'attached'.
+      - Only applicable when target_platform is 'FIAttached'.
     type: bool
     default: false
   iqn_allocation_type:
     description:
       - IQN allocation type for the LAN Connectivity policy.
-      - Only applicable when target_platform is 'attached'.
+      - Only applicable when target_platform is 'FIAttached'.
     type: str
     choices: ['None', 'Pool', 'Static']
     default: 'None'
   placement_mode:
     description:
       - Placement mode for vNIC assignment.
-      - Only applicable when target_platform is 'attached'.
+      - Only applicable when target_platform is 'FIAttached'.
     type: str
     choices: ['custom', 'auto']
     default: 'custom'
@@ -85,13 +85,13 @@ options:
     description:
       - Relationship to the iSCSI Qualified Name Pool.
       - Required when iqn_allocation_type is 'Pool'.
-      - Only applicable for attached target platform.
+      - Only applicable for FIAttached target platform.
     type: str
   static_iqn_name:
     description:
       - User provided static iSCSI Qualified Name (IQN) for use as initiator identifiers by iSCSI vNICs in a Fabric Interconnect domain.
       - Required when iqn_allocation_type is 'Static'.
-      - Only applicable for attached target platform.
+      - Only applicable for FIAttached target platform.
     type: str
   vnics:
     description:
@@ -163,29 +163,29 @@ options:
       mac_address_type:
         description:
           - Type of MAC address assignment.
-          - Only applicable for attached target platform.
+          - Only applicable for FIAttached target platform.
         type: str
         choices: ['pool', 'static']
         default: 'pool'
       mac_pool_name:
         description:
           - The MAC pool that is assigned.
-          - Required when mac_address_type is 'pool' and target platform is attached.
-          - Only applicable for attached target platform.
+          - Required when mac_address_type is 'pool' and target platform is FIAttached.
+          - Only applicable for FIAttached target platform.
         type: str
       static_mac_address:
         description:
           - The MAC address must be in hexadecimal format xx:xx:xx:xx:xx:xx.
           - To ensure uniqueness of MACs in the LAN fabric, you are strongly encouraged to use the following MAC prefix 00:25:B5:xx:xx:xx.
-          - Required when mac_address_type is 'static' and target platform is attached.
-          - Only applicable for attached target platform.
+          - Required when mac_address_type is 'static' and target platform is FIAttached.
+          - Only applicable for FIAttached target platform.
         type: str
       pci_link:
         description:
           - The PCI Link used as transport for the virtual interface.
           - PCI Link is only applicable for select Cisco UCS VIC 1300 models (UCSC-PCIE-C40Q-03, UCSB-MLOM-40G-03, UCSB-VIC-M83-8P) that support two PCI links.
           - The value, if specified, for any other VIC model will be ignored.
-          - For attached required when pci_link_assignment_mode is 'Custom'.
+          - For FIAttached required when pci_link_assignment_mode is 'Custom'.
         type: int
         choices: [0, 1]
         default: 0
@@ -195,7 +195,7 @@ options:
           - If enabled and the server has only one VIC, the same VIC is chosen for all the vNICs.
           - If enabled and the server has multiple VICs, the vNIC/vHBA are deployed on the first VIC.
           - If disabled, placement_slot_id must be specified.
-          - Only applicable for attached target platform when auto_vnic_placement_enabled is false.
+          - Only applicable for FIAttached target platform when auto_vnic_placement_enabled is false.
         type: bool
         default: true
       auto_pci_link:
@@ -204,7 +204,7 @@ options:
           - This option applies only to 13xx series VICs that support dual-link.
           - If enabled, the system determines the placement of the vNIC/vHBA on either of the PCI Links.
           - If disabled, pci_link_assignment_mode must be specified.
-          - Only applicable for attached target platform when auto_vnic_placement_enabled is false.
+          - Only applicable for FIAttached target platform when auto_vnic_placement_enabled is false.
         type: bool
         default: true
       pci_link_assignment_mode:
@@ -213,21 +213,21 @@ options:
           - Custom allows manual selection of PCI link via pci_link parameter.
           - Load-Balanced automatically distributes vNICs across available PCI links.
           - Required when auto_pci_link is false and auto_vnic_placement_enabled is false.
-          - Only applicable for attached target platform.
+          - Only applicable for FIAttached target platform.
         type: str
         choices: ['Custom', 'Load-Balanced']
       auto_vnic_placement_enabled:
         description:
-          - Enable automatic vNIC placement for FI-attached servers.
+          - Enable automatic vNIC placement for FIAttached servers.
           - When enabled, the vNIC placement is simplified to only specify the switch ID.
           - When disabled, full placement control is available including order, auto_slot_id, and auto_pci_link.
-          - Only applicable for attached target platform.
+          - Only applicable for FIAttached target platform.
         type: bool
         default: false
       switch_id:
         description:
           - The fabric port to which the vNICs will be associated.
-          - Only applicable for attached target platform.
+          - Only applicable for FIAttached target platform.
         type: str
         choices: ['A', 'B']
         default: 'A'
@@ -236,31 +236,31 @@ options:
           - Enables automatic vNIC failover to the secondary Fabric Interconnect
             if the primary path fails.
           - Failover applies only to Cisco VICs that are connected to a Fabric Interconnect cluster.
-          - Only applicable for attached target platform.
+          - Only applicable for FIAttached target platform.
         type: bool
         default: false
       fabric_eth_network_group_policy_name:
         description:
           - Relationship to the Fabric Ethernet Group Policy.
-          - Required when target platform is attached and vNIC state is 'present'.
-          - Only applicable for attached target platform.
+          - Required when target platform is FIAttached and vNIC state is 'present'.
+          - Only applicable for FIAttached target platform.
         type: str
       fabric_eth_network_control_policy_name:
         description:
           - Relationship to the Fabric Ethernet Network Policy.
-          - Required when target platform is attached and vNIC state is 'present'.
-          - Only applicable for attached target platform.
+          - Required when target platform is FIAttached and vNIC state is 'present'.
+          - Only applicable for FIAttached target platform.
         type: str
       iscsi_boot_policy_name:
         description:
           - Relationship to the boot iSCSI Policy.
-          - Only applicable for attached target platform.
+          - Only applicable for FIAttached target platform.
         type: str
       pin_group_name:
         description:
           - Pingroup name associated to vNIC for static pinning.
           - LCP deploy will resolve pingroup name and fetches the corresponding uplink port/port channel to pin the vNIC traffic.
-          - Only applicable for attached target platform.
+          - Only applicable for FIAttached target platform.
         type: str
       usnic_settings:
         description:
@@ -376,8 +376,8 @@ EXAMPLES = r'''
     api_private_key: "{{ api_private_key }}"
     api_key_id: "{{ api_key_id }}"
     organization: "default"
-    name: "standalone-lan-policy"
-    description: "LAN connectivity policy for standalone servers"
+    name: "Standalone-lan-policy"
+    description: "LAN connectivity policy for Standalone servers"
     target_platform: "Standalone"
     tags:
       - Key: "Environment"
@@ -405,14 +405,14 @@ EXAMPLES = r'''
         connection_type: "none"
     state: present
 
-- name: Create a LAN Connectivity Policy for FI-Attached servers
+- name: Create a LAN Connectivity Policy for FIAttached servers
   cisco.intersight.intersight_lan_connectivity_policy:
     api_private_key: "{{ api_private_key }}"
     api_key_id: "{{ api_key_id }}"
     organization: "default"
     name: "fi-attached-lan-policy"
-    description: "LAN connectivity policy for FI-attached servers"
-    target_platform: "attached"
+    description: "LAN connectivity policy for FIAttached servers"
+    target_platform: "FIAttached"
     azure_qos_enabled: true
     iqn_allocation_type: "Pool"
     iqn_pool_name: "default-iqn-pool"
@@ -446,7 +446,7 @@ EXAMPLES = r'''
     organization: "default"
     name: "fi-attached-pinned-policy"
     description: "LAN connectivity policy with static uplink pinning"
-    target_platform: "attached"
+    target_platform: "FIAttached"
     azure_qos_enabled: false
     iqn_allocation_type: "None"
     placement_mode: "custom"
@@ -477,7 +477,7 @@ EXAMPLES = r'''
     organization: "default"
     name: "fi-attached-auto-placement-policy"
     description: "LAN connectivity policy with automatic vNIC placement"
-    target_platform: "attached"
+    target_platform: "FIAttached"
     azure_qos_enabled: false
     iqn_allocation_type: "None"
     placement_mode: "auto"
@@ -504,7 +504,7 @@ EXAMPLES = r'''
     organization: "default"
     name: "fi-attached-advanced-placement-policy"
     description: "LAN connectivity policy with advanced placement control"
-    target_platform: "attached"
+    target_platform: "FIAttached"
     azure_qos_enabled: false
     iqn_allocation_type: "None"
     placement_mode: "custom"
@@ -537,7 +537,7 @@ EXAMPLES = r'''
     organization: "default"
     name: "fi-attached-load-balanced-policy"
     description: "LAN connectivity policy with load-balanced PCI assignment"
-    target_platform: "attached"
+    target_platform: "FIAttached"
     azure_qos_enabled: false
     iqn_allocation_type: "None"
     placement_mode: "custom"
@@ -768,7 +768,7 @@ from ansible_collections.cisco.intersight.plugins.module_utils.intersight_vnic_u
 
 def validate_fi_attached_params(module):
     """
-    Validate FI-Attached specific parameters
+    Validate FIAttached specific parameters
     """
     iqn_allocation_type = module.params.get('iqn_allocation_type')
     static_iqn_name = module.params.get('static_iqn_name')
@@ -874,10 +874,10 @@ def validate_standalone_vnic_config(module, vnic_config):
     eth_network_policy_name = vnic_config.get('eth_network_policy_name')
 
     if not placement_slot_id:
-        module.fail_json(msg=f"placement_slot_id is required for standalone vNIC '{vnic_name}'")
+        module.fail_json(msg=f"placement_slot_id is required for Standalone vNIC '{vnic_name}'")
 
     if not eth_network_policy_name:
-        module.fail_json(msg=f"eth_network_policy_name is required for standalone vNIC '{vnic_name}'")
+        module.fail_json(msg=f"eth_network_policy_name is required for Standalone vNIC '{vnic_name}'")
 
 
 def get_vnic_policy_mappings(target_platform, vnic_config):
@@ -888,7 +888,7 @@ def get_vnic_policy_mappings(target_platform, vnic_config):
     policy_mappings = get_common_policy_mappings()
 
     # Platform-specific policies
-    if target_platform == 'attached':
+    if target_platform == 'FIAttached':
         # Add fabric network policies
         policy_mappings.update(get_fabric_network_policy_mappings())
 
@@ -900,7 +900,7 @@ def get_vnic_policy_mappings(target_platform, vnic_config):
         if vnic_config.get('iscsi_boot_policy_name'):
             policy_mappings.update(get_iscsi_boot_policy_mapping())
 
-    else:  # standalone server
+    else:  # Standalone server
         policy_mappings['eth_network_policy_name'] = ('/vnic/EthNetworkPolicies', 'EthNetworkPolicy', 'Ethernet Network Policy')
 
     return policy_mappings
@@ -921,7 +921,7 @@ def build_vnic_api_body(intersight, policy_cache, module, vnic_config, lan_conne
     """
     target_platform = module.params.get('target_platform')
 
-    if target_platform == 'attached':
+    if target_platform == 'FIAttached':
         return build_fi_attached_vnic_api_body(intersight, policy_cache, module, vnic_config, lan_connectivity_policy_moid)
     else:
         return build_standalone_vnic_api_body(intersight, policy_cache, module, vnic_config, lan_connectivity_policy_moid)
@@ -947,7 +947,7 @@ def build_standalone_vnic_api_body(intersight, policy_cache, module, vnic_config
     vnic_api_body['Cdn'] = build_cdn_config(vnic_config)
 
     # Resolve and add policy MOIDs
-    policy_moids = resolve_vnic_policy_moids(intersight, policy_cache, module, vnic_config, 'standalone')
+    policy_moids = resolve_vnic_policy_moids(intersight, policy_cache, module, vnic_config, 'Standalone')
     vnic_api_body.update(policy_moids)
 
     # Add common connection type settings
@@ -1011,7 +1011,7 @@ def build_fi_attached_vnic_api_body(intersight, policy_cache, module, vnic_confi
         vnic_api_body['StaticMacAddress'] = vnic_config['static_mac_address']
 
     # Resolve and add policy MOIDs
-    policy_moids = resolve_vnic_policy_moids(intersight, policy_cache, module, vnic_config, 'attached')
+    policy_moids = resolve_vnic_policy_moids(intersight, policy_cache, module, vnic_config, 'FIAttached')
     vnic_api_body.update(policy_moids)
 
     # Add common connection type settings
@@ -1030,9 +1030,9 @@ def validate_input(module):
     """
     Validate module input parameters
     """
-    # Validate FI-Attached specific requirements
+    # Validate FIAttached specific requirements
     target_platform = module.params.get('target_platform')
-    if target_platform == 'attached':
+    if target_platform == 'FIAttached':
         validate_fi_attached_params(module)
 
     # Validate vNIC configurations
@@ -1051,7 +1051,7 @@ def validate_input(module):
 
             # Validate target platform specific fields
             target_platform = module.params.get('target_platform')
-            if target_platform == 'attached':
+            if target_platform == 'FIAttached':
                 validate_fi_attached_vnic_config(module, vnic_config)
             else:
                 validate_standalone_vnic_config(module, vnic_config)
@@ -1104,7 +1104,7 @@ def main():
         name=dict(type='str', required=True),
         description=dict(type='str', aliases=['descr']),
         tags=dict(type='list', elements='dict'),
-        target_platform=dict(type='str', choices=['standalone', 'attached'], default='standalone'),
+        target_platform=dict(type='str', choices=['Standalone', 'FIAttached'], default='Standalone'),
         azure_qos_enabled=dict(type='bool', default=False),
         iqn_allocation_type=dict(type='str', choices=['None', 'Pool', 'Static'], default='None'),
         placement_mode=dict(type='str', choices=['custom', 'auto'], default='custom'),
@@ -1144,11 +1144,11 @@ def main():
         intersight.set_tags_and_description()
 
         target_platform = intersight.module.params['target_platform']
-        api_target_platform = 'FIAttached' if target_platform == 'attached' else 'Standalone'
+        api_target_platform = 'FIAttached' if target_platform == 'FIAttached' else 'Standalone'
         intersight.api_body['TargetPlatform'] = api_target_platform
 
         # Add FIAttached-specific parameters
-        if intersight.module.params['target_platform'] == 'attached':
+        if intersight.module.params['target_platform'] == 'FIAttached':
             intersight.api_body['AzureQosEnabled'] = intersight.module.params['azure_qos_enabled']
             intersight.api_body['IqnAllocationType'] = intersight.module.params['iqn_allocation_type']
             intersight.api_body['PlacementMode'] = intersight.module.params['placement_mode']

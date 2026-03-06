@@ -52,7 +52,7 @@
             "Moid": "{{ org_query_result.api_response.Moid }}"
           },
           "Name": "test-lan-eth-network-policy",
-          "Description": "Test Ethernet Network policy for standalone LAN connectivity tests",
+          "Description": "Test Ethernet Network policy for Standalone LAN connectivity tests",
           "VlanSettings": {
             "Mode": "ACCESS",
             "DefaultVlan": 1
@@ -196,7 +196,7 @@
       name: test-lan-policy-basic
       description: "Basic standalone LAN connectivity policy"
       state: present
-      target_platform: standalone
+      target_platform: Standalone
       vnics:
         - name: eth0-test
           state: present
@@ -248,7 +248,7 @@
       name: test-lan-policy-custom-cdn
       description: "Standalone with custom CDN values"
       state: present
-      target_platform: standalone
+      target_platform: Standalone
       vnics:
         - name: eth0-custom
           state: present
@@ -281,7 +281,7 @@
       name: test-lan-policy-usnic
       description: "Standalone with USNIC connection type"
       state: present
-      target_platform: standalone
+      target_platform: Standalone
       vnics:
         - name: eth0-usnic
           state: present
@@ -334,7 +334,7 @@
       name: test-lan-policy-vmq
       description: "Standalone with VMQ connection type"
       state: present
-      target_platform: standalone
+      target_platform: Standalone
       vnics:
         - name: eth0-vmq
           state: present
@@ -371,7 +371,7 @@
       name: test-lan-policy-vmq-multiqueue
       description: "Standalone with VMQ multi-queue support"
       state: present
-      target_platform: standalone
+      target_platform: Standalone
       vnics:
         - name: eth0-vmq-multi
           state: present
@@ -408,7 +408,7 @@
       name: test-lan-policy-sriov
       description: "Standalone with SR-IOV connection type"
       state: present
-      target_platform: standalone
+      target_platform: Standalone
       vnics:
         - name: eth0-sriov
           state: present
@@ -447,7 +447,7 @@
       name: test-lan-policy-mixed-states
       description: "Standalone with multiple vNICs and mixed states"
       state: present
-      target_platform: standalone
+      target_platform: Standalone
       vnics:
         - name: eth0-keep
           state: present
@@ -494,7 +494,7 @@
       name: test-lan-policy-idempotency
       description: "Test idempotency - should not change on second run"
       state: present
-      target_platform: standalone
+      target_platform: Standalone
       vnics:
         - name: eth0-idempotent
           state: present
@@ -519,7 +519,7 @@
       name: test-lan-policy-idempotency
       description: "Test idempotency - should not change on second run"
       state: present
-      target_platform: standalone
+      target_platform: Standalone
       vnics:
         - name: eth0-idempotent
           state: present
@@ -552,7 +552,7 @@
       name: test-fi-attached-basic
       description: "Basic FIAttached LAN connectivity policy"
       state: present
-      target_platform: attached
+      target_platform: FIAttached
       azure_qos_enabled: false
       iqn_allocation_type: None
       placement_mode: custom
@@ -614,7 +614,7 @@
       name: test-fi-attached-iqn-pool
       description: "FIAttached with IQN Pool allocation"
       state: present
-      target_platform: attached
+      target_platform: FIAttached
       azure_qos_enabled: true
       iqn_allocation_type: Pool
       iqn_pool_name: test-lan-iqn-pool
@@ -654,7 +654,7 @@
       name: test-fi-attached-static
       description: "FIAttached with static IQN and MAC"
       state: present
-      target_platform: attached
+      target_platform: FIAttached
       azure_qos_enabled: false
       iqn_allocation_type: Static
       static_iqn_name: "iqn.1991-05.com.microsoft:testserver1"
@@ -721,7 +721,7 @@
       name: test-fi-attached-iscsi
       description: "FIAttached with iSCSI boot policy"
       state: present
-      target_platform: attached
+      target_platform: FIAttached
       azure_qos_enabled: true
       iqn_allocation_type: None
       placement_mode: custom
@@ -760,7 +760,7 @@
       name: test-fi-attached-usnic
       description: "FIAttached with USNIC connection"
       state: present
-      target_platform: attached
+      target_platform: FIAttached
       azure_qos_enabled: false
       iqn_allocation_type: None
       placement_mode: custom
@@ -803,7 +803,7 @@
       name: test-fi-attached-idempotency
       description: "FIAttached idempotency test"
       state: present
-      target_platform: attached
+      target_platform: FIAttached
       azure_qos_enabled: false
       iqn_allocation_type: None
       placement_mode: custom
@@ -835,7 +835,7 @@
       name: test-fi-attached-idempotency
       description: "FIAttached idempotency test"
       state: present
-      target_platform: attached
+      target_platform: FIAttached
       azure_qos_enabled: false
       iqn_allocation_type: None
       placement_mode: custom
@@ -891,7 +891,7 @@
       organization: "{{ organization }}"
       name: test-validation-fail
       state: present
-      target_platform: standalone
+      target_platform: Standalone
       vnics:
         - name: eth0-incomplete
           state: present
@@ -906,7 +906,7 @@
       organization: "{{ organization }}"
       name: test-cdn-validation-fail
       state: present
-      target_platform: standalone
+      target_platform: Standalone
       vnics:
         - name: eth0-bad-cdn
           state: present
@@ -930,7 +930,7 @@
       organization: "{{ organization }}"
       name: test-usnic-validation-fail
       state: present
-      target_platform: standalone
+      target_platform: Standalone
       vnics:
         - name: eth0-bad-usnic
           state: present
@@ -953,7 +953,7 @@
       organization: "{{ organization }}"
       name: test-fi-validation-mac-pool
       state: present
-      target_platform: attached
+      target_platform: FIAttached
       iqn_allocation_type: None
       vnics:
         - name: vnic-fail
@@ -974,7 +974,7 @@
       organization: "{{ organization }}"
       name: test-fi-validation-static-mac
       state: present
-      target_platform: attached
+      target_platform: FIAttached
       iqn_allocation_type: None
       vnics:
         - name: vnic-fail
@@ -995,7 +995,7 @@
       organization: "{{ organization }}"
       name: test_auto_placement_api_body
       description: "Test auto placement API body structure"
-      target_platform: "attached"
+      target_platform: "FIAttached"
       vnics:
         - name: "auto-api-vnic"
           mac_address_type: "pool"
@@ -1022,7 +1022,7 @@
       organization: "{{ organization }}"
       name: test_advanced_pci_custom
       description: "Test advanced PCI Custom configuration"
-      target_platform: "attached"
+      target_platform: "FIAttached"
       vnics:
         - name: "custom-pci-vnic"
           order: 1
@@ -1056,7 +1056,7 @@
       organization: "{{ organization }}"
       name: test_advanced_pci_load_balanced
       description: "Test advanced PCI Load-Balanced configuration"
-      target_platform: "attached"
+      target_platform: "FIAttached"
       vnics:
         - name: "load-balanced-pci-vnic"
           order: 1

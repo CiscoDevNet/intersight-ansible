@@ -24,7 +24,7 @@
       <<: *api_info
       name: test_power_policy
       description: "Test power policy description"
-      target_platform: "standalone-server"
+      target_platform: "Standalone"
       power_restore: "LastState"
       processor_package_power_limit: "Minimum"
       tags:
@@ -44,7 +44,7 @@
       <<: *api_info
       name: test_power_policy
       description: "Test power policy description"
-      target_platform: "standalone-server"
+      target_platform: "Standalone"
       power_restore: "LastState"
       processor_package_power_limit: "Minimum"
       tags:
@@ -78,7 +78,7 @@
       <<: *api_info
       name: test_power_policy
       description: "Test power policy description"
-      target_platform: "standalone-server"
+      target_platform: "Standalone"
       power_restore: "LastState"
       processor_package_power_limit: "Minimum"
       tags:
@@ -107,7 +107,7 @@
       name: test_power_policy_validate
       description: "Test policy description"
       state: present
-      target_platform: "all"
+      target_platform: "All"
       power_allocation: 100000000
     register: failure_res_alloc
     failed_when:
@@ -118,7 +118,7 @@
       <<: *api_info
       name: test_power_policy_2
       description: "Test power policy for chassis"
-      target_platform: "chassis"
+      target_platform: "Chassis"
       power_redundancy: "N+1"
     register: creation_res_b
 
