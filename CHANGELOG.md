@@ -1,5 +1,11 @@
 # cisco.intersight Ansible Collection Changelog
 
+## Version 2.15.0
+- Fix for issue #290 to change all target_plaforms to All, Standalone, FIAttached, or Chassis
+
+## Version 2.14.0
+- Fix for issue #282 to optimise lookup queries in all modules
+
 ## Version 2.12.0
 - Repost collection with UUID pool support added to server profile module.
 
