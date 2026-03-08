@@ -1,0 +1,405 @@
+---
+- block:
+  - name: Define anchor for Intersight API login info
+    ansible.builtin.set_fact:
+      api_info: &api_info
+        api_private_key: "{{ api_private_key }}"
+        api_key_id: "{{ api_key_id }}"
+        api_uri: "{{ api_uri | default(omit) }}"
+        validate_certs: "{{ validate_certs | default(omit) }}"
+        organization: "{{ organization }}"
+
+  - name: Make sure Env is clean - templates
+    cisco.intersight.intersight_server_profile_template:
+      <<: *api_info
+      name: "{{ item }}"
+      state: absent
+    loop:
+      - test_spt_basic
+      - test_spt_with_policies
+      - test_spt_multi_policy
+
+  - name: Make sure Env is clean - NTP policies
+    cisco.intersight.intersight_ntp_policy:
+      <<: *api_info
+      name: "{{ item }}"
+      state: absent
+    loop:
+      - test_spt_ntp_policy
+      - test_spt_ntp_policy_2
+
+  - name: Make sure Env is clean - SNMP policy
+    cisco.intersight.intersight_snmp_policy:
+      <<: *api_info
+      name: test_spt_snmp_policy
+      state: absent
+
+  - name: Make sure Env is clean - SSH policy
+    cisco.intersight.intersight_ssh_policy:
+      <<: *api_info
+      name: test_spt_ssh_policy
+      state: absent
+
+  - name: Make sure Env is clean - Network Connectivity policy
+    cisco.intersight.intersight_network_connectivity_policy:
+      <<: *api_info
+      name: test_spt_dns_policy
+      state: absent
+
+  - name: Create NTP policy
+    cisco.intersight.intersight_ntp_policy:
+      <<: *api_info
+      name: test_spt_ntp_policy
+      enable: true
+      ntp_servers:
+        - "pool.ntp.org"
+    register: ntp_policy_res
+
+  - name: Create second NTP policy for swap test
+    cisco.intersight.intersight_ntp_policy:
+      <<: *api_info
+      name: test_spt_ntp_policy_2
+      enable: true
+      ntp_servers:
+        - "time.google.com"
+    register: ntp_policy_2_res
+
+  - name: Create SNMP policy
+    cisco.intersight.intersight_snmp_policy:
+      <<: *api_info
+      name: test_spt_snmp_policy
+      enabled: true
+      snmp_port: 161
+      sys_contact: "admin@example.com"
+      sys_location: "Lab-DC1"
+    register: snmp_policy_res
+
+  - name: Create SSH policy
+    cisco.intersight.intersight_ssh_policy:
+      <<: *api_info
+      name: test_spt_ssh_policy
+      enable_ssh: true
+      ssh_port: 22
+      ssh_timeout: 1800
+    register: ssh_policy_res
+
+  - name: Create Network Connectivity (DNS) policy
+    cisco.intersight.intersight_network_connectivity_policy:
+      <<: *api_info
+      name: test_spt_dns_policy
+      preferred_ipv4_dns_server: "8.8.8.8"
+      alternate_ipv4_dns_server: "8.8.4.4"
+    register: dns_policy_res
+
+  - name: Create server profile template - check-mode
+    cisco.intersight.intersight_server_profile_template:
+      <<: *api_info
+      name: test_spt_basic
+      description: "Basic standalone template"
+      target_platform: standalone
+      tags:
+        - Key: "Environment"
+          Value: "Test"
+    check_mode: true
+    register: creation_check_mode_res
+
+  - name: Verify template was not created - check-mode
+    ansible.builtin.assert:
+      that:
+        - creation_check_mode_res is changed
+        - creation_check_mode_res.api_response == {}
+
+  - name: Create server profile template
+    cisco.intersight.intersight_server_profile_template:
+      <<: *api_info
+      name: test_spt_basic
+      description: "Basic standalone template"
+      target_platform: standalone
+      tags:
+        - Key: "Environment"
+          Value: "Test"
+    register: creation_res
+
+  - name: Verify template creation
+    ansible.builtin.assert:
+      that:
+        - creation_res is changed
+        - creation_res.api_response.Name == 'test_spt_basic'
+        - creation_res.api_response.Moid is defined
+        - creation_res.api_response.TargetPlatform == 'Standalone'
+
+  - name: Create server profile template (idempotency)
+    cisco.intersight.intersight_server_profile_template:
+      <<: *api_info
+      name: test_spt_basic
+      description: "Basic standalone template"
+      target_platform: standalone
+      tags:
+        - Key: "Environment"
+          Value: "Test"
+    register: creation_idempotent_res
+
+  - name: Verify idempotency - no change
+    ansible.builtin.assert:
+      that:
+        - not creation_idempotent_res.changed
+
+  - name: Fetch template info by name
+    cisco.intersight.intersight_server_profile_template_info:
+      <<: *api_info
+      name: test_spt_basic
+    register: info_res
+
+  - name: Verify info response
+    ansible.builtin.assert:
+      that:
+        - info_res.api_response | length == 1
+        - info_res.api_response[0].Name == 'test_spt_basic'
+
+  - name: Create template with one NTP policy
+    cisco.intersight.intersight_server_profile_template:
+      <<: *api_info
+      name: test_spt_with_policies
+      description: "Template with single policy"
+      target_platform: standalone
+      ntp_policy: test_spt_ntp_policy
+    register: single_policy_res
+
+  - name: Verify single-policy template
+    ansible.builtin.assert:
+      that:
+        - single_policy_res is changed
+        - single_policy_res.api_response.Name == 'test_spt_with_policies'
+        - single_policy_res.api_response.PolicyBucket | length == 1
+
+  - name: Single-policy template (idempotency)
+    cisco.intersight.intersight_server_profile_template:
+      <<: *api_info
+      name: test_spt_with_policies
+      description: "Template with single policy"
+      target_platform: standalone
+      ntp_policy: test_spt_ntp_policy
+    register: single_policy_idempotent_res
+
+  - name: Verify single-policy idempotency
+    ansible.builtin.assert:
+      that:
+        - not single_policy_idempotent_res.changed
+
+  - name: Swap NTP policy to a different one
+    cisco.intersight.intersight_server_profile_template:
+      <<: *api_info
+      name: test_spt_with_policies
+      description: "Template with single policy"
+      target_platform: standalone
+      ntp_policy: test_spt_ntp_policy_2
+    register: swap_policy_res
+
+  - name: Verify NTP policy swap triggered change
+    ansible.builtin.assert:
+      that:
+        - swap_policy_res is changed
+        - swap_policy_res.api_response.PolicyBucket | length == 1
+
+  - name: Remove all policies from template
+    cisco.intersight.intersight_server_profile_template:
+      <<: *api_info
+      name: test_spt_with_policies
+      description: "Template with single policy"
+      target_platform: standalone
+    register: remove_all_res
+
+  - name: Verify policy removal triggered change
+    ansible.builtin.assert:
+      that:
+        - remove_all_res is changed
+
+  - name: Create template with multiple policies (NTP + SNMP + SSH)
+    cisco.intersight.intersight_server_profile_template:
+      <<: *api_info
+      name: test_spt_multi_policy
+      description: "Template with multiple policies"
+      target_platform: standalone
+      ntp_policy: test_spt_ntp_policy
+      snmp_policy: test_spt_snmp_policy
+      ssh_policy: test_spt_ssh_policy
+    register: multi_create_res
+
+  - name: Verify multi-policy template creation
+    ansible.builtin.assert:
+      that:
+        - multi_create_res is changed
+        - multi_create_res.api_response.PolicyBucket | length == 3
+
+  - name: Multi-policy template (idempotency)
+    cisco.intersight.intersight_server_profile_template:
+      <<: *api_info
+      name: test_spt_multi_policy
+      description: "Template with multiple policies"
+      target_platform: standalone
+      ntp_policy: test_spt_ntp_policy
+      snmp_policy: test_spt_snmp_policy
+      ssh_policy: test_spt_ssh_policy
+    register: multi_idempotent_res
+
+  - name: Verify multi-policy idempotency
+    ansible.builtin.assert:
+      that:
+        - not multi_idempotent_res.changed
+
+  - name: Add DNS policy to existing NTP + SNMP + SSH
+    cisco.intersight.intersight_server_profile_template:
+      <<: *api_info
+      name: test_spt_multi_policy
+      description: "Template with multiple policies"
+      target_platform: standalone
+      ntp_policy: test_spt_ntp_policy
+      snmp_policy: test_spt_snmp_policy
+      ssh_policy: test_spt_ssh_policy
+      network_connectivity_policy: test_spt_dns_policy
+    register: add_policy_res
+
+  - name: Verify policy count after adding DNS
+    ansible.builtin.assert:
+      that:
+        - add_policy_res is changed
+        - add_policy_res.api_response.PolicyBucket | length == 4
+
+  - name: Remove SNMP policy (keep NTP + SSH + DNS)
+    cisco.intersight.intersight_server_profile_template:
+      <<: *api_info
+      name: test_spt_multi_policy
+      description: "Template with multiple policies"
+      target_platform: standalone
+      ntp_policy: test_spt_ntp_policy
+      ssh_policy: test_spt_ssh_policy
+      network_connectivity_policy: test_spt_dns_policy
+    register: remove_one_res
+
+  - name: Verify policy count after removing SNMP
+    ansible.builtin.assert:
+      that:
+        - remove_one_res is changed
+
+  - name: After removing SNMP (idempotency)
+    cisco.intersight.intersight_server_profile_template:
+      <<: *api_info
+      name: test_spt_multi_policy
+      description: "Template with multiple policies"
+      target_platform: standalone
+      ntp_policy: test_spt_ntp_policy
+      ssh_policy: test_spt_ssh_policy
+      network_connectivity_policy: test_spt_dns_policy
+    register: remove_one_idempotent_res
+
+  - name: Verify post-removal idempotency
+    ansible.builtin.assert:
+      that:
+        - not remove_one_idempotent_res.changed
+
+  - name: Swap NTP policy while keeping SSH + DNS
+    cisco.intersight.intersight_server_profile_template:
+      <<: *api_info
+      name: test_spt_multi_policy
+      description: "Template with multiple policies"
+      target_platform: standalone
+      ntp_policy: test_spt_ntp_policy_2
+      ssh_policy: test_spt_ssh_policy
+      network_connectivity_policy: test_spt_dns_policy
+    register: swap_in_set_res
+
+  - name: Verify swap triggered change with same count
+    ansible.builtin.assert:
+      that:
+        - swap_in_set_res is changed
+        - swap_in_set_res.api_response.PolicyBucket | length == 3
+
+  - name: Strip all policies from multi-policy template
+    cisco.intersight.intersight_server_profile_template:
+      <<: *api_info
+      name: test_spt_multi_policy
+      description: "Template with multiple policies"
+      target_platform: standalone
+    register: strip_all_res
+
+  - name: Verify all policies removed
+    ansible.builtin.assert:
+      that:
+        - strip_all_res is changed
+
+  - name: Fetch all templates in the organization
+    cisco.intersight.intersight_server_profile_template_info:
+      <<: *api_info
+    register: all_info_res
+
+  - name: Verify at least 3 templates exist
+    ansible.builtin.assert:
+      that:
+        - all_info_res.api_response | length >= 3
+
+  - name: Delete basic template
+    cisco.intersight.intersight_server_profile_template:
+      <<: *api_info
+      name: test_spt_basic
+      state: absent
+    register: delete_basic_res
+
+  - name: Verify basic deletion
+    ansible.builtin.assert:
+      that:
+        - delete_basic_res is changed
+
+  - name: Delete basic template again (idempotency)
+    cisco.intersight.intersight_server_profile_template:
+      <<: *api_info
+      name: test_spt_basic
+      state: absent
+    register: delete_basic_idempotent_res
+
+  - name: Verify delete idempotency
+    ansible.builtin.assert:
+      that:
+        - not delete_basic_idempotent_res.changed
+
+  always:
+  - name: Cleanup - remove server profile templates
+    cisco.intersight.intersight_server_profile_template:
+      <<: *api_info
+      name: "{{ item }}"
+      state: absent
+    loop:
+      - test_spt_basic
+      - test_spt_with_policies
+      - test_spt_multi_policy
+    ignore_errors: true
+
+  - name: Cleanup - remove NTP policies
+    cisco.intersight.intersight_ntp_policy:
+      <<: *api_info
+      name: "{{ item }}"
+      state: absent
+    loop:
+      - test_spt_ntp_policy
+      - test_spt_ntp_policy_2
+    ignore_errors: true
+
+  - name: Cleanup - remove SNMP policy
+    cisco.intersight.intersight_snmp_policy:
+      <<: *api_info
+      name: test_spt_snmp_policy
+      state: absent
+    ignore_errors: true
+
+  - name: Cleanup - remove SSH policy
+    cisco.intersight.intersight_ssh_policy:
+      <<: *api_info
+      name: test_spt_ssh_policy
+      state: absent
+    ignore_errors: true
+
+  - name: Cleanup - remove Network Connectivity policy
+    cisco.intersight.intersight_network_connectivity_policy:
+      <<: *api_info
+      name: test_spt_dns_policy
+      state: absent
+    ignore_errors: true
