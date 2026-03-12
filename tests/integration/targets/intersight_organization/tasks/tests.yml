@@ -1,0 +1,237 @@
+---
+- block:
+  - name: Define anchor for Intersight API login info
+    ansible.builtin.set_fact:
+      api_info: &api_info
+        api_private_key: "{{ api_private_key }}"
+        api_key_id: "{{ api_key_id }}"
+        api_uri: "{{ api_uri | default(omit) }}"
+        validate_certs: "{{ validate_certs | default(omit) }}"
+
+  # --- Setup: Create prerequisite Resource Group ---
+  - name: Create test Resource Group for org assignment
+    cisco.intersight.intersight_resource_group:
+      <<: *api_info
+      name: test_rg_for_org
+      description: "Resource group for organization tests"
+      qualifier: all
+    register: setup_rg
+
+  # --- Cleanup environment ---
+  - name: Make sure Env is clean
+    cisco.intersight.intersight_organization:
+      <<: *api_info
+      name: "{{ item }}"
+      state: absent
+    loop:
+      - test_org
+      - test_org_shared
+
+  # --- Basic Organization tests (share_resources: false) ---
+  - name: Create Organization - check-mode
+    cisco.intersight.intersight_organization:
+      <<: *api_info
+      name: test_org
+      description: "Test organization"
+      resource_groups:
+        - test_rg_for_org
+    check_mode: true
+    register: create_check_mode
+
+  - name: Verify check-mode did not create resource
+    ansible.builtin.assert:
+      that:
+        - create_check_mode is changed
+        - create_check_mode.api_response == {}
+
+  - name: Create Organization with Resource Group
+    cisco.intersight.intersight_organization:
+      <<: *api_info
+      name: test_org
+      description: "Test organization"
+      resource_groups:
+        - test_rg_for_org
+    register: create_result
+
+  - name: Fetch info after creation
+    cisco.intersight.intersight_organization_info:
+      <<: *api_info
+      name: test_org
+    register: create_info
+
+  - name: Verify creation
+    ansible.builtin.assert:
+      that:
+        - create_result.changed
+        - create_info.api_response[0].Name == 'test_org'
+        - create_info.api_response[0].Description == 'Test organization'
+        - create_info.api_response[0].ResourceGroups | length == 1
+        - create_info.api_response[0].ResourceGroups[0].Moid == setup_rg.api_response.Moid
+
+  - name: Verify response alignment
+    ansible.builtin.assert:
+      that:
+        - create_result.api_response.Name == create_info.api_response[0].Name
+        - create_result.api_response.Moid == create_info.api_response[0].Moid
+        - create_result.api_response.ResourceGroups | length == 1
+
+  - name: Create Organization with Resource Group (idempotency)
+    cisco.intersight.intersight_organization:
+      <<: *api_info
+      name: test_org
+      description: "Test organization"
+      resource_groups:
+        - test_rg_for_org
+    register: create_idempotent
+
+  - name: Verify idempotency
+    ansible.builtin.assert:
+      that:
+        - not create_idempotent.changed
+
+  - name: Update Organization description
+    cisco.intersight.intersight_organization:
+      <<: *api_info
+      name: test_org
+      description: "Updated description"
+      resource_groups:
+        - test_rg_for_org
+    register: update_result
+
+  - name: Fetch info after update
+    cisco.intersight.intersight_organization_info:
+      <<: *api_info
+      name: test_org
+    register: update_info
+
+  - name: Verify update
+    ansible.builtin.assert:
+      that:
+        - update_result.changed
+        - update_info.api_response[0].Description == 'Updated description'
+
+  # --- Shared Organization tests (share_resources: true) ---
+  - name: Create second Organization for sharing tests
+    cisco.intersight.intersight_organization:
+      <<: *api_info
+      name: test_org_shared
+      description: "Organization to share with"
+    register: shared_org_result
+
+  - name: Update Organization to share resources
+    cisco.intersight.intersight_organization:
+      <<: *api_info
+      name: test_org
+      description: "Updated description"
+      share_resources: true
+      shared_orgs:
+        - test_org_shared
+    register: share_result
+
+  - name: Verify sharing was configured
+    ansible.builtin.assert:
+      that:
+        - share_result.changed
+
+  - name: Update Organization to share resources (idempotency)
+    cisco.intersight.intersight_organization:
+      <<: *api_info
+      name: test_org
+      description: "Updated description"
+      share_resources: true
+      shared_orgs:
+        - test_org_shared
+    register: share_idempotent
+
+  - name: Verify sharing idempotency
+    ansible.builtin.assert:
+      that:
+        - not share_idempotent.changed
+
+  - name: Switch back to non-shared mode
+    cisco.intersight.intersight_organization:
+      <<: *api_info
+      name: test_org
+      description: "Updated description"
+      resource_groups:
+        - test_rg_for_org
+    register: unshare_result
+
+  - name: Fetch info after switch to non-shared
+    cisco.intersight.intersight_organization_info:
+      <<: *api_info
+      name: test_org
+    register: unshare_info
+
+  - name: Verify switch to non-shared restored resource groups
+    ansible.builtin.assert:
+      that:
+        - unshare_result.changed
+        - unshare_info.api_response[0].ResourceGroups | length == 1
+        - unshare_info.api_response[0].ResourceGroups[0].Moid == setup_rg.api_response.Moid
+
+  # --- Fetch all Organizations ---
+  - name: Fetch all Organizations
+    cisco.intersight.intersight_organization_info:
+      <<: *api_info
+    register: all_orgs_info
+
+  - name: Verify at least one Organization exists
+    ansible.builtin.assert:
+      that:
+        - all_orgs_info.api_response | length >= 1
+
+  # --- Deletion tests ---
+  - name: Delete Organization
+    cisco.intersight.intersight_organization:
+      <<: *api_info
+      name: test_org
+      state: absent
+    register: delete_result
+
+  - name: Verify deletion
+    ansible.builtin.assert:
+      that:
+        - delete_result.changed
+
+  - name: Delete Organization again (idempotency)
+    cisco.intersight.intersight_organization:
+      <<: *api_info
+      name: test_org
+      state: absent
+    register: delete_idempotent
+
+  - name: Verify delete idempotency
+    ansible.builtin.assert:
+      that:
+        - not delete_idempotent.changed
+
+  # --- Validation tests ---
+  - name: Test validation - share_resources with resource_groups (should fail)
+    cisco.intersight.intersight_organization:
+      <<: *api_info
+      name: test_org_validation
+      share_resources: true
+      shared_orgs:
+        - test_org_shared
+      resource_groups:
+        - test_rg_for_org
+    register: validation_fail
+    failed_when:
+      - validation_fail.failed == false
+
+  always:
+  - name: Remove all test Organizations
+    cisco.intersight.intersight_organization:
+      <<: *api_info
+      name: "{{ item }}"
+      state: absent
+    loop:
+      - test_org
+      - test_org_shared
+
+  - name: Remove test Resource Group
+    cisco.intersight.intersight_resource_group:
+      <<: *api_info
+      name: test_rg_for_org
+      state: absent

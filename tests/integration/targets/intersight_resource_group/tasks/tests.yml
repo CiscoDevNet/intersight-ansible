@@ -1,0 +1,181 @@
+---
+- block:
+  - name: Define anchor for Intersight API login info
+    ansible.builtin.set_fact:
+      api_info: &api_info
+        api_private_key: "{{ api_private_key }}"
+        api_key_id: "{{ api_key_id }}"
+        api_uri: "{{ api_uri | default(omit) }}"
+        validate_certs: "{{ validate_certs | default(omit) }}"
+
+  - name: Make sure Env is clean
+    cisco.intersight.intersight_resource_group:
+      <<: *api_info
+      name: "{{ item }}"
+      state: absent
+    loop:
+      - test_rg
+
+  - name: Create Resource Group with all qualifier - check-mode
+    cisco.intersight.intersight_resource_group:
+      <<: *api_info
+      name: test_rg
+      description: "Test resource group"
+      qualifier: all
+    check_mode: true
+    register: create_check_mode
+
+  - name: Verify check-mode did not create resource
+    ansible.builtin.assert:
+      that:
+        - create_check_mode is changed
+        - create_check_mode.api_response == {}
+
+  - name: Create Resource Group with all qualifier
+    cisco.intersight.intersight_resource_group:
+      <<: *api_info
+      name: test_rg
+      description: "Test resource group"
+      qualifier: all
+    register: create_result
+
+  - name: Fetch info after creation
+    cisco.intersight.intersight_resource_group_info:
+      <<: *api_info
+      name: test_rg
+    register: create_info
+
+  - name: Verify creation
+    ansible.builtin.assert:
+      that:
+        - create_result.changed
+        - create_info.api_response[0].Name == 'test_rg'
+        - create_info.api_response[0].Description == 'Test resource group'
+        - create_info.api_response[0].Qualifier == 'Allow-All'
+
+  - name: Create Resource Group with all qualifier (idempotency)
+    cisco.intersight.intersight_resource_group:
+      <<: *api_info
+      name: test_rg
+      description: "Test resource group"
+      qualifier: all
+    register: create_idempotent
+
+  - name: Verify idempotency
+    ansible.builtin.assert:
+      that:
+        - not create_idempotent.changed
+
+  - name: Update Resource Group from all to selectors
+    cisco.intersight.intersight_resource_group:
+      <<: *api_info
+      name: test_rg
+      description: "Now scoped to specific devices"
+      qualifier: selectors
+      selectors:
+        - "/api/v1/asset/DeviceRegistrations?$filter=Moid in ('507f1f77bcf86cd799439011')"
+    register: update_to_selectors
+
+  - name: Fetch info after update to selectors
+    cisco.intersight.intersight_resource_group_info:
+      <<: *api_info
+      name: test_rg
+    register: selectors_info
+
+  - name: Verify update to selectors
+    ansible.builtin.assert:
+      that:
+        - update_to_selectors.changed
+        - selectors_info.api_response[0].Qualifier == 'Allow-Selectors'
+        - selectors_info.api_response[0].Description == 'Now scoped to specific devices'
+        - selectors_info.api_response[0].Selectors | length == 1
+
+  - name: Update Resource Group from all to selectors (idempotency)
+    cisco.intersight.intersight_resource_group:
+      <<: *api_info
+      name: test_rg
+      description: "Now scoped to specific devices"
+      qualifier: selectors
+      selectors:
+        - "/api/v1/asset/DeviceRegistrations?$filter=Moid in ('507f1f77bcf86cd799439011')"
+    register: selectors_idempotent
+
+  - name: Verify selectors idempotency
+    ansible.builtin.assert:
+      that:
+        - not selectors_idempotent.changed
+
+  - name: Update Resource Group with different selector
+    cisco.intersight.intersight_resource_group:
+      <<: *api_info
+      name: test_rg
+      description: "Now scoped to specific devices"
+      qualifier: selectors
+      selectors:
+        - "/api/v1/compute/Blades?$filter=Serial in ('FCH26387BD1') and ManagementMode eq 'Intersight'"
+    register: update_selector_value
+
+  - name: Fetch info after selector change
+    cisco.intersight.intersight_resource_group_info:
+      <<: *api_info
+      name: test_rg
+    register: updated_selector_info
+
+  - name: Verify selector was updated
+    ansible.builtin.assert:
+      that:
+        - update_selector_value.changed
+        - updated_selector_info.api_response[0].Qualifier == 'Allow-Selectors'
+        - updated_selector_info.api_response[0].Selectors | length == 1
+
+  - name: Fetch all Resource Groups
+    cisco.intersight.intersight_resource_group_info:
+      <<: *api_info
+    register: all_rg_info
+
+  - name: Verify at least one Resource Group exists
+    ansible.builtin.assert:
+      that:
+        - all_rg_info.api_response | length >= 1
+
+  - name: Delete Resource Group
+    cisco.intersight.intersight_resource_group:
+      <<: *api_info
+      name: test_rg
+      state: absent
+    register: delete_result
+
+  - name: Verify deletion
+    ansible.builtin.assert:
+      that:
+        - delete_result.changed
+
+  - name: Delete Resource Group again (idempotency)
+    cisco.intersight.intersight_resource_group:
+      <<: *api_info
+      name: test_rg
+      state: absent
+    register: delete_idempotent
+
+  - name: Verify delete idempotency
+    ansible.builtin.assert:
+      that:
+        - not delete_idempotent.changed
+
+  - name: Test validation - selectors qualifier without selectors param (should fail)
+    cisco.intersight.intersight_resource_group:
+      <<: *api_info
+      name: test_rg_validation
+      qualifier: selectors
+    register: validation_fail
+    failed_when:
+      - validation_fail.failed == false
+
+  always:
+  - name: Remove all test Resource Groups
+    cisco.intersight.intersight_resource_group:
+      <<: *api_info
+      name: "{{ item }}"
+      state: absent
+    loop:
+      - test_rg
