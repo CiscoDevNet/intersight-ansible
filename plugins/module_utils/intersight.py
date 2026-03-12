@@ -950,3 +950,64 @@ class IntersightModule():
             self.result['changed'] = True
 
         return bulk_results
+
+
+def resolve_policy_bucket(intersight, organization_name, policy_mapping):
+    """Resolve policy names to MOIDs and build the PolicyBucket list.
+
+    Args:
+        intersight: IntersightModule instance.
+        organization_name: Organization to scope the policy lookup.
+        policy_mapping: Dict mapping module param names to resource_path/object_type.
+    """
+    policy_bucket = []
+    for param_name, mapping in policy_mapping.items():
+        policy_name = intersight.module.params.get(param_name)
+        if policy_name:
+            moid = intersight.get_moid_by_name_and_org(
+                resource_path=mapping['resource_path'],
+                resource_name=policy_name,
+                organization_name=organization_name,
+            )
+            if not moid:
+                intersight.module.fail_json(
+                    msg=f"Policy '{policy_name}' ({param_name}) not found in organization '{organization_name}'"
+                )
+            policy_bucket.append({
+                'Moid': moid,
+                'ObjectType': mapping['object_type'],
+            })
+    return policy_bucket
+
+
+def sync_policy_bucket(intersight, bucket_path, desired_bucket, current_bucket):
+    """Sync the PolicyBucket via the sub-resource endpoint using differential add/delete.
+
+    Args:
+        intersight: IntersightModule instance.
+        bucket_path: Full API sub-resource path (e.g. /chassis/Profiles/{moid}/PolicyBucket).
+        desired_bucket: List of policy dicts representing the desired state.
+        current_bucket: List of policy dicts representing the current state.
+    """
+    current_set = {(p['Moid'], p['ObjectType']) for p in current_bucket}
+    desired_set = {(p['Moid'], p['ObjectType']) for p in desired_bucket}
+
+    if current_set == desired_set:
+        return
+
+    to_remove = current_set - desired_set
+    for policy_moid, obj_type in to_remove:
+        intersight.delete_resource(
+            moid=policy_moid,
+            resource_path=bucket_path,
+        )
+
+    to_add = desired_set - current_set
+    if to_add:
+        add_body = [{'Moid': m, 'ObjectType': t} for m, t in to_add]
+        intersight.configure_resource(
+            moid=None,
+            resource_path=bucket_path,
+            body=add_body,
+            query_params={},
+        )

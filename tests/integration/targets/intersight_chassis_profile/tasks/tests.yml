@@ -1,0 +1,354 @@
+---
+- block:
+  - name: Define anchor for Intersight API login info
+    ansible.builtin.set_fact:
+      api_info: &api_info
+        api_private_key: "{{ api_private_key }}"
+        api_key_id: "{{ api_key_id }}"
+        api_uri: "{{ api_uri | default(omit) }}"
+        validate_certs: "{{ validate_certs | default(omit) }}"
+        organization: "{{ organization }}"
+
+  - name: Make sure Env is clean - chassis profiles
+    cisco.intersight.intersight_chassis_profile:
+      <<: *api_info
+      name: "{{ item }}"
+      state: absent
+    loop:
+      - test_cp_basic
+      - test_cp_with_policies
+      - test_cp_multi_policy
+
+  - name: Make sure Env is clean - Power policy
+    cisco.intersight.intersight_power_policy:
+      <<: *api_info
+      name: "{{ item }}"
+      state: absent
+    loop:
+      - test_cp_power_policy
+      - test_cp_power_policy_2
+
+  - name: Make sure Env is clean - SNMP policy
+    cisco.intersight.intersight_snmp_policy:
+      <<: *api_info
+      name: test_cp_snmp_policy
+      state: absent
+
+  - name: Make sure Env is clean - Thermal policy
+    cisco.intersight.intersight_thermal_policy:
+      <<: *api_info
+      name: test_cp_thermal_policy
+      state: absent
+
+  - name: Create Power policy
+    cisco.intersight.intersight_power_policy:
+      <<: *api_info
+      name: test_cp_power_policy
+      target_platform: Chassis
+      power_redundancy: Grid
+    register: power_policy_res
+
+  - name: Create second Power policy for swap test
+    cisco.intersight.intersight_power_policy:
+      <<: *api_info
+      name: test_cp_power_policy_2
+      target_platform: Chassis
+      power_redundancy: "N+1"
+    register: power_policy_2_res
+
+  - name: Create SNMP policy
+    cisco.intersight.intersight_snmp_policy:
+      <<: *api_info
+      name: test_cp_snmp_policy
+      enabled: true
+      snmp_port: 161
+      sys_contact: "admin@example.com"
+      sys_location: "Lab-DC1"
+    register: snmp_policy_res
+
+  - name: Create Thermal policy
+    cisco.intersight.intersight_thermal_policy:
+      <<: *api_info
+      name: test_cp_thermal_policy
+      fan_control_mode: Balanced
+    register: thermal_policy_res
+
+  # -- Check Mode --
+
+  - name: Create chassis profile - check-mode
+    cisco.intersight.intersight_chassis_profile:
+      <<: *api_info
+      name: test_cp_basic
+      description: "Basic chassis profile"
+      tags:
+        - Key: "Environment"
+          Value: "Test"
+    check_mode: true
+    register: creation_check_mode_res
+
+  - name: Verify profile was not created - check-mode
+    ansible.builtin.assert:
+      that:
+        - creation_check_mode_res is changed
+        - creation_check_mode_res.api_response == {}
+
+  # -- Create --
+
+  - name: Create chassis profile
+    cisco.intersight.intersight_chassis_profile:
+      <<: *api_info
+      name: test_cp_basic
+      description: "Basic chassis profile"
+      tags:
+        - Key: "Environment"
+          Value: "Test"
+    register: creation_res
+
+  - name: Verify profile creation
+    ansible.builtin.assert:
+      that:
+        - creation_res is changed
+        - creation_res.api_response.Name == 'test_cp_basic'
+        - creation_res.api_response.Moid is defined
+
+  # -- Idempotency --
+
+  - name: Create chassis profile (idempotency)
+    cisco.intersight.intersight_chassis_profile:
+      <<: *api_info
+      name: test_cp_basic
+      description: "Basic chassis profile"
+      tags:
+        - Key: "Environment"
+          Value: "Test"
+    register: creation_idempotent_res
+
+  - name: Verify idempotency - no change
+    ansible.builtin.assert:
+      that:
+        - not creation_idempotent_res.changed
+
+  # -- Info Module --
+
+  - name: Fetch chassis profile info by name
+    cisco.intersight.intersight_chassis_profile_info:
+      <<: *api_info
+      name: test_cp_basic
+    register: info_res
+
+  - name: Verify info response
+    ansible.builtin.assert:
+      that:
+        - info_res.api_response | length == 1
+        - info_res.api_response[0].Name == 'test_cp_basic'
+
+  # -- Single Policy --
+
+  - name: Create profile with one Power policy
+    cisco.intersight.intersight_chassis_profile:
+      <<: *api_info
+      name: test_cp_with_policies
+      description: "Profile with single policy"
+      power_policy: test_cp_power_policy
+    register: single_policy_res
+
+  - name: Verify single-policy profile
+    ansible.builtin.assert:
+      that:
+        - single_policy_res is changed
+        - single_policy_res.api_response.Name == 'test_cp_with_policies'
+        - single_policy_res.api_response.PolicyBucket | length == 1
+
+  - name: Single-policy profile (idempotency)
+    cisco.intersight.intersight_chassis_profile:
+      <<: *api_info
+      name: test_cp_with_policies
+      description: "Profile with single policy"
+      power_policy: test_cp_power_policy
+    register: single_policy_idempotent_res
+
+  - name: Verify single-policy idempotency
+    ansible.builtin.assert:
+      that:
+        - not single_policy_idempotent_res.changed
+
+  # -- Policy Swap --
+
+  - name: Swap Power policy to a different one
+    cisco.intersight.intersight_chassis_profile:
+      <<: *api_info
+      name: test_cp_with_policies
+      description: "Profile with single policy"
+      power_policy: test_cp_power_policy_2
+    register: swap_policy_res
+
+  - name: Verify Power policy swap triggered change
+    ansible.builtin.assert:
+      that:
+        - swap_policy_res is changed
+        - swap_policy_res.api_response.PolicyBucket | length == 1
+
+  # -- Remove All Policies --
+
+  - name: Remove all policies from profile
+    cisco.intersight.intersight_chassis_profile:
+      <<: *api_info
+      name: test_cp_with_policies
+      description: "Profile with single policy"
+    register: remove_all_res
+
+  - name: Verify policy removal triggered change
+    ansible.builtin.assert:
+      that:
+        - remove_all_res is changed
+
+  # -- Multiple Policies --
+
+  - name: Create profile with multiple policies (Power + SNMP + Thermal)
+    cisco.intersight.intersight_chassis_profile:
+      <<: *api_info
+      name: test_cp_multi_policy
+      description: "Profile with multiple policies"
+      power_policy: test_cp_power_policy
+      snmp_policy: test_cp_snmp_policy
+      thermal_policy: test_cp_thermal_policy
+    register: multi_create_res
+
+  - name: Verify multi-policy profile creation
+    ansible.builtin.assert:
+      that:
+        - multi_create_res is changed
+        - multi_create_res.api_response.PolicyBucket | length == 3
+
+  - name: Multi-policy profile (idempotency)
+    cisco.intersight.intersight_chassis_profile:
+      <<: *api_info
+      name: test_cp_multi_policy
+      description: "Profile with multiple policies"
+      power_policy: test_cp_power_policy
+      snmp_policy: test_cp_snmp_policy
+      thermal_policy: test_cp_thermal_policy
+    register: multi_idempotent_res
+
+  - name: Verify multi-policy idempotency
+    ansible.builtin.assert:
+      that:
+        - not multi_idempotent_res.changed
+
+  # -- Remove One Policy --
+
+  - name: Remove SNMP policy (keep Power + Thermal)
+    cisco.intersight.intersight_chassis_profile:
+      <<: *api_info
+      name: test_cp_multi_policy
+      description: "Profile with multiple policies"
+      power_policy: test_cp_power_policy
+      thermal_policy: test_cp_thermal_policy
+    register: remove_one_res
+
+  - name: Verify policy count after removing SNMP
+    ansible.builtin.assert:
+      that:
+        - remove_one_res is changed
+
+  - name: After removing SNMP (idempotency)
+    cisco.intersight.intersight_chassis_profile:
+      <<: *api_info
+      name: test_cp_multi_policy
+      description: "Profile with multiple policies"
+      power_policy: test_cp_power_policy
+      thermal_policy: test_cp_thermal_policy
+    register: remove_one_idempotent_res
+
+  - name: Verify post-removal idempotency
+    ansible.builtin.assert:
+      that:
+        - not remove_one_idempotent_res.changed
+
+  # -- Strip All Policies --
+
+  - name: Strip all policies from multi-policy profile
+    cisco.intersight.intersight_chassis_profile:
+      <<: *api_info
+      name: test_cp_multi_policy
+      description: "Profile with multiple policies"
+    register: strip_all_res
+
+  - name: Verify all policies removed
+    ansible.builtin.assert:
+      that:
+        - strip_all_res is changed
+
+  # -- Info Module (list all) --
+
+  - name: Fetch all chassis profiles in the organization
+    cisco.intersight.intersight_chassis_profile_info:
+      <<: *api_info
+    register: all_info_res
+
+  - name: Verify at least 3 profiles exist
+    ansible.builtin.assert:
+      that:
+        - all_info_res.api_response | length >= 3
+
+  # -- Delete --
+
+  - name: Delete basic profile
+    cisco.intersight.intersight_chassis_profile:
+      <<: *api_info
+      name: test_cp_basic
+      state: absent
+    register: delete_basic_res
+
+  - name: Verify basic deletion
+    ansible.builtin.assert:
+      that:
+        - delete_basic_res is changed
+
+  - name: Delete basic profile again (idempotency)
+    cisco.intersight.intersight_chassis_profile:
+      <<: *api_info
+      name: test_cp_basic
+      state: absent
+    register: delete_basic_idempotent_res
+
+  - name: Verify delete idempotency
+    ansible.builtin.assert:
+      that:
+        - not delete_basic_idempotent_res.changed
+
+  always:
+  - name: Cleanup - remove chassis profiles
+    cisco.intersight.intersight_chassis_profile:
+      <<: *api_info
+      name: "{{ item }}"
+      state: absent
+    loop:
+      - test_cp_basic
+      - test_cp_with_policies
+      - test_cp_multi_policy
+    ignore_errors: true
+
+  - name: Cleanup - remove Power policies
+    cisco.intersight.intersight_power_policy:
+      <<: *api_info
+      name: "{{ item }}"
+      state: absent
+    loop:
+      - test_cp_power_policy
+      - test_cp_power_policy_2
+    ignore_errors: true
+
+  - name: Cleanup - remove SNMP policy
+    cisco.intersight.intersight_snmp_policy:
+      <<: *api_info
+      name: test_cp_snmp_policy
+      state: absent
+    ignore_errors: true
+
+  - name: Cleanup - remove Thermal policy
+    cisco.intersight.intersight_thermal_policy:
+      <<: *api_info
+      name: test_cp_thermal_policy
+      state: absent
+    ignore_errors: true

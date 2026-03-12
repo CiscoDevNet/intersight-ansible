@@ -243,7 +243,12 @@ api_response:
 
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible_collections.cisco.intersight.plugins.module_utils.intersight import IntersightModule, intersight_argument_spec
+from ansible_collections.cisco.intersight.plugins.module_utils.intersight import (
+    IntersightModule,
+    intersight_argument_spec,
+    resolve_policy_bucket,
+    sync_policy_bucket,
+)
 
 
 POLICY_MAPPING = {
@@ -281,64 +286,6 @@ TARGET_PLATFORM_MAP = {
     'fi-attached': 'FIAttached',
     'unified-edge': 'UnifiedEdgeServer',
 }
-
-
-def resolve_policy_bucket(intersight, organization_name):
-    """Resolve policy names to MOIDs and build the PolicyBucket list."""
-    policy_bucket = []
-    for param_name, mapping in POLICY_MAPPING.items():
-        policy_name = intersight.module.params.get(param_name)
-        if policy_name:
-            moid = intersight.get_moid_by_name_and_org(
-                resource_path=mapping['resource_path'],
-                resource_name=policy_name,
-                organization_name=organization_name,
-            )
-            if not moid:
-                intersight.module.fail_json(
-                    msg=f"Policy '{policy_name}' ({param_name}) not found in organization '{organization_name}'"
-                )
-            policy_bucket.append({
-                'Moid': moid,
-                'ObjectType': mapping['object_type'],
-            })
-    return policy_bucket
-
-
-def sync_policy_bucket(intersight, template_moid, desired_bucket, current_bucket):
-    """
-    Sync the PolicyBucket via the sub-resource endpoint using differential add/delete.
-
-    PolicyBucket items are not individually queryable resources (unlike vHBAs or VLANs),
-    so configure_secondary_resource cannot be used here. The PolicyBucket POST endpoint
-    is append-only and rejects duplicates, so we must compute the diff and only POST
-    new policies / DELETE removed policies. The set comparison also serves as the
-    idempotency guard since configure_resource always sets changed=True.
-    """
-    current_set = {(p['Moid'], p['ObjectType']) for p in current_bucket}
-    desired_set = {(p['Moid'], p['ObjectType']) for p in desired_bucket}
-
-    if current_set == desired_set:
-        return
-
-    bucket_path = f'/server/ProfileTemplates/{template_moid}/PolicyBucket'
-
-    to_remove = current_set - desired_set
-    for policy_moid, obj_type in to_remove:
-        intersight.delete_resource(
-            moid=policy_moid,
-            resource_path=bucket_path,
-        )
-
-    to_add = desired_set - current_set
-    if to_add:
-        add_body = [{'Moid': m, 'ObjectType': t} for m, t in to_add]
-        intersight.configure_resource(
-            moid=None,
-            resource_path=bucket_path,
-            body=add_body,
-            query_params={},
-        )
 
 
 def main():
@@ -410,9 +357,10 @@ def main():
     # Sync PolicyBucket via the sub-resource endpoint
     if template_moid and intersight.module.params['state'] == 'present':
         organization_name = intersight.module.params['organization']
-        desired_bucket = resolve_policy_bucket(intersight, organization_name)
+        desired_bucket = resolve_policy_bucket(intersight, organization_name, POLICY_MAPPING)
         current_bucket = template_response.get('PolicyBucket') or []
-        sync_policy_bucket(intersight, template_moid, desired_bucket, current_bucket)
+        bucket_path = f'/server/ProfileTemplates/{template_moid}/PolicyBucket'
+        sync_policy_bucket(intersight, bucket_path, desired_bucket, current_bucket)
 
     module.exit_json(**intersight.result)
 
