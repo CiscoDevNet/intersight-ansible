@@ -293,6 +293,10 @@ EXAMPLES = r'''
     api_key_id: "{{ api_key_id }}"
     name: "basic-storage-policy"
     description: "Basic storage policy configuration"
+    m2_virtual_drive_config:
+      enable: false
+    raid0_drive_config:
+      enable: false
     tags:
       - Key: "Environment"
         Value: "Production"
@@ -307,6 +311,8 @@ EXAMPLES = r'''
       enable: true
       controller_slot: "MSTOR-RAID-1"
       name: "MStorBootVd"
+    raid0_drive_config:
+      enable: false
     tags:
       - Key: "Site"
         Value: "Datacenter1"
@@ -320,6 +326,8 @@ EXAMPLES = r'''
     use_jbod_for_vd_creation: true
     default_drive_mode: "RAID0"
     secure_jbods: "1"
+    m2_virtual_drive_config:
+      enable: false
     raid0_drive_config:
       enable: true
       strip_size: 128
