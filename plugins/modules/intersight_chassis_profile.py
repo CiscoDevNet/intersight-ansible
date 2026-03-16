@@ -17,6 +17,7 @@ short_description: Manage Chassis Profiles in Cisco Intersight
 description:
   - Create, update, and delete Chassis Profiles on Cisco Intersight.
   - For more information see L(Cisco Intersight,https://intersight.com/apidocs/chassis/Profile/post/).
+  - This module does not manage deployment of the chassis profile.
 extends_documentation_fragment: intersight
 options:
   state:

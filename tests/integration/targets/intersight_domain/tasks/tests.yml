@@ -1,0 +1,401 @@
+---
+- block:
+  - name: Define anchor for Intersight API login info
+    ansible.builtin.set_fact:
+      api_info: &api_info
+        api_private_key: "{{ api_private_key }}"
+        api_key_id: "{{ api_key_id }}"
+        api_uri: "{{ api_uri | default(omit) }}"
+        validate_certs: "{{ validate_certs | default(omit) }}"
+        organization: "{{ organization }}"
+
+  - name: Make sure Env is clean - domain profiles
+    cisco.intersight.intersight_domain:
+      <<: *api_info
+      name: "{{ item }}"
+      state: absent
+    loop:
+      - test_domain_basic
+      - test_domain_with_policies
+
+  - name: Make sure Env is clean - System QoS policy
+    cisco.intersight.intersight_system_qos_policy:
+      <<: *api_info
+      name: "{{ item }}"
+      state: absent
+    loop:
+      - test_domain_qos
+      - test_domain_qos_2
+
+  - name: Make sure Env is clean - NTP policy
+    cisco.intersight.intersight_ntp_policy:
+      <<: *api_info
+      name: test_domain_ntp
+      state: absent
+
+  - name: Make sure Env is clean - SNMP policy
+    cisco.intersight.intersight_snmp_policy:
+      <<: *api_info
+      name: test_domain_snmp
+      state: absent
+
+  - name: Create System QoS policy
+    cisco.intersight.intersight_system_qos_policy:
+      <<: *api_info
+      name: test_domain_qos
+    register: qos_policy_res
+
+  - name: Create second System QoS policy for swap test
+    cisco.intersight.intersight_system_qos_policy:
+      <<: *api_info
+      name: test_domain_qos_2
+    register: qos_policy_2_res
+
+  - name: Create NTP policy
+    cisco.intersight.intersight_ntp_policy:
+      <<: *api_info
+      name: test_domain_ntp
+      enable: true
+      ntp_servers:
+        - 0.pool.ntp.org
+    register: ntp_policy_res
+
+  - name: Create SNMP policy
+    cisco.intersight.intersight_snmp_policy:
+      <<: *api_info
+      name: test_domain_snmp
+      enabled: true
+      snmp_port: 161
+      sys_contact: "admin@example.com"
+      sys_location: "Lab-DC1"
+    register: snmp_policy_res
+
+  # -- Check Mode --
+
+  - name: Create domain profile - check-mode
+    cisco.intersight.intersight_domain:
+      <<: *api_info
+      name: test_domain_basic
+      description: "Basic domain profile"
+      system_qos_policy: test_domain_qos
+      tags:
+        - Key: "Environment"
+          Value: "Test"
+    check_mode: true
+    register: creation_check_mode_res
+
+  - name: Verify profile was not created - check-mode
+    ansible.builtin.assert:
+      that:
+        - creation_check_mode_res is changed
+        - creation_check_mode_res.api_response == {}
+
+  # -- Create --
+
+  - name: Create domain profile
+    cisco.intersight.intersight_domain:
+      <<: *api_info
+      name: test_domain_basic
+      description: "Basic domain profile"
+      system_qos_policy: test_domain_qos
+      tags:
+        - Key: "Environment"
+          Value: "Test"
+    register: creation_res
+
+  - name: Verify profile creation
+    ansible.builtin.assert:
+      that:
+        - creation_res is changed
+        - creation_res.api_response.Name == 'test_domain_basic'
+        - creation_res.api_response.Moid is defined
+
+  # -- Idempotency --
+
+  - name: Create domain profile (idempotency)
+    cisco.intersight.intersight_domain:
+      <<: *api_info
+      name: test_domain_basic
+      description: "Basic domain profile"
+      system_qos_policy: test_domain_qos
+      tags:
+        - Key: "Environment"
+          Value: "Test"
+    register: creation_idempotent_res
+
+  - name: Verify idempotency - no change
+    ansible.builtin.assert:
+      that:
+        - not creation_idempotent_res.changed
+
+  # -- Update --
+
+  - name: Update domain profile description and tags
+    cisco.intersight.intersight_domain:
+      <<: *api_info
+      name: test_domain_basic
+      description: "Updated domain profile"
+      system_qos_policy: test_domain_qos
+      tags:
+        - Key: "Environment"
+          Value: "Staging"
+        - Key: "Owner"
+          Value: "CI"
+    register: update_res
+
+  - name: Verify update triggered change
+    ansible.builtin.assert:
+      that:
+        - update_res is changed
+        - update_res.api_response.Name == 'test_domain_basic'
+        - update_res.api_response.Description == 'Updated domain profile'
+
+  - name: Update domain profile (idempotency)
+    cisco.intersight.intersight_domain:
+      <<: *api_info
+      name: test_domain_basic
+      description: "Updated domain profile"
+      system_qos_policy: test_domain_qos
+      tags:
+        - Key: "Environment"
+          Value: "Staging"
+        - Key: "Owner"
+          Value: "CI"
+    register: update_idempotent_res
+
+  - name: Verify update idempotency
+    ansible.builtin.assert:
+      that:
+        - not update_idempotent_res.changed
+
+  # -- Info Module --
+
+  - name: Fetch domain profile info by name
+    cisco.intersight.intersight_domain_info:
+      <<: *api_info
+      name: test_domain_basic
+    register: info_res
+
+  - name: Verify info response structure and updated values
+    ansible.builtin.assert:
+      that:
+        - info_res.api_response | length == 1
+        - info_res.api_response[0].Name == 'test_domain_basic'
+        - info_res.api_response[0].ObjectType == 'fabric.SwitchClusterProfile'
+        - info_res.api_response[0].Description == 'Updated domain profile'
+        - info_res.api_response[0].Tags | length == 2
+        - info_res.api_response[0].SwitchProfiles | length == 2
+        - info_res.api_response[0].SwitchProfiles | selectattr('SwitchId', 'equalto', 'A') | list | length == 1
+        - info_res.api_response[0].SwitchProfiles | selectattr('SwitchId', 'equalto', 'B') | list | length == 1
+
+  - name: Verify switch profile A has QoS policy in bucket
+    vars:
+      profile_a: "{{ info_res.api_response[0].SwitchProfiles | selectattr('SwitchId', 'equalto', 'A') | first }}"
+    ansible.builtin.assert:
+      that:
+        - profile_a.PolicyBucket | selectattr('ObjectType', 'equalto', 'fabric.SystemQosPolicy') | list | length == 1
+
+  # -- With Policies --
+
+  - name: Create domain profile with multiple shared policies
+    cisco.intersight.intersight_domain:
+      <<: *api_info
+      name: test_domain_with_policies
+      description: "Profile with policies"
+      system_qos_policy: test_domain_qos
+      ntp_policy: test_domain_ntp
+      snmp_policy: test_domain_snmp
+    register: multi_policy_res
+
+  - name: Verify multi-policy profile creation
+    ansible.builtin.assert:
+      that:
+        - multi_policy_res is changed
+        - multi_policy_res.api_response.Name == 'test_domain_with_policies'
+
+  - name: Fetch multi-policy domain info to verify policies
+    cisco.intersight.intersight_domain_info:
+      <<: *api_info
+      name: test_domain_with_policies
+    register: multi_policy_info_res
+
+  - name: Verify all shared policies attached to both switch profiles
+    vars:
+      profile_a: "{{ multi_policy_info_res.api_response[0].SwitchProfiles | selectattr('SwitchId', 'equalto', 'A') | first }}"
+      profile_b: "{{ multi_policy_info_res.api_response[0].SwitchProfiles | selectattr('SwitchId', 'equalto', 'B') | first }}"
+      expected_policy_types:
+        - fabric.SystemQosPolicy
+        - ntp.Policy
+        - snmp.Policy
+    ansible.builtin.assert:
+      that:
+        - profile_a.PolicyBucket | selectattr('ObjectType', 'equalto', item) | list | length == 1
+        - profile_b.PolicyBucket | selectattr('ObjectType', 'equalto', item) | list | length == 1
+    loop: "{{ expected_policy_types }}"
+
+  - name: Multi-policy domain profile (idempotency)
+    cisco.intersight.intersight_domain:
+      <<: *api_info
+      name: test_domain_with_policies
+      description: "Profile with policies"
+      system_qos_policy: test_domain_qos
+      ntp_policy: test_domain_ntp
+      snmp_policy: test_domain_snmp
+    register: multi_policy_idempotent_res
+
+  - name: Verify multi-policy idempotency
+    ansible.builtin.assert:
+      that:
+        - not multi_policy_idempotent_res.changed
+
+  # -- Policy Swap --
+
+  - name: Swap System QoS policy to a different one
+    cisco.intersight.intersight_domain:
+      <<: *api_info
+      name: test_domain_with_policies
+      description: "Profile with policies"
+      system_qos_policy: test_domain_qos_2
+      ntp_policy: test_domain_ntp
+      snmp_policy: test_domain_snmp
+    register: swap_policy_res
+
+  - name: Verify policy swap triggered change
+    ansible.builtin.assert:
+      that:
+        - swap_policy_res is changed
+
+  - name: Fetch info after policy swap
+    cisco.intersight.intersight_domain_info:
+      <<: *api_info
+      name: test_domain_with_policies
+    register: swap_info_res
+
+  - name: Verify QoS policy was swapped to the new one
+    vars:
+      profile_a: "{{ swap_info_res.api_response[0].SwitchProfiles | selectattr('SwitchId', 'equalto', 'A') | first }}"
+      qos_policy: "{{ profile_a.PolicyBucket | selectattr('ObjectType', 'equalto', 'fabric.SystemQosPolicy') | first }}"
+    ansible.builtin.assert:
+      that:
+        - qos_policy.Moid == qos_policy_2_res.api_response.Moid
+
+  # -- Remove One Policy --
+
+  - name: Remove SNMP policy (keep QoS + NTP)
+    cisco.intersight.intersight_domain:
+      <<: *api_info
+      name: test_domain_with_policies
+      description: "Profile with policies"
+      system_qos_policy: test_domain_qos_2
+      ntp_policy: test_domain_ntp
+    register: remove_one_res
+
+  - name: Verify policy removal triggered change
+    ansible.builtin.assert:
+      that:
+        - remove_one_res is changed
+
+  - name: Fetch info after SNMP policy removal
+    cisco.intersight.intersight_domain_info:
+      <<: *api_info
+      name: test_domain_with_policies
+    register: remove_info_res
+
+  - name: Verify SNMP policy was removed and remaining policies are intact
+    vars:
+      profile_a: "{{ remove_info_res.api_response[0].SwitchProfiles | selectattr('SwitchId', 'equalto', 'A') | first }}"
+    ansible.builtin.assert:
+      that:
+        - profile_a.PolicyBucket | selectattr('ObjectType', 'equalto', 'snmp.Policy') | list | length == 0
+        - profile_a.PolicyBucket | selectattr('ObjectType', 'equalto', 'fabric.SystemQosPolicy') | list | length == 1
+        - profile_a.PolicyBucket | selectattr('ObjectType', 'equalto', 'ntp.Policy') | list | length == 1
+
+  - name: After removing SNMP (idempotency)
+    cisco.intersight.intersight_domain:
+      <<: *api_info
+      name: test_domain_with_policies
+      description: "Profile with policies"
+      system_qos_policy: test_domain_qos_2
+      ntp_policy: test_domain_ntp
+    register: remove_one_idempotent_res
+
+  - name: Verify post-removal idempotency
+    ansible.builtin.assert:
+      that:
+        - not remove_one_idempotent_res.changed
+
+  # -- Info Module (list all) --
+
+  - name: Fetch all domain profiles in the organization
+    cisco.intersight.intersight_domain_info:
+      <<: *api_info
+    register: all_info_res
+
+  - name: Verify at least 2 profiles exist with enriched data
+    ansible.builtin.assert:
+      that:
+        - all_info_res.api_response | length >= 2
+        - all_info_res.api_response | selectattr('Name', 'equalto', 'test_domain_basic') | list | length == 1
+        - all_info_res.api_response | selectattr('Name', 'equalto', 'test_domain_with_policies') | list | length == 1
+        - (all_info_res.api_response | selectattr('Name', 'equalto', 'test_domain_basic') | first).SwitchProfiles is defined
+
+  # -- Delete --
+
+  - name: Delete basic domain profile
+    cisco.intersight.intersight_domain:
+      <<: *api_info
+      name: test_domain_basic
+      state: absent
+    register: delete_basic_res
+
+  - name: Verify basic deletion
+    ansible.builtin.assert:
+      that:
+        - delete_basic_res is changed
+
+  - name: Delete basic domain profile again (idempotency)
+    cisco.intersight.intersight_domain:
+      <<: *api_info
+      name: test_domain_basic
+      state: absent
+    register: delete_basic_idempotent_res
+
+  - name: Verify delete idempotency
+    ansible.builtin.assert:
+      that:
+        - not delete_basic_idempotent_res.changed
+
+  always:
+  - name: Cleanup - remove domain profiles
+    cisco.intersight.intersight_domain:
+      <<: *api_info
+      name: "{{ item }}"
+      state: absent
+    loop:
+      - test_domain_basic
+      - test_domain_with_policies
+    ignore_errors: true
+
+  - name: Cleanup - remove System QoS policies
+    cisco.intersight.intersight_system_qos_policy:
+      <<: *api_info
+      name: "{{ item }}"
+      state: absent
+    loop:
+      - test_domain_qos
+      - test_domain_qos_2
+    ignore_errors: true
+
+  - name: Cleanup - remove NTP policy
+    cisco.intersight.intersight_ntp_policy:
+      <<: *api_info
+      name: test_domain_ntp
+      state: absent
+    ignore_errors: true
+
+  - name: Cleanup - remove SNMP policy
+    cisco.intersight.intersight_snmp_policy:
+      <<: *api_info
+      name: test_domain_snmp
+      state: absent
+    ignore_errors: true
