@@ -18,6 +18,8 @@ description:
   - Create, update, and delete Server Profile Templates on Cisco Intersight.
   - Server Profile Templates define a reusable configuration that can be used to derive multiple Server Profiles.
   - Policies are attached to the template via the PolicyBucket sub-resource endpoint.
+  - To derive Server Profiles from a template, use the derive_profiles playbook included in this collection.
+    See U(https://github.com/CiscoDevNet/intersight-ansible/blob/master/playbooks/derive_profiles.yml) for details.
   - For more information see L(Cisco Intersight,https://intersight.com/apidocs/server/ProfileTemplate/post/).
 extends_documentation_fragment: intersight
 options:
