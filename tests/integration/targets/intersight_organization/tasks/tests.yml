@@ -8,13 +8,37 @@
         api_uri: "{{ api_uri | default(omit) }}"
         validate_certs: "{{ validate_certs | default(omit) }}"
 
-  # --- Setup: Create prerequisite Resource Group ---
+  # --- Setup: Lookup domain and create prerequisite Resource Group ---
+  - name: Find an Intersight-managed UCS domain target
+    cisco.intersight.intersight_rest_api:
+      <<: *api_info
+      resource_path: /asset/Targets
+      query_params:
+        $filter: "TargetType eq 'UCSFIISM'"
+        $select: "Name,RegisteredDevice"
+        $expand: "RegisteredDevice($select=Moid)"
+        $top: 1
+    register: domain_target_result
+
+  - name: Set domain target name for org tests
+    ansible.builtin.set_fact:
+      org_test_domain_name: "{{ domain_target_result.api_response.Name }}"
+    when: domain_target_result.api_response.Name is defined
+
+  - name: Fail if no UCS domain target available
+    ansible.builtin.fail:
+      msg: >-
+        Organization tests require an Intersight-managed UCS domain target
+        (UCSFIISM) to create a Resource Group. No target found.
+    when: org_test_domain_name is not defined or org_test_domain_name == ''
+
   - name: Create test Resource Group for org assignment
     cisco.intersight.intersight_resource_group:
       <<: *api_info
       name: test_rg_for_org
       description: "Resource group for organization tests"
-      qualifier: all
+      resources:
+        - domain_name: "{{ org_test_domain_name }}"
     register: setup_rg
 
   # --- Cleanup environment ---
