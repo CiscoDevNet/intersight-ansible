@@ -20,6 +20,36 @@ description:
   - For more information see L(Cisco Intersight,https://intersight.com/apidocs).
 extends_documentation_fragment: intersight
 options:
+  state:
+    description:
+      - If C(present), will verify the resource is present and will create if needed.
+      - If C(absent), will verify the resource is absent and will delete if needed.
+    choices: [present, absent]
+    default: present
+    type: str
+  organization:
+    description:
+      - The name of the Organization this resource is assigned to.
+      - Profiles and Policies that are created within a Custom Organization are applicable only to devices in the same Organization.
+    default: default
+    type: str
+  name:
+    description:
+      - The name assigned to the BIOS policy.
+      - The name must be between 1 and 62 alphanumeric characters, allowing special characters :-_.
+    required: true
+    type: str
+  tags:
+    description:
+      - List of tags in Key:<user-defined key> Value:<user-defined value> format.
+    type: list
+    elements: dict
+  description:
+    description:
+      - The user-defined description of the BIOS policy.
+      - Description can contain letters(a-z, A-Z), numbers(0-9), hyphen(-), period(.), colon(:), or an underscore(_).
+    aliases: [descr]
+    type: str
   acpi_srat_sp_flag_en:
     description:
       -  BIOS Token for setting ACPI SRAT SP Flag Enable configuration.
@@ -1908,12 +1938,6 @@ options:
     choices: ['platform-default' , '256G' , '128G' , '64G' , '32G' , '16G' , '8G' , '4G' , '2G' , '1G' , 'Auto']
     default: platform-default
     type: str
-  name:
-    description:
-      - The name assigned to the BIOS policy.
-      - The name must be between 1 and 62 alphanumeric characters, allowing special characters :-_.
-    required: true
-    type: str
   network_stack:
     description:
       -  BIOS Token for setting Network Stack configuration.
@@ -1995,12 +2019,6 @@ options:
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
     default: platform-default
-    type: str
-  organization:
-    description:
-      - The name of the Organization this resource is assigned to.
-      - Profiles and Policies that are created within a Custom Organization are applicable only to devices in the same Organization.
-    default: default
     type: str
   os_boot_watchdog_timer:
     description:
@@ -4615,13 +4633,6 @@ options:
     choices: ['platform-default' , 'enabled' , 'disabled']
     default: platform-default
     type: str
-  state:
-    description:
-      - If C(present), will verify the resource is present and will create if needed.
-      - If C(absent), will verify the resource is absent and will delete if needed.
-    choices: [present, absent]
-    default: present
-    type: str
   streamer_prefetch:
     description:
       -  BIOS Token for setting DCU Streamer Prefetch configuration.
@@ -4639,17 +4650,6 @@ options:
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
     default: platform-default
-    type: str
-  tags:
-    description:
-      - List of tags in Key:<user-defined key> Value:<user-defined value> format.
-    type: list
-    elements: dict
-  description:
-    description:
-      - The user-defined description of the BIOS policy.
-      - Description can contain letters(a-z, A-Z), numbers(0-9), hyphen(-), period(.), colon(:), or an underscore(_).
-    aliases: [descr]
     type: str
   terminal_type:
     description:
