@@ -57,7 +57,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   acs_control_gpu2state:
     description:
@@ -66,7 +65,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   acs_control_gpu3state:
     description:
@@ -75,7 +73,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   acs_control_gpu4state:
     description:
@@ -84,7 +81,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   acs_control_gpu5state:
     description:
@@ -93,7 +89,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   acs_control_gpu6state:
     description:
@@ -102,7 +97,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   acs_control_gpu7state:
     description:
@@ -111,7 +105,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   acs_control_gpu8state:
     description:
@@ -120,7 +113,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   acs_control_slot11state:
     description:
@@ -129,7 +121,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   acs_control_slot12state:
     description:
@@ -138,7 +129,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   acs_control_slot13state:
     description:
@@ -147,7 +137,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   acs_control_slot14state:
     description:
@@ -156,7 +145,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   adaptive_refresh_mgmt_level:
     description:
@@ -167,7 +155,6 @@ options:
       -  Level B - Value - Level B for configuring adaptive_refresh_mgmt_level token.
       -  Level C - Value - Level C for configuring adaptive_refresh_mgmt_level token.
     choices: ['platform-default' , 'Default' , 'Level A' , 'Level B' , 'Level C']
-    default: platform-default
     type: str
   adjacent_cache_line_prefetch:
     description:
@@ -176,7 +163,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   advanced_mem_test:
     description:
@@ -186,7 +172,6 @@ options:
       -  disabled - Value - disabled for configuring advanced_mem_test token.
       -  enabled - Value - enabled for configuring advanced_mem_test token.
     choices: ['platform-default' , 'Auto' , 'disabled' , 'enabled']
-    default: platform-default
     type: str
   all_usb_devices:
     description:
@@ -195,7 +180,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   altitude:
     description:
@@ -207,7 +191,6 @@ options:
       -  3000-m - Value - 3000-m for configuring altitude token.
       -  auto - Value - auto for configuring altitude token.
     choices: ['platform-default' , '300-m' , '900-m' , '1500-m' , '3000-m' , 'auto']
-    default: platform-default
     type: str
   aspm_support:
     description:
@@ -218,7 +201,6 @@ options:
       -  Force L0s - Value - Force L0s for configuring aspm_support token.
       -  L1 Only - Value - L1 Only for configuring aspm_support token.
     choices: ['platform-default' , 'Auto' , 'Disabled' , 'Force L0s' , 'L1 Only']
-    default: platform-default
     type: str
   assert_nmi_on_perr:
     description:
@@ -227,7 +209,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   assert_nmi_on_serr:
     description:
@@ -236,7 +217,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   auto_cc_state:
     description:
@@ -245,7 +225,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   autonumous_cstate_enable:
     description:
@@ -254,7 +233,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   baud_rate:
     description:
@@ -266,7 +244,6 @@ options:
       -  57600 - Value - 57600 for configuring baud_rate token.
       -  115200 - Value - 115200 for configuring baud_rate token.
     choices: ['platform-default' , '9600' , '19200' , '38400' , '57600' , '115200']
-    default: platform-default
     type: str
   bme_dma_mitigation:
     description:
@@ -275,7 +252,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   boot_option_num_retry:
     description:
@@ -285,7 +261,6 @@ options:
       -  13 - Value - 13 for configuring boot_option_num_retry token.
       -  Infinite - Value - Infinite for configuring boot_option_num_retry token.
     choices: ['platform-default' , '5' , '13' , 'Infinite']
-    default: platform-default
     type: str
   boot_option_re_cool_down:
     description:
@@ -295,7 +270,6 @@ options:
       -  45 - Value - 45 for configuring boot_option_re_cool_down token.
       -  90 - Value - 90 for configuring boot_option_re_cool_down token.
     choices: ['platform-default' , '15' , '45' , '90']
-    default: platform-default
     type: str
   boot_option_retry:
     description:
@@ -304,7 +278,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   boot_performance_mode:
     description:
@@ -314,7 +287,6 @@ options:
       -  Max Performance - Value - Max Performance for configuring boot_performance_mode token.
       -  Set by Intel NM - Value - Set by Intel NM for configuring boot_performance_mode token.
     choices: ['platform-default' , 'Max Efficient' , 'Max Performance' , 'Set by Intel NM']
-    default: platform-default
     type: str
   burst_and_postponed_refresh:
     description:
@@ -323,7 +295,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   c1auto_demotion:
     description:
@@ -332,7 +303,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   c1auto_un_demotion:
     description:
@@ -341,7 +311,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   cbs_cmn_apbdis:
     description:
@@ -351,7 +320,6 @@ options:
       -  1 - Value - 1 for configuring cbs_cmn_apbdis token.
       -  Auto - Value - Auto for configuring cbs_cmn_apbdis token.
     choices: ['platform-default' , '0' , '1' , 'Auto']
-    default: platform-default
     type: str
   cbs_cmn_cpu_cpb:
     description:
@@ -360,7 +328,6 @@ options:
       -  Auto - Value - Auto for configuring cbs_cmn_cpu_cpb token.
       -  disabled - Value - disabled for configuring cbs_cmn_cpu_cpb token.
     choices: ['platform-default' , 'Auto' , 'disabled']
-    default: platform-default
     type: str
   cbs_cmn_cpu_gen_downcore_ctrl:
     description:
@@ -374,7 +341,6 @@ options:
       -  TWO (1 + 1) - Value - TWO (1 + 1) for configuring cbs_cmn_cpu_gen_downcore_ctrl token.
       -  TWO (2 + 0) - Value - TWO (2 + 0) for configuring cbs_cmn_cpu_gen_downcore_ctrl token.
     choices: ['platform-default' , 'Auto' , 'FOUR (2 + 2)' , 'FOUR (4 + 0)' , 'SIX (3 + 3)' , 'THREE (3 + 0)' , 'TWO (1 + 1)' , 'TWO (2 + 0)']
-    default: platform-default
     type: str
   cbs_cmn_cpu_global_cstate_ctrl:
     description:
@@ -384,7 +350,6 @@ options:
       -  disabled - Value - disabled for configuring cbs_cmn_cpu_global_cstate_ctrl token.
       -  enabled - Value - enabled for configuring cbs_cmn_cpu_global_cstate_ctrl token.
     choices: ['platform-default' , 'Auto' , 'disabled' , 'enabled']
-    default: platform-default
     type: str
   cbs_cmn_cpu_l1stream_hw_prefetcher:
     description:
@@ -394,7 +359,6 @@ options:
       -  disabled - Value - disabled for configuring cbs_cmn_cpu_l1stream_hw_prefetcher token.
       -  enabled - Value - enabled for configuring cbs_cmn_cpu_l1stream_hw_prefetcher token.
     choices: ['platform-default' , 'Auto' , 'disabled' , 'enabled']
-    default: platform-default
     type: str
   cbs_cmn_cpu_l2stream_hw_prefetcher:
     description:
@@ -404,7 +368,6 @@ options:
       -  disabled - Value - disabled for configuring cbs_cmn_cpu_l2stream_hw_prefetcher token.
       -  enabled - Value - enabled for configuring cbs_cmn_cpu_l2stream_hw_prefetcher token.
     choices: ['platform-default' , 'Auto' , 'disabled' , 'enabled']
-    default: platform-default
     type: str
   cbs_cmn_cpu_smee:
     description:
@@ -414,7 +377,6 @@ options:
       -  disabled - Value - disabled for configuring cbs_cmn_cpu_smee token.
       -  enabled - Value - enabled for configuring cbs_cmn_cpu_smee token.
     choices: ['platform-default' , 'Auto' , 'disabled' , 'enabled']
-    default: platform-default
     type: str
   cbs_cmn_cpu_streaming_stores_ctrl:
     description:
@@ -424,7 +386,6 @@ options:
       -  disabled - Value - disabled for configuring cbs_cmn_cpu_streaming_stores_ctrl token.
       -  enabled - Value - enabled for configuring cbs_cmn_cpu_streaming_stores_ctrl token.
     choices: ['platform-default' , 'Auto' , 'disabled' , 'enabled']
-    default: platform-default
     type: str
   cbs_cmnc_tdp_ctl:
     description:
@@ -433,7 +394,6 @@ options:
       -  Auto - Value - Auto for configuring cbs_cmnc_tdp_ctl token.
       -  Manual - Value - Manual for configuring cbs_cmnc_tdp_ctl token.
     choices: ['platform-default' , 'Auto' , 'Manual']
-    default: platform-default
     type: str
   cbs_cmn_determinism_slider:
     description:
@@ -443,7 +403,6 @@ options:
       -  Performance - Value - Performance for configuring cbs_cmn_determinism_slider token.
       -  Power - Value - Power for configuring cbs_cmn_determinism_slider token.
     choices: ['platform-default' , 'Auto' , 'Performance' , 'Power']
-    default: platform-default
     type: str
   cbs_cmn_efficiency_mode_en:
     description:
@@ -452,7 +411,6 @@ options:
       -  Auto - Value - Auto for configuring cbs_cmn_efficiency_mode_en token.
       -  Enabled - Value - Enabled for configuring cbs_cmn_efficiency_mode_en token.
     choices: ['platform-default' , 'Auto' , 'Enabled']
-    default: platform-default
     type: str
   cbs_cmn_fixed_soc_pstate:
     description:
@@ -464,7 +422,6 @@ options:
       -  P2 - Value - P2 for configuring cbs_cmn_fixed_soc_pstate token.
       -  P3 - Value - P3 for configuring cbs_cmn_fixed_soc_pstate token.
     choices: ['platform-default' , 'Auto' , 'P0' , 'P1' , 'P2' , 'P3']
-    default: platform-default
     type: str
   cbs_cmn_gnb_nb_iommu:
     description:
@@ -474,7 +431,6 @@ options:
       -  disabled - Value - disabled for configuring cbs_cmn_gnb_nb_iommu token.
       -  enabled - Value - enabled for configuring cbs_cmn_gnb_nb_iommu token.
     choices: ['platform-default' , 'Auto' , 'disabled' , 'enabled']
-    default: platform-default
     type: str
   cbs_cmn_gnb_smucppc:
     description:
@@ -484,7 +440,6 @@ options:
       -  disabled - Value - disabled for configuring cbs_cmn_gnb_smucppc token.
       -  enabled - Value - enabled for configuring cbs_cmn_gnb_smucppc token.
     choices: ['platform-default' , 'Auto' , 'disabled' , 'enabled']
-    default: platform-default
     type: str
   cbs_cmn_gnb_smu_df_cstates:
     description:
@@ -494,7 +449,6 @@ options:
       -  disabled - Value - disabled for configuring cbs_cmn_gnb_smu_df_cstates token.
       -  enabled - Value - enabled for configuring cbs_cmn_gnb_smu_df_cstates token.
     choices: ['platform-default' , 'Auto' , 'disabled' , 'enabled']
-    default: platform-default
     type: str
   cbs_cmn_mem_ctrl_bank_group_swap_ddr4:
     description:
@@ -504,7 +458,6 @@ options:
       -  disabled - Value - disabled for configuring cbs_cmn_mem_ctrl_bank_group_swap_ddr4 token.
       -  enabled - Value - enabled for configuring cbs_cmn_mem_ctrl_bank_group_swap_ddr4 token.
     choices: ['platform-default' , 'Auto' , 'disabled' , 'enabled']
-    default: platform-default
     type: str
   cbs_cmn_mem_map_bank_interleave_ddr4:
     description:
@@ -513,7 +466,6 @@ options:
       -  Auto - Value - Auto for configuring cbs_cmn_mem_map_bank_interleave_ddr4 token.
       -  disabled - Value - disabled for configuring cbs_cmn_mem_map_bank_interleave_ddr4 token.
     choices: ['platform-default' , 'Auto' , 'disabled']
-    default: platform-default
     type: str
   cbs_cpu_ccd_ctrl_ssp:
     description:
@@ -525,7 +477,6 @@ options:
       -  6 CCDs - Value - 6 CCDs for configuring cbs_cpu_ccd_ctrl_ssp token.
       -  Auto - Value - Auto for configuring cbs_cpu_ccd_ctrl_ssp token.
     choices: ['platform-default' , '2 CCDs' , '3 CCDs' , '4 CCDs' , '6 CCDs' , 'Auto']
-    default: platform-default
     type: str
   cbs_cpu_core_ctrl:
     description:
@@ -540,7 +491,6 @@ options:
       -  THREE (3 + 0) - Value - THREE (3 + 0) for configuring cbs_cpu_core_ctrl token.
       -  TWO (2 + 0) - Value - TWO (2 + 0) for configuring cbs_cpu_core_ctrl token.
     choices: ['platform-default' , 'Auto' , 'FIVE (5 + 0)' , 'FOUR (4 + 0)' , 'ONE (1 + 0)' , 'SEVEN (7 + 0)' , 'SIX (6 + 0)' , 'THREE (3 + 0)' , 'TWO (2 + 0)']
-    default: platform-default
     type: str
   cbs_cpu_smt_ctrl:
     description:
@@ -550,7 +500,6 @@ options:
       -  disabled - Value - disabled for configuring cbs_cpu_smt_ctrl token.
       -  enabled - Value - enabled for configuring cbs_cpu_smt_ctrl token.
     choices: ['platform-default' , 'Auto' , 'disabled' , 'enabled']
-    default: platform-default
     type: str
   cbs_dbg_cpu_snp_mem_cover:
     description:
@@ -561,12 +510,10 @@ options:
       -  disabled - Value - disabled for configuring cbs_dbg_cpu_snp_mem_cover token.
       -  enabled - Value - enabled for configuring cbs_dbg_cpu_snp_mem_cover token.
     choices: ['platform-default' , 'Auto' , 'Custom' , 'disabled' , 'enabled']
-    default: platform-default
     type: str
   cbs_dbg_cpu_snp_mem_size_cover:
     description:
       -  BIOS Token for setting SNP Memory Size to Cover in MiB configuration (0 - 1048576 MiB).
-    default: platform-default
     type: str
   cbs_df_cmn_acpi_srat_l3numa:
     description:
@@ -576,7 +523,6 @@ options:
       -  disabled - Value - disabled for configuring cbs_df_cmn_acpi_srat_l3numa token.
       -  enabled - Value - enabled for configuring cbs_df_cmn_acpi_srat_l3numa token.
     choices: ['platform-default' , 'Auto' , 'disabled' , 'enabled']
-    default: platform-default
     type: str
   cbs_df_cmn_dram_nps:
     description:
@@ -588,7 +534,6 @@ options:
       -  NPS2 - Value - NPS2 for configuring cbs_df_cmn_dram_nps token.
       -  NPS4 - Value - NPS4 for configuring cbs_df_cmn_dram_nps token.
     choices: ['platform-default' , 'Auto' , 'NPS0' , 'NPS1' , 'NPS2' , 'NPS4']
-    default: platform-default
     type: str
   cbs_df_cmn_mem_intlv:
     description:
@@ -600,7 +545,6 @@ options:
       -  None - Value - None for configuring cbs_df_cmn_mem_intlv token.
       -  Socket - Value - Socket for configuring cbs_df_cmn_mem_intlv token.
     choices: ['platform-default' , 'Auto' , 'Channel' , 'Die' , 'None' , 'Socket']
-    default: platform-default
     type: str
   cbs_df_cmn_mem_intlv_size:
     description:
@@ -613,7 +557,6 @@ options:
       -  4 KB - Value - 4 KiB for configuring cbs_df_cmn_mem_intlv_size token.
       -  Auto - Value - Auto for configuring cbs_df_cmn_mem_intlv_size token.
     choices: ['platform-default' , '256 Bytes' , '512 Bytes' , '1 KB' , '2 KB' , '4 KB' , 'Auto']
-    default: platform-default
     type: str
   cbs_sev_snp_support:
     description:
@@ -622,7 +565,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   cdn_enable:
     description:
@@ -631,7 +573,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   cdn_support:
     description:
@@ -641,7 +582,6 @@ options:
       -  enabled - Value - enabled for configuring cdn_support token.
       -  LOMs Only - Value - LOMs Only for configuring cdn_support token.
     choices: ['platform-default' , 'disabled' , 'enabled' , 'LOMs Only']
-    default: platform-default
     type: str
   channel_inter_leave:
     description:
@@ -653,7 +593,6 @@ options:
       -  4-way - Value - 4-way for configuring channel_inter_leave token.
       -  auto - Value - auto for configuring channel_inter_leave token.
     choices: ['platform-default' , '1-way' , '2-way' , '3-way' , '4-way' , 'auto']
-    default: platform-default
     type: str
   cisco_adaptive_mem_training:
     description:
@@ -662,7 +601,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   cisco_debug_level:
     description:
@@ -672,7 +610,6 @@ options:
       -  Minimum - Value - Minimum for configuring cisco_debug_level token.
       -  Normal - Value - Normal for configuring cisco_debug_level token.
     choices: ['platform-default' , 'Maximum' , 'Minimum' , 'Normal']
-    default: platform-default
     type: str
   cisco_oprom_launch_optimization:
     description:
@@ -681,7 +618,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   cisco_xgmi_max_speed:
     description:
@@ -690,7 +626,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   cke_low_policy:
     description:
@@ -701,7 +636,6 @@ options:
       -  fast - Value - fast for configuring cke_low_policy token.
       -  slow - Value - slow for configuring cke_low_policy token.
     choices: ['platform-default' , 'auto' , 'disabled' , 'fast' , 'slow']
-    default: platform-default
     type: str
   closed_loop_therm_throtl:
     description:
@@ -710,7 +644,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   cmci_enable:
     description:
@@ -719,7 +652,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   config_tdp:
     description:
@@ -728,7 +660,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   config_tdp_level:
     description:
@@ -738,7 +669,6 @@ options:
       -  Level 2 - Value - Level 2 for configuring config_tdp_level token.
       -  Normal - Value - Normal for configuring config_tdp_level token.
     choices: ['platform-default' , 'Level 1' , 'Level 2' , 'Normal']
-    default: platform-default
     type: str
   console_redirection:
     description:
@@ -750,7 +680,6 @@ options:
       -  enabled - Value - enabled for configuring console_redirection token.
       -  serial-port-a - Value - serial-port-a for configuring console_redirection token.
     choices: ['platform-default' , 'com-0' , 'com-1' , 'disabled' , 'enabled' , 'serial-port-a']
-    default: platform-default
     type: str
   core_multi_processing:
     description:
@@ -825,7 +754,6 @@ options:
               '19' , '20' , '21' , '22' , '23' , '24' , '25' , '26' , '27' , '28' , '29' , '30' , '31' , '32' , '33' , '34' , '35' , '36' , '37',
               '38' , '39' , '40' , '41' , '42' , '43' , '44' , '45' , '46' , '47' , '48' , '49' , '50' , '51' , '52' , '53' , '54' , '55' , '56' , '57',
               '58' , '59' , '60' , '61' , '62' , '63' , '64' , 'all']
-    default: platform-default
     type: str
   cpu_energy_performance:
     description:
@@ -838,7 +766,6 @@ options:
       -  performance - Value - performance for configuring cpu_energy_performance token.
       -  power - Value - power for configuring cpu_energy_performance token.
     choices: ['platform-default' , 'balanced-energy' , 'balanced-performance' , 'balanced-power' , 'energy-efficient' , 'performance' , 'power']
-    default: platform-default
     type: str
   cpu_frequency_floor:
     description:
@@ -847,7 +774,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   cpu_pa_limit:
     description:
@@ -856,7 +782,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   cpu_perf_enhancement:
     description:
@@ -865,7 +790,6 @@ options:
       -  Auto - Value - Auto for configuring cpu_perf_enhancement token.
       -  Disabled - Value - Disabled for configuring cpu_perf_enhancement token.
     choices: ['platform-default' , 'Auto' , 'Disabled']
-    default: platform-default
     type: str
   cpu_performance:
     description:
@@ -876,7 +800,6 @@ options:
       -  high-throughput - Value - high-throughput for configuring cpu_performance token.
       -  hpc - Value - hpc for configuring cpu_performance token.
     choices: ['platform-default' , 'custom' , 'enterprise' , 'high-throughput' , 'hpc']
-    default: platform-default
     type: str
   cpu_power_management:
     description:
@@ -887,7 +810,6 @@ options:
       -  energy-efficient - Value - energy-efficient for configuring cpu_power_management token.
       -  performance - Value - performance for configuring cpu_power_management token.
     choices: ['platform-default' , 'custom' , 'disabled' , 'energy-efficient' , 'performance']
-    default: platform-default
     type: str
   crfastgo_config:
     description:
@@ -904,7 +826,6 @@ options:
       -  Option 5 - Value - Option 5 for configuring crfastgo_config token.
     choices: ['platform-default' , 'Auto' , 'Default' , 'Disable optimization' , 'Enable optimization' , 'Option 1' , 'Option 2' , 'Option 3',
               'Option 4' , 'Option 5']
-    default: platform-default
     type: str
   cr_qos:
     description:
@@ -920,7 +841,6 @@ options:
       -  Recipe 3 - Value - Recipe 3 for configuring cr_qos token.
     choices: ['platform-default' , 'Disabled' , 'Mode 0 - Disable the PMem QoS Feature' , 'Mode 1 - M2M QoS Enable and CHA QoS Disable' ,
               'Mode 2 - M2M QoS Enable and CHA QoS Enable' , 'Profile 1' , 'Recipe 1' , 'Recipe 2' , 'Recipe 3']
-    default: platform-default
     type: str
   dcpmm_firmware_downgrade:
     description:
@@ -929,7 +849,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   demand_scrub:
     description:
@@ -938,7 +857,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   direct_cache_access:
     description:
@@ -948,7 +866,6 @@ options:
       -  disabled - Value - disabled for configuring direct_cache_access token.
       -  enabled - Value - enabled for configuring direct_cache_access token.
     choices: ['platform-default' , 'auto' , 'disabled' , 'enabled']
-    default: platform-default
     type: str
   dma_ctrl_opt_in:
     description:
@@ -957,7 +874,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   dram_clock_throttling:
     description:
@@ -968,7 +884,6 @@ options:
       -  Energy Efficient - Value - Energy Efficient for configuring dram_clock_throttling token.
       -  Performance - Value - Performance for configuring dram_clock_throttling token.
     choices: ['platform-default' , 'Auto' , 'Balanced' , 'Energy Efficient' , 'Performance']
-    default: platform-default
     type: str
   dram_refresh_rate:
     description:
@@ -980,7 +895,6 @@ options:
       -  4x - Value - 4x for configuring dram_refresh_rate token.
       -  Auto - Value - Auto for configuring dram_refresh_rate token.
     choices: ['platform-default' , '1x' , '2x' , '3x' , '4x' , 'Auto']
-    default: platform-default
     type: str
   dram_sw_thermal_throttling:
     description:
@@ -989,7 +903,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   eadr_support:
     description:
@@ -999,7 +912,6 @@ options:
       -  disabled - Value - disabled for configuring eadr_support token.
       -  enabled - Value - enabled for configuring eadr_support token.
     choices: ['platform-default' , 'Auto' , 'disabled' , 'enabled']
-    default: platform-default
     type: str
   edpc_en:
     description:
@@ -1009,7 +921,6 @@ options:
       -  On Fatal Error - Value - On Fatal Error for configuring edpc_en token.
       -  On Fatal and Non-Fatal Errors - Value - On Fatal and Non-Fatal Errors for configuring edpc_en token.
     choices: ['platform-default' , 'Disabled' , 'On Fatal Error' , 'On Fatal and Non-Fatal Errors']
-    default: platform-default
     type: str
   enable_clock_spread_spec:
     description:
@@ -1022,7 +933,6 @@ options:
       -  Hardware - Value - Hardware for configuring enable_clock_spread_spec token.
       -  Off - Value - Off for configuring enable_clock_spread_spec token.
     choices: ['platform-default' , '0P3_Percent' , '0P5_Percent' , 'disabled' , 'enabled' , 'Hardware' , 'Off']
-    default: platform-default
     type: str
   enable_mktme:
     description:
@@ -1031,7 +941,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   enable_rmt:
     description:
@@ -1040,7 +949,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   enable_sgx:
     description:
@@ -1049,7 +957,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   enable_tme:
     description:
@@ -1058,7 +965,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   energy_efficient_turbo:
     description:
@@ -1067,7 +973,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   eng_perf_tuning:
     description:
@@ -1076,7 +981,6 @@ options:
       -  BIOS - Value - BIOS for configuring eng_perf_tuning token.
       -  OS - Value - OS for configuring eng_perf_tuning token.
     choices: ['platform-default' , 'BIOS' , 'OS']
-    default: platform-default
     type: str
   enhanced_intel_speed_step_tech:
     description:
@@ -1085,7 +989,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   epoch_update:
     description:
@@ -1095,7 +998,6 @@ options:
       -  Manual User Defined Owner EPOCHs - Value - Manual User Defined Owner EPOCHs for configuring epoch_update token.
       -  SGX Owner EPOCH activated - Value - SGX Owner EPOCH activated for configuring epoch_update token.
     choices: ['platform-default' , 'Change to New Random Owner EPOCHs' , 'Manual User Defined Owner EPOCHs' , 'SGX Owner EPOCH activated']
-    default: platform-default
     type: str
   epp_enable:
     description:
@@ -1104,7 +1006,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   epp_profile:
     description:
@@ -1115,7 +1016,6 @@ options:
       -  Performance - Value - Performance for configuring epp_profile token.
       -  Power - Value - Power for configuring epp_profile token.
     choices: ['platform-default' , 'Balanced Performance' , 'Balanced Power' , 'Performance' , 'Power']
-    default: platform-default
     type: str
   error_check_scrub:
     description:
@@ -1125,7 +1025,6 @@ options:
       -  Enabled with Result Collection - Value - Enabled with Result Collection for configuring error_check_scrub token.
       -  Enabled without Result Collection - Value - Enabled without Result Collection for configuring error_check_scrub token.
     choices: ['platform-default' , 'Disabled' , 'Enabled with Result Collection' , 'Enabled without Result Collection']
-    default: platform-default
     type: str
   execute_disable_bit:
     description:
@@ -1134,7 +1033,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   extended_apic:
     description:
@@ -1145,7 +1043,6 @@ options:
       -  X2APIC - Value - X2APIC for configuring extended_apic token.
       -  XAPIC - Value - XAPIC for configuring extended_apic token.
     choices: ['platform-default' , 'disabled' , 'enabled' , 'X2APIC' , 'XAPIC']
-    default: platform-default
     type: str
   flow_control:
     description:
@@ -1154,7 +1051,6 @@ options:
       -  none - Value - none for configuring flow_control token.
       -  rts-cts - Value - rts-cts for configuring flow_control token.
     choices: ['platform-default' , 'none' , 'rts-cts']
-    default: platform-default
     type: str
   frb2enable:
     description:
@@ -1163,7 +1059,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   hardware_prefetch:
     description:
@@ -1172,7 +1067,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   hwpm_enable:
     description:
@@ -1185,7 +1079,6 @@ options:
       -  Native Mode with no Legacy - Value - Native Mode with no Legacy for configuring hwpm_enable token.
       -  OOB MODE - Value - OOB MODE for configuring hwpm_enable token.
     choices: ['platform-default' , 'Disabled' , 'HWPM Native Mode' , 'HWPM OOB Mode' , 'NATIVE MODE' , 'Native Mode with no Legacy' , 'OOB MODE']
-    default: platform-default
     type: str
   imc_interleave:
     description:
@@ -1195,7 +1088,6 @@ options:
       -  2-way Interleave - Value - 2-way Interleave for configuring imc_interleave token.
       -  Auto - Value - Auto for configuring imc_interleave token.
     choices: ['platform-default' , '1-way Interleave' , '2-way Interleave' , 'Auto']
-    default: platform-default
     type: str
   intel_dynamic_speed_select:
     description:
@@ -1204,7 +1096,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   intel_hyper_threading_tech:
     description:
@@ -1213,7 +1104,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   intel_speed_select:
     description:
@@ -1226,7 +1116,6 @@ options:
       -  Config 3 - Value - Config 3 for configuring intel_speed_select token.
       -  Config 4 - Value - Config 4 for configuring intel_speed_select token.
     choices: ['platform-default' , 'Auto' , 'Base' , 'Config 1' , 'Config 2' , 'Config 3' , 'Config 4']
-    default: platform-default
     type: str
   intel_turbo_boost_tech:
     description:
@@ -1235,7 +1124,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   intel_virtualization_technology:
     description:
@@ -1244,7 +1132,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   intel_vtdats_support:
     description:
@@ -1253,7 +1140,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   intel_vtd_coherency_support:
     description:
@@ -1262,7 +1148,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   intel_vtd_interrupt_remapping:
     description:
@@ -1271,7 +1156,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   intel_vtd_pass_through_dma_support:
     description:
@@ -1280,7 +1164,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   intel_vt_for_directed_io:
     description:
@@ -1289,7 +1172,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   ioh_error_enable:
     description:
@@ -1298,7 +1180,6 @@ options:
       -  No - Value - No for configuring ioh_error_enable token.
       -  Yes - Value - Yes for configuring ioh_error_enable token.
     choices: ['platform-default' , 'No' , 'Yes']
-    default: platform-default
     type: str
   ioh_resource:
     description:
@@ -1310,7 +1191,6 @@ options:
       -  IOH0 48k IOH1 16k - Value - IOH0 48k IOH1 16k for configuring ioh_resource token.
       -  IOH0 56k IOH1 8k - Value - IOH0 56k IOH1 8k for configuring ioh_resource token.
     choices: ['platform-default' , 'IOH0 24k IOH1 40k' , 'IOH0 32k IOH1 32k' , 'IOH0 40k IOH1 24k' , 'IOH0 48k IOH1 16k' , 'IOH0 56k IOH1 8k']
-    default: platform-default
     type: str
   ip_prefetch:
     description:
@@ -1319,7 +1199,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   ipv4http:
     description:
@@ -1328,7 +1207,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   ipv4pxe:
     description:
@@ -1337,7 +1215,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   ipv6http:
     description:
@@ -1346,7 +1223,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   ipv6pxe:
     description:
@@ -1355,7 +1231,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   kti_prefetch:
     description:
@@ -1365,7 +1240,6 @@ options:
       -  disabled - Value - disabled for configuring kti_prefetch token.
       -  enabled - Value - enabled for configuring kti_prefetch token.
     choices: ['platform-default' , 'Auto' , 'disabled' , 'enabled']
-    default: platform-default
     type: str
   legacy_os_redirection:
     description:
@@ -1374,7 +1248,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   legacy_usb_support:
     description:
@@ -1384,7 +1257,6 @@ options:
       -  disabled - Value - disabled for configuring legacy_usb_support token.
       -  enabled - Value - enabled for configuring legacy_usb_support token.
     choices: ['platform-default' , 'auto' , 'disabled' , 'enabled']
-    default: platform-default
     type: str
   llc_alloc:
     description:
@@ -1394,7 +1266,6 @@ options:
       -  disabled - Value - disabled for configuring llc_alloc token.
       -  enabled - Value - enabled for configuring llc_alloc token.
     choices: ['platform-default' , 'Auto' , 'disabled' , 'enabled']
-    default: platform-default
     type: str
   llc_prefetch:
     description:
@@ -1403,7 +1274,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   lom_port0state:
     description:
@@ -1414,7 +1284,6 @@ options:
       -  Legacy Only - Value - Legacy Only for configuring lom_port0state token.
       -  UEFI Only - Value - UEFI Only for configuring lom_port0state token.
     choices: ['platform-default' , 'disabled' , 'enabled' , 'Legacy Only' , 'UEFI Only']
-    default: platform-default
     type: str
   lom_port1state:
     description:
@@ -1425,7 +1294,6 @@ options:
       -  Legacy Only - Value - Legacy Only for configuring lom_port1state token.
       -  UEFI Only - Value - UEFI Only for configuring lom_port1state token.
     choices: ['platform-default' , 'disabled' , 'enabled' , 'Legacy Only' , 'UEFI Only']
-    default: platform-default
     type: str
   lom_port2state:
     description:
@@ -1436,7 +1304,6 @@ options:
       -  Legacy Only - Value - Legacy Only for configuring lom_port2state token.
       -  UEFI Only - Value - UEFI Only for configuring lom_port2state token.
     choices: ['platform-default' , 'disabled' , 'enabled' , 'Legacy Only' , 'UEFI Only']
-    default: platform-default
     type: str
   lom_port3state:
     description:
@@ -1447,7 +1314,6 @@ options:
       -  Legacy Only - Value - Legacy Only for configuring lom_port3state token.
       -  UEFI Only - Value - UEFI Only for configuring lom_port3state token.
     choices: ['platform-default' , 'disabled' , 'enabled' , 'Legacy Only' , 'UEFI Only']
-    default: platform-default
     type: str
   lom_ports_all_state:
     description:
@@ -1456,7 +1322,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   lv_ddr_mode:
     description:
@@ -1466,7 +1331,6 @@ options:
       -  performance-mode - Value - performance-mode for configuring lv_ddr_mode token.
       -  power-saving-mode - Value - power-saving-mode for configuring lv_ddr_mode token.
     choices: ['platform-default' , 'auto' , 'performance-mode' , 'power-saving-mode']
-    default: platform-default
     type: str
   make_device_non_bootable:
     description:
@@ -1475,7 +1339,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   memory_bandwidth_boost:
     description:
@@ -1484,7 +1347,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   memory_inter_leave:
     description:
@@ -1498,7 +1360,6 @@ options:
       -  enabled - Value - enabled for configuring memory_inter_leave token.
     choices: ['platform-default' , '1 Way Node Interleave' , '2 Way Node Interleave' , '4 Way Node Interleave' , '8 Way Node Interleave' ,
               'disabled' , 'enabled']
-    default: platform-default
     type: str
   memory_mapped_io_above4gb:
     description:
@@ -1507,7 +1368,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   memory_refresh_rate:
     description:
@@ -1516,12 +1376,10 @@ options:
       -  1x Refresh - Value - 1x Refresh for configuring memory_refresh_rate token.
       -  2x Refresh - Value - 2x Refresh for configuring memory_refresh_rate token.
     choices: ['platform-default' , '1x Refresh' , '2x Refresh']
-    default: platform-default
     type: str
   memory_size_limit:
     description:
       -  BIOS Token for setting Memory Size Limit in GiB configuration (0 - 65535 GiB).
-    default: platform-default
     type: str
   memory_thermal_throttling:
     description:
@@ -1530,7 +1388,6 @@ options:
       -  CLTT with PECI - Value - CLTT with PECI for configuring memory_thermal_throttling token.
       -  Disabled - Value - Disabled for configuring memory_thermal_throttling token.
     choices: ['platform-default' , 'CLTT with PECI' , 'Disabled']
-    default: platform-default
     type: str
   mirroring_mode:
     description:
@@ -1539,7 +1396,6 @@ options:
       -  inter-socket - Value - inter-socket for configuring mirroring_mode token.
       -  intra-socket - Value - intra-socket for configuring mirroring_mode token.
     choices: ['platform-default' , 'inter-socket' , 'intra-socket']
-    default: platform-default
     type: str
   mmcfg_base:
     description:
@@ -1551,7 +1407,6 @@ options:
       -  3 GB - Value - 3 GiB for configuring mmcfg_base token.
       -  Auto - Value - Auto for configuring mmcfg_base token.
     choices: ['platform-default' , '1 GB' , '2 GB' , '2.5 GB' , '3 GB' , 'Auto']
-    default: platform-default
     type: str
   network_stack:
     description:
@@ -1560,7 +1415,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   numa_optimized:
     description:
@@ -1569,7 +1423,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   nvmdimm_perform_config:
     description:
@@ -1579,7 +1432,6 @@ options:
       -  Balanced Profile - Value - Balanced Profile for configuring nvmdimm_perform_config token.
       -  Latency Optimized - Value - Latency Optimized for configuring nvmdimm_perform_config token.
     choices: ['platform-default' , 'BW Optimized' , 'Balanced Profile' , 'Latency Optimized']
-    default: platform-default
     type: str
   onboard10gbit_lom:
     description:
@@ -1588,7 +1440,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   onboard_gbit_lom:
     description:
@@ -1597,7 +1448,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   onboard_scu_storage_support:
     description:
@@ -1606,7 +1456,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   onboard_scu_storage_sw_stack:
     description:
@@ -1615,7 +1464,6 @@ options:
       -  Intel RSTe - Value - Intel RSTe for configuring onboard_scu_storage_sw_stack token.
       -  LSI SW RAID - Value - LSI SW RAID for configuring onboard_scu_storage_sw_stack token.
     choices: ['platform-default' , 'Intel RSTe' , 'LSI SW RAID']
-    default: platform-default
     type: str
   operation_mode:
     description:
@@ -1624,7 +1472,6 @@ options:
       -  Test Only - Value - Test Only for configuring operation_mode token.
       -  Test and Repair - Value - Test and Repair for configuring operation_mode token.
     choices: ['platform-default' , 'Test Only' , 'Test and Repair']
-    default: platform-default
     type: str
   os_boot_watchdog_timer:
     description:
@@ -1633,7 +1480,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   os_boot_watchdog_timer_policy:
     description:
@@ -1643,7 +1489,6 @@ options:
       -  power-off - Value - power-off for configuring os_boot_watchdog_timer_policy token.
       -  reset - Value - reset for configuring os_boot_watchdog_timer_policy token.
     choices: ['platform-default' , 'do-nothing' , 'power-off' , 'reset']
-    default: platform-default
     type: str
   os_boot_watchdog_timer_timeout:
     description:
@@ -1654,7 +1499,6 @@ options:
       -  15-minutes - Value - 15-minutes for configuring os_boot_watchdog_timer_timeout token.
       -  20-minutes - Value - 20-minutes for configuring os_boot_watchdog_timer_timeout token.
     choices: ['platform-default' , '5-minutes' , '10-minutes' , '15-minutes' , '20-minutes']
-    default: platform-default
     type: str
   out_of_band_mgmt_port:
     description:
@@ -1663,7 +1507,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   package_cstate_limit:
     description:
@@ -1677,7 +1520,6 @@ options:
       -  C6 Retention - Value - C6 Retention for configuring package_cstate_limit token.
       -  No Limit - Value - No Limit for configuring package_cstate_limit token.
     choices: ['platform-default' , 'Auto' , 'C0 C1 State' , 'C0/C1' , 'C2' , 'C6 Non Retention' , 'C6 Retention' , 'No Limit']
-    default: platform-default
     type: str
   panic_high_watermark:
     description:
@@ -1686,7 +1528,6 @@ options:
       -  High - Value - High for configuring panic_high_watermark token.
       -  Low - Value - Low for configuring panic_high_watermark token.
     choices: ['platform-default' , 'High' , 'Low']
-    default: platform-default
     type: str
   partial_cache_line_sparing:
     description:
@@ -1695,7 +1536,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   partial_mirror_mode_config:
     description:
@@ -1705,32 +1545,26 @@ options:
       -  Percentage - Value - Percentage for configuring partial_mirror_mode_config token.
       -  Value in GB - Value - Value in GiB for configuring partial_mirror_mode_config token.
     choices: ['platform-default' , 'disabled' , 'Percentage' , 'Value in GB']
-    default: platform-default
     type: str
   partial_mirror_percent:
     description:
       -  BIOS Token for setting Partial Mirror Percentage configuration (0.00 - 50.00 Percentage).
-    default: platform-default
     type: str
   partial_mirror_value1:
     description:
       -  BIOS Token for setting Partial Mirror1 Size in GiB configuration (0 - 65535 GiB).
-    default: platform-default
     type: str
   partial_mirror_value2:
     description:
       -  BIOS Token for setting Partial Mirror2 Size in GiB configuration (0 - 65535 GiB).
-    default: platform-default
     type: str
   partial_mirror_value3:
     description:
       -  BIOS Token for setting Partial Mirror3 Size in GiB configuration (0 - 65535 GiB).
-    default: platform-default
     type: str
   partial_mirror_value4:
     description:
       -  BIOS Token for setting Partial Mirror4 Size in GiB configuration (0 - 65535 GiB).
-    default: platform-default
     type: str
   patrol_scrub:
     description:
@@ -1740,17 +1574,14 @@ options:
       -  Enable at End of POST - Value - Enable at End of POST for configuring patrol_scrub token.
       -  enabled - Value - enabled for configuring patrol_scrub token.
     choices: ['platform-default' , 'disabled' , 'Enable at End of POST' , 'enabled']
-    default: platform-default
     type: str
   patrol_scrub_duration:
     description:
       -  BIOS Token for setting Patrol Scrub Interval configuration (5 - 23 Hour).
-    default: platform-default
     type: str
   pch_pcie_pll_ssc:
     description:
       -  BIOS Token for setting PCIe PLL SSC Percent configuration (0 - 255 (n/10)%).
-    default: platform-default
     type: str
   pch_usb30mode:
     description:
@@ -1759,7 +1590,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   pcie_ari_support:
     description:
@@ -1769,7 +1599,6 @@ options:
       -  disabled - Value - disabled for configuring pcie_ari_support token.
       -  enabled - Value - enabled for configuring pcie_ari_support token.
     choices: ['platform-default' , 'Auto' , 'disabled' , 'enabled']
-    default: platform-default
     type: str
   pcie_pll_ssc:
     description:
@@ -1779,7 +1608,6 @@ options:
       -  Disabled - Value - Disabled for configuring pcie_pll_ssc token.
       -  ZeroPointFive - Value - ZeroPointFive for configuring pcie_pll_ssc token.
     choices: ['platform-default' , 'Auto' , 'Disabled' , 'ZeroPointFive']
-    default: platform-default
     type: str
   pc_ie_ras_support:
     description:
@@ -1788,7 +1616,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   pcie_slot_mraid1link_speed:
     description:
@@ -1802,7 +1629,6 @@ options:
       -  GEN4 - Value - GEN4 for configuring pcie_slot_mraid1link_speed token.
       -  GEN5 - Value - GEN5 for configuring pcie_slot_mraid1link_speed token.
     choices: ['platform-default' , 'Auto' , 'Disabled' , 'GEN1' , 'GEN2' , 'GEN3' , 'GEN4' , 'GEN5']
-    default: platform-default
     type: str
   pcie_slot_mraid1option_rom:
     description:
@@ -1811,7 +1637,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   pcie_slot_mraid2link_speed:
     description:
@@ -1825,7 +1650,6 @@ options:
       -  GEN4 - Value - GEN4 for configuring pcie_slot_mraid2link_speed token.
       -  GEN5 - Value - GEN5 for configuring pcie_slot_mraid2link_speed token.
     choices: ['platform-default' , 'Auto' , 'Disabled' , 'GEN1' , 'GEN2' , 'GEN3' , 'GEN4' , 'GEN5']
-    default: platform-default
     type: str
   pcie_slot_mraid2option_rom:
     description:
@@ -1834,7 +1658,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   pcie_slot_mstorraid_link_speed:
     description:
@@ -1847,7 +1670,6 @@ options:
       -  GEN3 - Value - GEN3 for configuring pcie_slot_mstorraid_link_speed token.
       -  GEN4 - Value - GEN4 for configuring pcie_slot_mstorraid_link_speed token.
     choices: ['platform-default' , 'Auto' , 'Disabled' , 'GEN1' , 'GEN2' , 'GEN3' , 'GEN4']
-    default: platform-default
     type: str
   pcie_slot_mstorraid_option_rom:
     description:
@@ -1856,7 +1678,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   pcie_slot_nvme1link_speed:
     description:
@@ -1868,7 +1689,6 @@ options:
       -  GEN2 - Value - GEN2 for configuring pcie_slot_nvme1link_speed token.
       -  GEN3 - Value - GEN3 for configuring pcie_slot_nvme1link_speed token.
     choices: ['platform-default' , 'Auto' , 'Disabled' , 'GEN1' , 'GEN2' , 'GEN3']
-    default: platform-default
     type: str
   pcie_slot_nvme1option_rom:
     description:
@@ -1877,7 +1697,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   pcie_slot_nvme2link_speed:
     description:
@@ -1889,7 +1708,6 @@ options:
       -  GEN2 - Value - GEN2 for configuring pcie_slot_nvme2link_speed token.
       -  GEN3 - Value - GEN3 for configuring pcie_slot_nvme2link_speed token.
     choices: ['platform-default' , 'Auto' , 'Disabled' , 'GEN1' , 'GEN2' , 'GEN3']
-    default: platform-default
     type: str
   pcie_slot_nvme2option_rom:
     description:
@@ -1898,7 +1716,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   pcie_slot_nvme3link_speed:
     description:
@@ -1910,7 +1727,6 @@ options:
       -  GEN2 - Value - GEN2 for configuring pcie_slot_nvme3link_speed token.
       -  GEN3 - Value - GEN3 for configuring pcie_slot_nvme3link_speed token.
     choices: ['platform-default' , 'Auto' , 'Disabled' , 'GEN1' , 'GEN2' , 'GEN3']
-    default: platform-default
     type: str
   pcie_slot_nvme3option_rom:
     description:
@@ -1919,7 +1735,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   pcie_slot_nvme4link_speed:
     description:
@@ -1931,7 +1746,6 @@ options:
       -  GEN2 - Value - GEN2 for configuring pcie_slot_nvme4link_speed token.
       -  GEN3 - Value - GEN3 for configuring pcie_slot_nvme4link_speed token.
     choices: ['platform-default' , 'Auto' , 'Disabled' , 'GEN1' , 'GEN2' , 'GEN3']
-    default: platform-default
     type: str
   pcie_slot_nvme4option_rom:
     description:
@@ -1940,7 +1754,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   pcie_slot_nvme5link_speed:
     description:
@@ -1952,7 +1765,6 @@ options:
       -  GEN2 - Value - GEN2 for configuring pcie_slot_nvme5link_speed token.
       -  GEN3 - Value - GEN3 for configuring pcie_slot_nvme5link_speed token.
     choices: ['platform-default' , 'Auto' , 'Disabled' , 'GEN1' , 'GEN2' , 'GEN3']
-    default: platform-default
     type: str
   pcie_slot_nvme5option_rom:
     description:
@@ -1961,7 +1773,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   pcie_slot_nvme6link_speed:
     description:
@@ -1973,7 +1784,6 @@ options:
       -  GEN2 - Value - GEN2 for configuring pcie_slot_nvme6link_speed token.
       -  GEN3 - Value - GEN3 for configuring pcie_slot_nvme6link_speed token.
     choices: ['platform-default' , 'Auto' , 'Disabled' , 'GEN1' , 'GEN2' , 'GEN3']
-    default: platform-default
     type: str
   pcie_slot_nvme6option_rom:
     description:
@@ -1982,7 +1792,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   pcie_slots_cdn_enable:
     description:
@@ -1991,7 +1800,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   pc_ie_ssd_hot_plug_support:
     description:
@@ -2000,7 +1808,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   pci_option_ro_ms:
     description:
@@ -2011,7 +1818,6 @@ options:
       -  Legacy Only - Value - Legacy Only for configuring pci_option_ro_ms token.
       -  UEFI Only - Value - UEFI Only for configuring pci_option_ro_ms token.
     choices: ['platform-default' , 'disabled' , 'enabled' , 'Legacy Only' , 'UEFI Only']
-    default: platform-default
     type: str
   pci_rom_clp:
     description:
@@ -2020,7 +1826,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   pop_support:
     description:
@@ -2029,7 +1834,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   post_error_pause:
     description:
@@ -2038,7 +1842,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   post_package_repair:
     description:
@@ -2047,7 +1850,6 @@ options:
       -  Disabled - Value - Disabled for configuring post_package_repair token.
       -  Hard PPR - Value - Hard PPR for configuring post_package_repair token.
     choices: ['platform-default' , 'Disabled' , 'Hard PPR']
-    default: platform-default
     type: str
   processor_c1e:
     description:
@@ -2056,7 +1858,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   processor_c3report:
     description:
@@ -2065,7 +1866,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   processor_c6report:
     description:
@@ -2074,7 +1874,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   processor_cstate:
     description:
@@ -2083,7 +1882,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   psata:
     description:
@@ -2093,7 +1891,6 @@ options:
       -  Disabled - Value - Disabled for configuring psata token.
       -  LSI SW RAID - Value - LSI SW RAID for configuring psata token.
     choices: ['platform-default' , 'AHCI' , 'Disabled' , 'LSI SW RAID']
-    default: platform-default
     type: str
   pstate_coord_type:
     description:
@@ -2103,7 +1900,6 @@ options:
       -  SW ALL - Value - SW ALL for configuring pstate_coord_type token.
       -  SW ANY - Value - SW ANY for configuring pstate_coord_type token.
     choices: ['platform-default' , 'HW ALL' , 'SW ALL' , 'SW ANY']
-    default: platform-default
     type: str
   putty_key_pad:
     description:
@@ -2116,7 +1912,6 @@ options:
       -  VT400 - Value - VT400 for configuring putty_key_pad token.
       -  XTERMR6 - Value - XTERMR6 for configuring putty_key_pad token.
     choices: ['platform-default' , 'ESCN' , 'LINUX' , 'SCO' , 'VT100' , 'VT400' , 'XTERMR6']
-    default: platform-default
     type: str
   pwr_perf_tuning:
     description:
@@ -2126,7 +1921,6 @@ options:
       -  os - Value - os for configuring pwr_perf_tuning token.
       -  peci - Value - peci for configuring pwr_perf_tuning token.
     choices: ['platform-default' , 'bios' , 'os' , 'peci']
-    default: platform-default
     type: str
   qpi_link_frequency:
     description:
@@ -2138,7 +1932,6 @@ options:
       -  9.6-gt/s - Value - 9.6-gt/s for configuring qpi_link_frequency token.
       -  auto - Value - auto for configuring qpi_link_frequency token.
     choices: ['platform-default' , '6.4-gt/s' , '7.2-gt/s' , '8.0-gt/s' , '9.6-gt/s' , 'auto']
-    default: platform-default
     type: str
   qpi_link_speed:
     description:
@@ -2152,7 +1945,6 @@ options:
       -  9.6GT/s - Value - 9.6GT/s for configuring qpi_link_speed token.
       -  Auto - Value - Auto for configuring qpi_link_speed token.
     choices: ['platform-default' , '10.4GT/s' , '11.2GT/s' , '12.8GT/s' , '14.4GT/s' , '16.0GT/s' , '9.6GT/s' , 'Auto']
-    default: platform-default
     type: str
   qpi_snoop_mode:
     description:
@@ -2165,7 +1957,6 @@ options:
       -  home-directory-snoop-with-osb - Value - home-directory-snoop-with-osb for configuring qpi_snoop_mode token.
       -  home-snoop - Value - home-snoop for configuring qpi_snoop_mode token.
     choices: ['platform-default' , 'auto' , 'cluster-on-die' , 'early-snoop' , 'home-directory-snoop' , 'home-directory-snoop-with-osb' , 'home-snoop']
-    default: platform-default
     type: str
   rank_inter_leave:
     description:
@@ -2177,7 +1968,6 @@ options:
       -  8-way - Value - 8-way for configuring rank_inter_leave token.
       -  auto - Value - auto for configuring rank_inter_leave token.
     choices: ['platform-default' , '1-way' , '2-way' , '4-way' , '8-way' , 'auto']
-    default: platform-default
     type: str
   redirection_after_post:
     description:
@@ -2186,7 +1976,6 @@ options:
       -  Always Enable - Value - Always Enable for configuring redirection_after_post token.
       -  Bootloader - Value - Bootloader for configuring redirection_after_post token.
     choices: ['platform-default' , 'Always Enable' , 'Bootloader']
-    default: platform-default
     type: str
   sata_mode_select:
     description:
@@ -2196,7 +1985,6 @@ options:
       -  Disabled - Value - Disabled for configuring sata_mode_select token.
       -  LSI SW RAID - Value - LSI SW RAID for configuring sata_mode_select token.
     choices: ['platform-default' , 'AHCI' , 'Disabled' , 'LSI SW RAID']
-    default: platform-default
     type: str
   select_memory_ras_configuration:
     description:
@@ -2211,7 +1999,6 @@ options:
       -  sparing - Value - sparing for configuring select_memory_ras_configuration token.
     choices: ['platform-default' , 'adddc-sparing' , 'lockstep' , 'maximum-performance' , 'mirror-mode-1lm' , 'mirroring' ,
               'partial-mirror-mode-1lm' , 'sparing']
-    default: platform-default
     type: str
   select_ppr_type:
     description:
@@ -2221,7 +2008,6 @@ options:
       -  Hard PPR - Value - Hard PPR for configuring select_ppr_type token.
       -  Soft PPR - Value - Soft PPR for configuring select_ppr_type token.
     choices: ['platform-default' , 'disabled' , 'Hard PPR' , 'Soft PPR']
-    default: platform-default
     type: str
   serial_port_aenable:
     description:
@@ -2230,7 +2016,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   sev:
     description:
@@ -2240,7 +2025,6 @@ options:
       -  509 ASIDs - Value - 509 ASIDs for configuring sev token.
       -  Auto - Value - Auto for configuring sev token.
     choices: ['platform-default' , '253 ASIDs' , '509 ASIDs' , 'Auto']
-    default: platform-default
     type: str
   sgx_auto_registration_agent:
     description:
@@ -2249,17 +2033,14 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   sgx_epoch0:
     description:
       -  BIOS Token for setting SGX Epoch 0 configuration (0 - ffffffffffffffff Hash byte 7-0).
-    default: platform-default
     type: str
   sgx_epoch1:
     description:
       -  BIOS Token for setting SGX Epoch 1 configuration (0 - ffffffffffffffff Hash byte 7-0).
-    default: platform-default
     type: str
   sgx_factory_reset:
     description:
@@ -2268,27 +2049,22 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   sgx_le_pub_key_hash0:
     description:
       -  BIOS Token for setting SGX PubKey Hash0 configuration (0 - ffffffffffffffff Hash byte 7-0).
-    default: platform-default
     type: str
   sgx_le_pub_key_hash1:
     description:
       -  BIOS Token for setting SGX PubKey Hash1 configuration (0 - ffffffffffffffff Hash byte 15-8).
-    default: platform-default
     type: str
   sgx_le_pub_key_hash2:
     description:
       -  BIOS Token for setting SGX PubKey Hash2 configuration (0 - ffffffffffffffff Hash byte 23-16).
-    default: platform-default
     type: str
   sgx_le_pub_key_hash3:
     description:
       -  BIOS Token for setting SGX PubKey Hash3 configuration (0 - ffffffffffffffff Hash byte 31-24).
-    default: platform-default
     type: str
   sgx_le_wr:
     description:
@@ -2297,7 +2073,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   sgx_package_info_in_band_access:
     description:
@@ -2306,7 +2081,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   sgx_qos:
     description:
@@ -2315,7 +2089,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   sha1pcr_bank:
     description:
@@ -2324,7 +2097,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   sha256pcr_bank:
     description:
@@ -2333,7 +2105,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   single_pctl_enable:
     description:
@@ -2342,7 +2113,6 @@ options:
       -  No - Value - No for configuring single_pctl_enable token.
       -  Yes - Value - Yes for configuring single_pctl_enable token.
     choices: ['platform-default' , 'No' , 'Yes']
-    default: platform-default
     type: str
   slot10link_speed:
     description:
@@ -2354,7 +2124,6 @@ options:
       -  GEN2 - Value - GEN2 for configuring slot10link_speed token.
       -  GEN3 - Value - GEN3 for configuring slot10link_speed token.
     choices: ['platform-default' , 'Auto' , 'Disabled' , 'GEN1' , 'GEN2' , 'GEN3']
-    default: platform-default
     type: str
   slot10state:
     description:
@@ -2365,7 +2134,6 @@ options:
       -  Legacy Only - Value - Legacy Only for configuring slot10state token.
       -  UEFI Only - Value - UEFI Only for configuring slot10state token.
     choices: ['platform-default' , 'disabled' , 'enabled' , 'Legacy Only' , 'UEFI Only']
-    default: platform-default
     type: str
   slot11link_speed:
     description:
@@ -2377,7 +2145,6 @@ options:
       -  GEN2 - Value - GEN2 for configuring slot11link_speed token.
       -  GEN3 - Value - GEN3 for configuring slot11link_speed token.
     choices: ['platform-default' , 'Auto' , 'Disabled' , 'GEN1' , 'GEN2' , 'GEN3']
-    default: platform-default
     type: str
   slot11state:
     description:
@@ -2386,7 +2153,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   slot12link_speed:
     description:
@@ -2398,7 +2164,6 @@ options:
       -  GEN2 - Value - GEN2 for configuring slot12link_speed token.
       -  GEN3 - Value - GEN3 for configuring slot12link_speed token.
     choices: ['platform-default' , 'Auto' , 'Disabled' , 'GEN1' , 'GEN2' , 'GEN3']
-    default: platform-default
     type: str
   slot12state:
     description:
@@ -2407,7 +2172,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   slot13state:
     description:
@@ -2416,7 +2180,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   slot14state:
     description:
@@ -2425,7 +2188,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   slot1link_speed:
     description:
@@ -2439,7 +2201,6 @@ options:
       -  GEN4 - Value - GEN4 for configuring slot1link_speed token.
       -  GEN5 - Value - GEN5 for configuring slot1link_speed token.
     choices: ['platform-default' , 'Auto' , 'Disabled' , 'GEN1' , 'GEN2' , 'GEN3' , 'GEN4' , 'GEN5']
-    default: platform-default
     type: str
   slot1state:
     description:
@@ -2450,7 +2211,6 @@ options:
       -  Legacy Only - Value - Legacy Only for configuring slot1state token.
       -  UEFI Only - Value - UEFI Only for configuring slot1state token.
     choices: ['platform-default' , 'disabled' , 'enabled' , 'Legacy Only' , 'UEFI Only']
-    default: platform-default
     type: str
   slot2link_speed:
     description:
@@ -2464,7 +2224,6 @@ options:
       -  GEN4 - Value - GEN4 for configuring slot2link_speed token.
       -  GEN5 - Value - GEN5 for configuring slot2link_speed token.
     choices: ['platform-default' , 'Auto' , 'Disabled' , 'GEN1' , 'GEN2' , 'GEN3' , 'GEN4' , 'GEN5']
-    default: platform-default
     type: str
   slot2state:
     description:
@@ -2475,7 +2234,6 @@ options:
       -  Legacy Only - Value - Legacy Only for configuring slot2state token.
       -  UEFI Only - Value - UEFI Only for configuring slot2state token.
     choices: ['platform-default' , 'disabled' , 'enabled' , 'Legacy Only' , 'UEFI Only']
-    default: platform-default
     type: str
   slot3link_speed:
     description:
@@ -2489,7 +2247,6 @@ options:
       -  GEN4 - Value - GEN4 for configuring slot3link_speed token.
       -  GEN5 - Value - GEN5 for configuring slot3link_speed token.
     choices: ['platform-default' , 'Auto' , 'Disabled' , 'GEN1' , 'GEN2' , 'GEN3' , 'GEN4' , 'GEN5']
-    default: platform-default
     type: str
   slot3state:
     description:
@@ -2500,7 +2257,6 @@ options:
       -  Legacy Only - Value - Legacy Only for configuring slot3state token.
       -  UEFI Only - Value - UEFI Only for configuring slot3state token.
     choices: ['platform-default' , 'disabled' , 'enabled' , 'Legacy Only' , 'UEFI Only']
-    default: platform-default
     type: str
   slot4link_speed:
     description:
@@ -2514,7 +2270,6 @@ options:
       -  GEN4 - Value - GEN4 for configuring slot4link_speed token.
       -  GEN5 - Value - GEN5 for configuring slot4link_speed token.
     choices: ['platform-default' , 'Auto' , 'Disabled' , 'GEN1' , 'GEN2' , 'GEN3' , 'GEN4' , 'GEN5']
-    default: platform-default
     type: str
   slot4state:
     description:
@@ -2525,7 +2280,6 @@ options:
       -  Legacy Only - Value - Legacy Only for configuring slot4state token.
       -  UEFI Only - Value - UEFI Only for configuring slot4state token.
     choices: ['platform-default' , 'disabled' , 'enabled' , 'Legacy Only' , 'UEFI Only']
-    default: platform-default
     type: str
   slot5link_speed:
     description:
@@ -2539,7 +2293,6 @@ options:
       -  GEN4 - Value - GEN4 for configuring slot5link_speed token.
       -  GEN5 - Value - GEN5 for configuring slot5link_speed token.
     choices: ['platform-default' , 'Auto' , 'Disabled' , 'GEN1' , 'GEN2' , 'GEN3' , 'GEN4' , 'GEN5']
-    default: platform-default
     type: str
   slot5state:
     description:
@@ -2550,7 +2303,6 @@ options:
       -  Legacy Only - Value - Legacy Only for configuring slot5state token.
       -  UEFI Only - Value - UEFI Only for configuring slot5state token.
     choices: ['platform-default' , 'disabled' , 'enabled' , 'Legacy Only' , 'UEFI Only']
-    default: platform-default
     type: str
   slot6link_speed:
     description:
@@ -2564,7 +2316,6 @@ options:
       -  GEN4 - Value - GEN4 for configuring slot6link_speed token.
       -  GEN5 - Value - GEN5 for configuring slot6link_speed token.
     choices: ['platform-default' , 'Auto' , 'Disabled' , 'GEN1' , 'GEN2' , 'GEN3' , 'GEN4' , 'GEN5']
-    default: platform-default
     type: str
   slot6state:
     description:
@@ -2575,7 +2326,6 @@ options:
       -  Legacy Only - Value - Legacy Only for configuring slot6state token.
       -  UEFI Only - Value - UEFI Only for configuring slot6state token.
     choices: ['platform-default' , 'disabled' , 'enabled' , 'Legacy Only' , 'UEFI Only']
-    default: platform-default
     type: str
   slot7link_speed:
     description:
@@ -2589,7 +2339,6 @@ options:
       -  GEN4 - Value - GEN4 for configuring slot7link_speed token.
       -  GEN5 - Value - GEN5 for configuring slot7link_speed token.
     choices: ['platform-default' , 'Auto' , 'Disabled' , 'GEN1' , 'GEN2' , 'GEN3' , 'GEN4' , 'GEN5']
-    default: platform-default
     type: str
   slot7state:
     description:
@@ -2600,7 +2349,6 @@ options:
       -  Legacy Only - Value - Legacy Only for configuring slot7state token.
       -  UEFI Only - Value - UEFI Only for configuring slot7state token.
     choices: ['platform-default' , 'disabled' , 'enabled' , 'Legacy Only' , 'UEFI Only']
-    default: platform-default
     type: str
   slot8link_speed:
     description:
@@ -2614,7 +2362,6 @@ options:
       -  GEN4 - Value - GEN4 for configuring slot8link_speed token.
       -  GEN5 - Value - GEN5 for configuring slot8link_speed token.
     choices: ['platform-default' , 'Auto' , 'Disabled' , 'GEN1' , 'GEN2' , 'GEN3' , 'GEN4' , 'GEN5']
-    default: platform-default
     type: str
   slot8state:
     description:
@@ -2625,7 +2372,6 @@ options:
       -  Legacy Only - Value - Legacy Only for configuring slot8state token.
       -  UEFI Only - Value - UEFI Only for configuring slot8state token.
     choices: ['platform-default' , 'disabled' , 'enabled' , 'Legacy Only' , 'UEFI Only']
-    default: platform-default
     type: str
   slot9link_speed:
     description:
@@ -2638,7 +2384,6 @@ options:
       -  GEN3 - Value - GEN3 for configuring slot9link_speed token.
       -  GEN4 - Value - GEN4 for configuring slot9link_speed token.
     choices: ['platform-default' , 'Auto' , 'Disabled' , 'GEN1' , 'GEN2' , 'GEN3' , 'GEN4']
-    default: platform-default
     type: str
   slot9state:
     description:
@@ -2649,7 +2394,6 @@ options:
       -  Legacy Only - Value - Legacy Only for configuring slot9state token.
       -  UEFI Only - Value - UEFI Only for configuring slot9state token.
     choices: ['platform-default' , 'disabled' , 'enabled' , 'Legacy Only' , 'UEFI Only']
-    default: platform-default
     type: str
   slot_flom_link_speed:
     description:
@@ -2661,7 +2405,6 @@ options:
       -  GEN2 - Value - GEN2 for configuring slot_flom_link_speed token.
       -  GEN3 - Value - GEN3 for configuring slot_flom_link_speed token.
     choices: ['platform-default' , 'Auto' , 'Disabled' , 'GEN1' , 'GEN2' , 'GEN3']
-    default: platform-default
     type: str
   slot_front_nvme10link_speed:
     description:
@@ -2675,7 +2418,6 @@ options:
       -  GEN4 - Value - GEN4 for configuring slot_front_nvme10link_speed token.
       -  GEN5 - Value - GEN5 for configuring slot_front_nvme10link_speed token.
     choices: ['platform-default' , 'Auto' , 'Disabled' , 'GEN1' , 'GEN2' , 'GEN3' , 'GEN4' , 'GEN5']
-    default: platform-default
     type: str
   slot_front_nvme10option_rom:
     description:
@@ -2684,7 +2426,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   slot_front_nvme11link_speed:
     description:
@@ -2698,7 +2439,6 @@ options:
       -  GEN4 - Value - GEN4 for configuring slot_front_nvme11link_speed token.
       -  GEN5 - Value - GEN5 for configuring slot_front_nvme11link_speed token.
     choices: ['platform-default' , 'Auto' , 'Disabled' , 'GEN1' , 'GEN2' , 'GEN3' , 'GEN4' , 'GEN5']
-    default: platform-default
     type: str
   slot_front_nvme11option_rom:
     description:
@@ -2707,7 +2447,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   slot_front_nvme12link_speed:
     description:
@@ -2721,7 +2460,6 @@ options:
       -  GEN4 - Value - GEN4 for configuring slot_front_nvme12link_speed token.
       -  GEN5 - Value - GEN5 for configuring slot_front_nvme12link_speed token.
     choices: ['platform-default' , 'Auto' , 'Disabled' , 'GEN1' , 'GEN2' , 'GEN3' , 'GEN4' , 'GEN5']
-    default: platform-default
     type: str
   slot_front_nvme12option_rom:
     description:
@@ -2730,7 +2468,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   slot_front_nvme13link_speed:
     description:
@@ -2744,7 +2481,6 @@ options:
       -  GEN4 - Value - GEN4 for configuring slot_front_nvme13link_speed token.
       -  GEN5 - Value - GEN5 for configuring slot_front_nvme13link_speed token.
     choices: ['platform-default' , 'Auto' , 'Disabled' , 'GEN1' , 'GEN2' , 'GEN3' , 'GEN4' , 'GEN5']
-    default: platform-default
     type: str
   slot_front_nvme13option_rom:
     description:
@@ -2753,7 +2489,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   slot_front_nvme14link_speed:
     description:
@@ -2767,7 +2502,6 @@ options:
       -  GEN4 - Value - GEN4 for configuring slot_front_nvme14link_speed token.
       -  GEN5 - Value - GEN5 for configuring slot_front_nvme14link_speed token.
     choices: ['platform-default' , 'Auto' , 'Disabled' , 'GEN1' , 'GEN2' , 'GEN3' , 'GEN4' , 'GEN5']
-    default: platform-default
     type: str
   slot_front_nvme14option_rom:
     description:
@@ -2776,7 +2510,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   slot_front_nvme15link_speed:
     description:
@@ -2790,7 +2523,6 @@ options:
       -  GEN4 - Value - GEN4 for configuring slot_front_nvme15link_speed token.
       -  GEN5 - Value - GEN5 for configuring slot_front_nvme15link_speed token.
     choices: ['platform-default' , 'Auto' , 'Disabled' , 'GEN1' , 'GEN2' , 'GEN3' , 'GEN4' , 'GEN5']
-    default: platform-default
     type: str
   slot_front_nvme15option_rom:
     description:
@@ -2799,7 +2531,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   slot_front_nvme16link_speed:
     description:
@@ -2813,7 +2544,6 @@ options:
       -  GEN4 - Value - GEN4 for configuring slot_front_nvme16link_speed token.
       -  GEN5 - Value - GEN5 for configuring slot_front_nvme16link_speed token.
     choices: ['platform-default' , 'Auto' , 'Disabled' , 'GEN1' , 'GEN2' , 'GEN3' , 'GEN4' , 'GEN5']
-    default: platform-default
     type: str
   slot_front_nvme16option_rom:
     description:
@@ -2822,7 +2552,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   slot_front_nvme17link_speed:
     description:
@@ -2836,7 +2565,6 @@ options:
       -  GEN4 - Value - GEN4 for configuring slot_front_nvme17link_speed token.
       -  GEN5 - Value - GEN5 for configuring slot_front_nvme17link_speed token.
     choices: ['platform-default' , 'Auto' , 'Disabled' , 'GEN1' , 'GEN2' , 'GEN3' , 'GEN4' , 'GEN5']
-    default: platform-default
     type: str
   slot_front_nvme17option_rom:
     description:
@@ -2845,7 +2573,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   slot_front_nvme18link_speed:
     description:
@@ -2859,7 +2586,6 @@ options:
       -  GEN4 - Value - GEN4 for configuring slot_front_nvme18link_speed token.
       -  GEN5 - Value - GEN5 for configuring slot_front_nvme18link_speed token.
     choices: ['platform-default' , 'Auto' , 'Disabled' , 'GEN1' , 'GEN2' , 'GEN3' , 'GEN4' , 'GEN5']
-    default: platform-default
     type: str
   slot_front_nvme18option_rom:
     description:
@@ -2868,7 +2594,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   slot_front_nvme19link_speed:
     description:
@@ -2882,7 +2607,6 @@ options:
       -  GEN4 - Value - GEN4 for configuring slot_front_nvme19link_speed token.
       -  GEN5 - Value - GEN5 for configuring slot_front_nvme19link_speed token.
     choices: ['platform-default' , 'Auto' , 'Disabled' , 'GEN1' , 'GEN2' , 'GEN3' , 'GEN4' , 'GEN5']
-    default: platform-default
     type: str
   slot_front_nvme19option_rom:
     description:
@@ -2891,7 +2615,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   slot_front_nvme1link_speed:
     description:
@@ -2905,7 +2628,6 @@ options:
       -  GEN4 - Value - GEN4 for configuring slot_front_nvme1link_speed token.
       -  GEN5 - Value - GEN5 for configuring slot_front_nvme1link_speed token.
     choices: ['platform-default' , 'Auto' , 'Disabled' , 'GEN1' , 'GEN2' , 'GEN3' , 'GEN4' , 'GEN5']
-    default: platform-default
     type: str
   slot_front_nvme1option_rom:
     description:
@@ -2914,7 +2636,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   slot_front_nvme20link_speed:
     description:
@@ -2928,7 +2649,6 @@ options:
       -  GEN4 - Value - GEN4 for configuring slot_front_nvme20link_speed token.
       -  GEN5 - Value - GEN5 for configuring slot_front_nvme20link_speed token.
     choices: ['platform-default' , 'Auto' , 'Disabled' , 'GEN1' , 'GEN2' , 'GEN3' , 'GEN4' , 'GEN5']
-    default: platform-default
     type: str
   slot_front_nvme20option_rom:
     description:
@@ -2937,7 +2657,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   slot_front_nvme21link_speed:
     description:
@@ -2951,7 +2670,6 @@ options:
       -  GEN4 - Value - GEN4 for configuring slot_front_nvme21link_speed token.
       -  GEN5 - Value - GEN5 for configuring slot_front_nvme21link_speed token.
     choices: ['platform-default' , 'Auto' , 'Disabled' , 'GEN1' , 'GEN2' , 'GEN3' , 'GEN4' , 'GEN5']
-    default: platform-default
     type: str
   slot_front_nvme21option_rom:
     description:
@@ -2960,7 +2678,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   slot_front_nvme22link_speed:
     description:
@@ -2974,7 +2691,6 @@ options:
       -  GEN4 - Value - GEN4 for configuring slot_front_nvme22link_speed token.
       -  GEN5 - Value - GEN5 for configuring slot_front_nvme22link_speed token.
     choices: ['platform-default' , 'Auto' , 'Disabled' , 'GEN1' , 'GEN2' , 'GEN3' , 'GEN4' , 'GEN5']
-    default: platform-default
     type: str
   slot_front_nvme22option_rom:
     description:
@@ -2983,7 +2699,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   slot_front_nvme23link_speed:
     description:
@@ -2997,7 +2712,6 @@ options:
       -  GEN4 - Value - GEN4 for configuring slot_front_nvme23link_speed token.
       -  GEN5 - Value - GEN5 for configuring slot_front_nvme23link_speed token.
     choices: ['platform-default' , 'Auto' , 'Disabled' , 'GEN1' , 'GEN2' , 'GEN3' , 'GEN4' , 'GEN5']
-    default: platform-default
     type: str
   slot_front_nvme23option_rom:
     description:
@@ -3006,7 +2720,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   slot_front_nvme24link_speed:
     description:
@@ -3020,7 +2733,6 @@ options:
       -  GEN4 - Value - GEN4 for configuring slot_front_nvme24link_speed token.
       -  GEN5 - Value - GEN5 for configuring slot_front_nvme24link_speed token.
     choices: ['platform-default' , 'Auto' , 'Disabled' , 'GEN1' , 'GEN2' , 'GEN3' , 'GEN4' , 'GEN5']
-    default: platform-default
     type: str
   slot_front_nvme24option_rom:
     description:
@@ -3029,7 +2741,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   slot_front_nvme2link_speed:
     description:
@@ -3043,7 +2754,6 @@ options:
       -  GEN4 - Value - GEN4 for configuring slot_front_nvme2link_speed token.
       -  GEN5 - Value - GEN5 for configuring slot_front_nvme2link_speed token.
     choices: ['platform-default' , 'Auto' , 'Disabled' , 'GEN1' , 'GEN2' , 'GEN3' , 'GEN4' , 'GEN5']
-    default: platform-default
     type: str
   slot_front_nvme2option_rom:
     description:
@@ -3052,7 +2762,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   slot_front_nvme3link_speed:
     description:
@@ -3066,7 +2775,6 @@ options:
       -  GEN4 - Value - GEN4 for configuring slot_front_nvme3link_speed token.
       -  GEN5 - Value - GEN5 for configuring slot_front_nvme3link_speed token.
     choices: ['platform-default' , 'Auto' , 'Disabled' , 'GEN1' , 'GEN2' , 'GEN3' , 'GEN4' , 'GEN5']
-    default: platform-default
     type: str
   slot_front_nvme3option_rom:
     description:
@@ -3075,7 +2783,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   slot_front_nvme4link_speed:
     description:
@@ -3089,7 +2796,6 @@ options:
       -  GEN4 - Value - GEN4 for configuring slot_front_nvme4link_speed token.
       -  GEN5 - Value - GEN5 for configuring slot_front_nvme4link_speed token.
     choices: ['platform-default' , 'Auto' , 'Disabled' , 'GEN1' , 'GEN2' , 'GEN3' , 'GEN4' , 'GEN5']
-    default: platform-default
     type: str
   slot_front_nvme4option_rom:
     description:
@@ -3098,7 +2804,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   slot_front_nvme5link_speed:
     description:
@@ -3112,7 +2817,6 @@ options:
       -  GEN4 - Value - GEN4 for configuring slot_front_nvme5link_speed token.
       -  GEN5 - Value - GEN5 for configuring slot_front_nvme5link_speed token.
     choices: ['platform-default' , 'Auto' , 'Disabled' , 'GEN1' , 'GEN2' , 'GEN3' , 'GEN4' , 'GEN5']
-    default: platform-default
     type: str
   slot_front_nvme5option_rom:
     description:
@@ -3121,7 +2825,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   slot_front_nvme6link_speed:
     description:
@@ -3135,7 +2838,6 @@ options:
       -  GEN4 - Value - GEN4 for configuring slot_front_nvme6link_speed token.
       -  GEN5 - Value - GEN5 for configuring slot_front_nvme6link_speed token.
     choices: ['platform-default' , 'Auto' , 'Disabled' , 'GEN1' , 'GEN2' , 'GEN3' , 'GEN4' , 'GEN5']
-    default: platform-default
     type: str
   slot_front_nvme6option_rom:
     description:
@@ -3144,7 +2846,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   slot_front_nvme7link_speed:
     description:
@@ -3158,7 +2859,6 @@ options:
       -  GEN4 - Value - GEN4 for configuring slot_front_nvme7link_speed token.
       -  GEN5 - Value - GEN5 for configuring slot_front_nvme7link_speed token.
     choices: ['platform-default' , 'Auto' , 'Disabled' , 'GEN1' , 'GEN2' , 'GEN3' , 'GEN4' , 'GEN5']
-    default: platform-default
     type: str
   slot_front_nvme7option_rom:
     description:
@@ -3167,7 +2867,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   slot_front_nvme8link_speed:
     description:
@@ -3181,7 +2880,6 @@ options:
       -  GEN4 - Value - GEN4 for configuring slot_front_nvme8link_speed token.
       -  GEN5 - Value - GEN5 for configuring slot_front_nvme8link_speed token.
     choices: ['platform-default' , 'Auto' , 'Disabled' , 'GEN1' , 'GEN2' , 'GEN3' , 'GEN4' , 'GEN5']
-    default: platform-default
     type: str
   slot_front_nvme8option_rom:
     description:
@@ -3190,7 +2888,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   slot_front_nvme9link_speed:
     description:
@@ -3204,7 +2901,6 @@ options:
       -  GEN4 - Value - GEN4 for configuring slot_front_nvme9link_speed token.
       -  GEN5 - Value - GEN5 for configuring slot_front_nvme9link_speed token.
     choices: ['platform-default' , 'Auto' , 'Disabled' , 'GEN1' , 'GEN2' , 'GEN3' , 'GEN4' , 'GEN5']
-    default: platform-default
     type: str
   slot_front_nvme9option_rom:
     description:
@@ -3213,7 +2909,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   slot_front_slot5link_speed:
     description:
@@ -3225,7 +2920,6 @@ options:
       -  GEN2 - Value - GEN2 for configuring slot_front_slot5link_speed token.
       -  GEN3 - Value - GEN3 for configuring slot_front_slot5link_speed token.
     choices: ['platform-default' , 'Auto' , 'Disabled' , 'GEN1' , 'GEN2' , 'GEN3']
-    default: platform-default
     type: str
   slot_front_slot6link_speed:
     description:
@@ -3237,7 +2931,6 @@ options:
       -  GEN2 - Value - GEN2 for configuring slot_front_slot6link_speed token.
       -  GEN3 - Value - GEN3 for configuring slot_front_slot6link_speed token.
     choices: ['platform-default' , 'Auto' , 'Disabled' , 'GEN1' , 'GEN2' , 'GEN3']
-    default: platform-default
     type: str
   slot_gpu1state:
     description:
@@ -3246,7 +2939,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   slot_gpu2state:
     description:
@@ -3255,7 +2947,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   slot_gpu3state:
     description:
@@ -3264,7 +2955,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   slot_gpu4state:
     description:
@@ -3273,7 +2963,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   slot_gpu5state:
     description:
@@ -3282,7 +2971,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   slot_gpu6state:
     description:
@@ -3291,7 +2979,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   slot_gpu7state:
     description:
@@ -3300,7 +2987,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   slot_gpu8state:
     description:
@@ -3309,7 +2995,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   slot_hba_link_speed:
     description:
@@ -3321,7 +3006,6 @@ options:
       -  GEN2 - Value - GEN2 for configuring slot_hba_link_speed token.
       -  GEN3 - Value - GEN3 for configuring slot_hba_link_speed token.
     choices: ['platform-default' , 'Auto' , 'Disabled' , 'GEN1' , 'GEN2' , 'GEN3']
-    default: platform-default
     type: str
   slot_hba_state:
     description:
@@ -3332,7 +3016,6 @@ options:
       -  Legacy Only - Value - Legacy Only for configuring slot_hba_state token.
       -  UEFI Only - Value - UEFI Only for configuring slot_hba_state token.
     choices: ['platform-default' , 'disabled' , 'enabled' , 'Legacy Only' , 'UEFI Only']
-    default: platform-default
     type: str
   slot_lom1link:
     description:
@@ -3341,7 +3024,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   slot_lom2link:
     description:
@@ -3350,7 +3032,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   slot_mezz_state:
     description:
@@ -3361,7 +3042,6 @@ options:
       -  Legacy Only - Value - Legacy Only for configuring slot_mezz_state token.
       -  UEFI Only - Value - UEFI Only for configuring slot_mezz_state token.
     choices: ['platform-default' , 'disabled' , 'enabled' , 'Legacy Only' , 'UEFI Only']
-    default: platform-default
     type: str
   slot_mlom_link_speed:
     description:
@@ -3375,7 +3055,6 @@ options:
       -  GEN4 - Value - GEN4 for configuring slot_mlom_link_speed token.
       -  GEN5 - Value - GEN5 for configuring slot_mlom_link_speed token.
     choices: ['platform-default' , 'Auto' , 'Disabled' , 'GEN1' , 'GEN2' , 'GEN3' , 'GEN4' , 'GEN5']
-    default: platform-default
     type: str
   slot_mlom_state:
     description:
@@ -3386,7 +3065,6 @@ options:
       -  Legacy Only - Value - Legacy Only for configuring slot_mlom_state token.
       -  UEFI Only - Value - UEFI Only for configuring slot_mlom_state token.
     choices: ['platform-default' , 'disabled' , 'enabled' , 'Legacy Only' , 'UEFI Only']
-    default: platform-default
     type: str
   slot_mraid_link_speed:
     description:
@@ -3400,7 +3078,6 @@ options:
       -  GEN4 - Value - GEN4 for configuring slot_mraid_link_speed token.
       -  GEN5 - Value - GEN5 for configuring slot_mraid_link_speed token.
     choices: ['platform-default' , 'Auto' , 'Disabled' , 'GEN1' , 'GEN2' , 'GEN3' , 'GEN4' , 'GEN5']
-    default: platform-default
     type: str
   slot_mraid_state:
     description:
@@ -3409,7 +3086,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   slot_n10state:
     description:
@@ -3418,7 +3094,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   slot_n11state:
     description:
@@ -3427,7 +3102,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   slot_n12state:
     description:
@@ -3436,7 +3110,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   slot_n13state:
     description:
@@ -3445,7 +3118,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   slot_n14state:
     description:
@@ -3454,7 +3126,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   slot_n15state:
     description:
@@ -3463,7 +3134,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   slot_n16state:
     description:
@@ -3472,7 +3142,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   slot_n17state:
     description:
@@ -3481,7 +3150,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   slot_n18state:
     description:
@@ -3490,7 +3158,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   slot_n19state:
     description:
@@ -3499,7 +3166,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   slot_n1state:
     description:
@@ -3510,7 +3176,6 @@ options:
       -  Legacy Only - Value - Legacy Only for configuring slot_n1state token.
       -  UEFI Only - Value - UEFI Only for configuring slot_n1state token.
     choices: ['platform-default' , 'disabled' , 'enabled' , 'Legacy Only' , 'UEFI Only']
-    default: platform-default
     type: str
   slot_n20state:
     description:
@@ -3519,7 +3184,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   slot_n21state:
     description:
@@ -3528,7 +3192,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   slot_n22state:
     description:
@@ -3537,7 +3200,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   slot_n23state:
     description:
@@ -3546,7 +3208,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   slot_n24state:
     description:
@@ -3555,7 +3216,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   slot_n2state:
     description:
@@ -3566,7 +3226,6 @@ options:
       -  Legacy Only - Value - Legacy Only for configuring slot_n2state token.
       -  UEFI Only - Value - UEFI Only for configuring slot_n2state token.
     choices: ['platform-default' , 'disabled' , 'enabled' , 'Legacy Only' , 'UEFI Only']
-    default: platform-default
     type: str
   slot_n3state:
     description:
@@ -3575,7 +3234,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   slot_n4state:
     description:
@@ -3584,7 +3242,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   slot_n5state:
     description:
@@ -3593,7 +3250,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   slot_n6state:
     description:
@@ -3602,7 +3258,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   slot_n7state:
     description:
@@ -3611,7 +3266,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   slot_n8state:
     description:
@@ -3620,7 +3274,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   slot_n9state:
     description:
@@ -3629,7 +3282,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   slot_raid_link_speed:
     description:
@@ -3641,7 +3293,6 @@ options:
       -  GEN2 - Value - GEN2 for configuring slot_raid_link_speed token.
       -  GEN3 - Value - GEN3 for configuring slot_raid_link_speed token.
     choices: ['platform-default' , 'Auto' , 'Disabled' , 'GEN1' , 'GEN2' , 'GEN3']
-    default: platform-default
     type: str
   slot_raid_state:
     description:
@@ -3650,7 +3301,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   slot_rear_nvme1link_speed:
     description:
@@ -3664,7 +3314,6 @@ options:
       -  GEN4 - Value - GEN4 for configuring slot_rear_nvme1link_speed token.
       -  GEN5 - Value - GEN5 for configuring slot_rear_nvme1link_speed token.
     choices: ['platform-default' , 'Auto' , 'Disabled' , 'GEN1' , 'GEN2' , 'GEN3' , 'GEN4' , 'GEN5']
-    default: platform-default
     type: str
   slot_rear_nvme1state:
     description:
@@ -3673,7 +3322,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   slot_rear_nvme2link_speed:
     description:
@@ -3687,7 +3335,6 @@ options:
       -  GEN4 - Value - GEN4 for configuring slot_rear_nvme2link_speed token.
       -  GEN5 - Value - GEN5 for configuring slot_rear_nvme2link_speed token.
     choices: ['platform-default' , 'Auto' , 'Disabled' , 'GEN1' , 'GEN2' , 'GEN3' , 'GEN4' , 'GEN5']
-    default: platform-default
     type: str
   slot_rear_nvme2state:
     description:
@@ -3696,7 +3343,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   slot_rear_nvme3link_speed:
     description:
@@ -3710,7 +3356,6 @@ options:
       -  GEN4 - Value - GEN4 for configuring slot_rear_nvme3link_speed token.
       -  GEN5 - Value - GEN5 for configuring slot_rear_nvme3link_speed token.
     choices: ['platform-default' , 'Auto' , 'Disabled' , 'GEN1' , 'GEN2' , 'GEN3' , 'GEN4' , 'GEN5']
-    default: platform-default
     type: str
   slot_rear_nvme3state:
     description:
@@ -3719,7 +3364,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   slot_rear_nvme4link_speed:
     description:
@@ -3733,7 +3377,6 @@ options:
       -  GEN4 - Value - GEN4 for configuring slot_rear_nvme4link_speed token.
       -  GEN5 - Value - GEN5 for configuring slot_rear_nvme4link_speed token.
     choices: ['platform-default' , 'Auto' , 'Disabled' , 'GEN1' , 'GEN2' , 'GEN3' , 'GEN4' , 'GEN5']
-    default: platform-default
     type: str
   slot_rear_nvme4state:
     description:
@@ -3742,7 +3385,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   slot_rear_nvme5state:
     description:
@@ -3751,7 +3393,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   slot_rear_nvme6state:
     description:
@@ -3760,7 +3401,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   slot_rear_nvme7state:
     description:
@@ -3769,7 +3409,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   slot_rear_nvme8state:
     description:
@@ -3778,7 +3417,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   slot_riser1link_speed:
     description:
@@ -3790,7 +3428,6 @@ options:
       -  GEN2 - Value - GEN2 for configuring slot_riser1link_speed token.
       -  GEN3 - Value - GEN3 for configuring slot_riser1link_speed token.
     choices: ['platform-default' , 'Auto' , 'Disabled' , 'GEN1' , 'GEN2' , 'GEN3']
-    default: platform-default
     type: str
   slot_riser1slot1link_speed:
     description:
@@ -3802,7 +3439,6 @@ options:
       -  GEN2 - Value - GEN2 for configuring slot_riser1slot1link_speed token.
       -  GEN3 - Value - GEN3 for configuring slot_riser1slot1link_speed token.
     choices: ['platform-default' , 'Auto' , 'Disabled' , 'GEN1' , 'GEN2' , 'GEN3']
-    default: platform-default
     type: str
   slot_riser1slot2link_speed:
     description:
@@ -3814,7 +3450,6 @@ options:
       -  GEN2 - Value - GEN2 for configuring slot_riser1slot2link_speed token.
       -  GEN3 - Value - GEN3 for configuring slot_riser1slot2link_speed token.
     choices: ['platform-default' , 'Auto' , 'Disabled' , 'GEN1' , 'GEN2' , 'GEN3']
-    default: platform-default
     type: str
   slot_riser1slot3link_speed:
     description:
@@ -3826,7 +3461,6 @@ options:
       -  GEN2 - Value - GEN2 for configuring slot_riser1slot3link_speed token.
       -  GEN3 - Value - GEN3 for configuring slot_riser1slot3link_speed token.
     choices: ['platform-default' , 'Auto' , 'Disabled' , 'GEN1' , 'GEN2' , 'GEN3']
-    default: platform-default
     type: str
   slot_riser2link_speed:
     description:
@@ -3838,7 +3472,6 @@ options:
       -  GEN2 - Value - GEN2 for configuring slot_riser2link_speed token.
       -  GEN3 - Value - GEN3 for configuring slot_riser2link_speed token.
     choices: ['platform-default' , 'Auto' , 'Disabled' , 'GEN1' , 'GEN2' , 'GEN3']
-    default: platform-default
     type: str
   slot_riser2slot4link_speed:
     description:
@@ -3850,7 +3483,6 @@ options:
       -  GEN2 - Value - GEN2 for configuring slot_riser2slot4link_speed token.
       -  GEN3 - Value - GEN3 for configuring slot_riser2slot4link_speed token.
     choices: ['platform-default' , 'Auto' , 'Disabled' , 'GEN1' , 'GEN2' , 'GEN3']
-    default: platform-default
     type: str
   slot_riser2slot5link_speed:
     description:
@@ -3862,7 +3494,6 @@ options:
       -  GEN2 - Value - GEN2 for configuring slot_riser2slot5link_speed token.
       -  GEN3 - Value - GEN3 for configuring slot_riser2slot5link_speed token.
     choices: ['platform-default' , 'Auto' , 'Disabled' , 'GEN1' , 'GEN2' , 'GEN3']
-    default: platform-default
     type: str
   slot_riser2slot6link_speed:
     description:
@@ -3874,7 +3505,6 @@ options:
       -  GEN2 - Value - GEN2 for configuring slot_riser2slot6link_speed token.
       -  GEN3 - Value - GEN3 for configuring slot_riser2slot6link_speed token.
     choices: ['platform-default' , 'Auto' , 'Disabled' , 'GEN1' , 'GEN2' , 'GEN3']
-    default: platform-default
     type: str
   slot_sas_state:
     description:
@@ -3885,7 +3515,6 @@ options:
       -  Legacy Only - Value - Legacy Only for configuring slot_sas_state token.
       -  UEFI Only - Value - UEFI Only for configuring slot_sas_state token.
     choices: ['platform-default' , 'disabled' , 'enabled' , 'Legacy Only' , 'UEFI Only']
-    default: platform-default
     type: str
   slot_ssd_slot1link_speed:
     description:
@@ -3897,7 +3526,6 @@ options:
       -  GEN2 - Value - GEN2 for configuring slot_ssd_slot1link_speed token.
       -  GEN3 - Value - GEN3 for configuring slot_ssd_slot1link_speed token.
     choices: ['platform-default' , 'Auto' , 'Disabled' , 'GEN1' , 'GEN2' , 'GEN3']
-    default: platform-default
     type: str
   slot_ssd_slot2link_speed:
     description:
@@ -3909,7 +3537,6 @@ options:
       -  GEN2 - Value - GEN2 for configuring slot_ssd_slot2link_speed token.
       -  GEN3 - Value - GEN3 for configuring slot_ssd_slot2link_speed token.
     choices: ['platform-default' , 'Auto' , 'Disabled' , 'GEN1' , 'GEN2' , 'GEN3']
-    default: platform-default
     type: str
   smee:
     description:
@@ -3918,7 +3545,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   smt_mode:
     description:
@@ -3927,7 +3553,6 @@ options:
       -  Auto - Value - Auto for configuring smt_mode token.
       -  Off - Value - Off for configuring smt_mode token.
     choices: ['platform-default' , 'Auto' , 'Off']
-    default: platform-default
     type: str
   snc:
     description:
@@ -3939,7 +3564,6 @@ options:
       -  SNC2 - Value - SNC2 for configuring snc token.
       -  SNC4 - Value - SNC4 for configuring snc token.
     choices: ['platform-default' , 'Auto' , 'disabled' , 'enabled' , 'SNC2' , 'SNC4']
-    default: platform-default
     type: str
   snoopy_mode_for2lm:
     description:
@@ -3948,7 +3572,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   snoopy_mode_for_ad:
     description:
@@ -3957,7 +3580,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   sparing_mode:
     description:
@@ -3966,7 +3588,6 @@ options:
       -  dimm-sparing - Value - dimm-sparing for configuring sparing_mode token.
       -  rank-sparing - Value - rank-sparing for configuring sparing_mode token.
     choices: ['platform-default' , 'dimm-sparing' , 'rank-sparing']
-    default: platform-default
     type: str
   sr_iov:
     description:
@@ -3975,7 +3596,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   streamer_prefetch:
     description:
@@ -3984,7 +3604,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   svm_mode:
     description:
@@ -3993,7 +3612,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   terminal_type:
     description:
@@ -4004,7 +3622,6 @@ options:
       -  vt100-plus - Value - vt100-plus for configuring terminal_type token.
       -  vt-utf8 - Value - vt-utf8 for configuring terminal_type token.
     choices: ['platform-default' , 'pc-ansi' , 'vt100' , 'vt100-plus' , 'vt-utf8']
-    default: platform-default
     type: str
   tpm_control:
     description:
@@ -4013,7 +3630,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   tpm_pending_operation:
     description:
@@ -4022,7 +3638,6 @@ options:
       -  None - Value - None for configuring tpm_pending_operation token.
       -  TpmClear - Value - TpmClear for configuring tpm_pending_operation token.
     choices: ['platform-default' , 'None' , 'TpmClear']
-    default: platform-default
     type: str
   tpm_ppi_required:
     description:
@@ -4031,7 +3646,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   tpm_support:
     description:
@@ -4040,7 +3654,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   tsme:
     description:
@@ -4050,7 +3663,6 @@ options:
       -  disabled - Value - disabled for configuring tsme token.
       -  enabled - Value - enabled for configuring tsme token.
     choices: ['platform-default' , 'Auto' , 'disabled' , 'enabled']
-    default: platform-default
     type: str
   txt_support:
     description:
@@ -4059,7 +3671,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   ucsm_boot_order_rule:
     description:
@@ -4068,7 +3679,6 @@ options:
       -  Loose - Value - Loose for configuring ucsm_boot_order_rule token.
       -  Strict - Value - Strict for configuring ucsm_boot_order_rule token.
     choices: ['platform-default' , 'Loose' , 'Strict']
-    default: platform-default
     type: str
   ufs_disable:
     description:
@@ -4077,7 +3687,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   uma_based_clustering:
     description:
@@ -4087,7 +3696,6 @@ options:
       -  Hemisphere (2-clusters) - Value - Hemisphere (2-clusters) for configuring uma_based_clustering token.
       -  Quadrant (4-clusters) - Value - Quadrant (4-clusters) for configuring uma_based_clustering token.
     choices: ['platform-default' , 'Disable (All2All)' , 'Hemisphere (2-clusters)' , 'Quadrant (4-clusters)']
-    default: platform-default
     type: str
   upi_link_enablement:
     description:
@@ -4098,7 +3706,6 @@ options:
       -  3 - Value - 3 for configuring upi_link_enablement token.
       -  Auto - Value - Auto for configuring upi_link_enablement token.
     choices: ['platform-default' , '1' , '2' , '3' , 'Auto']
-    default: platform-default
     type: str
   upi_power_management:
     description:
@@ -4107,7 +3714,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   usb_emul6064:
     description:
@@ -4116,7 +3722,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   usb_port_front:
     description:
@@ -4125,7 +3730,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   usb_port_internal:
     description:
@@ -4134,7 +3738,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   usb_port_kvm:
     description:
@@ -4143,7 +3746,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   usb_port_rear:
     description:
@@ -4152,7 +3754,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   usb_port_sd_card:
     description:
@@ -4161,7 +3762,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   usb_port_vmedia:
     description:
@@ -4170,7 +3770,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   usb_xhci_support:
     description:
@@ -4179,7 +3778,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   vga_priority:
     description:
@@ -4189,7 +3787,6 @@ options:
       -  Onboard - Value - Onboard for configuring vga_priority token.
       -  Onboard VGA Disabled - Value - Onboard VGA Disabled for configuring vga_priority token.
     choices: ['platform-default' , 'Offboard' , 'Onboard' , 'Onboard VGA Disabled']
-    default: platform-default
     type: str
   virtual_numa:
     description:
@@ -4198,7 +3795,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   vmd_enable:
     description:
@@ -4207,7 +3803,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   vol_memory_mode:
     description:
@@ -4216,7 +3811,6 @@ options:
       -  1LM - Value - 1LM for configuring vol_memory_mode token.
       -  2LM - Value - 2LM for configuring vol_memory_mode token.
     choices: ['platform-default' , '1LM' , '2LM']
-    default: platform-default
     type: str
   work_load_config:
     description:
@@ -4227,7 +3821,6 @@ options:
       -  NUMA - Value - NUMA for configuring work_load_config token.
       -  UMA - Value - UMA for configuring work_load_config token.
     choices: ['platform-default' , 'Balanced' , 'I/O Sensitive' , 'NUMA' , 'UMA']
-    default: platform-default
     type: str
   x2apic_opt_out:
     description:
@@ -4236,7 +3829,6 @@ options:
       -  enabled - Enables the BIOS setting.
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
-    default: platform-default
     type: str
   xpt_prefetch:
     description:
@@ -4246,7 +3838,6 @@ options:
       -  disabled - Value - disabled for configuring xpt_prefetch token.
       -  enabled - Value - enabled for configuring xpt_prefetch token.
     choices: ['platform-default' , 'Auto' , 'disabled' , 'enabled']
-    default: platform-default
     type: str
   xpt_remote_prefetch:
     description:
@@ -4256,7 +3847,6 @@ options:
       -  disabled - Value - disabled for configuring xpt_remote_prefetch token.
       -  enabled - Value - enabled for configuring xpt_remote_prefetch token.
     choices: ['platform-default' , 'Auto' , 'disabled' , 'enabled']
-    default: platform-default
     type: str
 author:
   - Surendra Ramarao (@CRSurendra)
@@ -4737,9 +4327,11 @@ def apply_bios_properties(params, api_body):
         'xpt_remote_prefetch': 'XptRemotePrefetch',
     }
 
-    # Apply properties from the mapping
+    # Only include parameters explicitly set by the user (non-None).
+    # Unspecified BIOS parameters default to None and are omitted from the
+    # API body, avoiding a full 430+ parameter payload on every request.
     for param_name, api_property in bios_property_map.items():
-        if param_name in params:
+        if params.get(param_name) is not None:
             api_body[api_property] = params[param_name]
 
 
@@ -4758,7 +4350,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         acs_control_gpu2state={
             "type": "str",
@@ -4767,7 +4358,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         acs_control_gpu3state={
             "type": "str",
@@ -4776,7 +4366,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         acs_control_gpu4state={
             "type": "str",
@@ -4785,7 +4374,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         acs_control_gpu5state={
             "type": "str",
@@ -4794,7 +4382,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         acs_control_gpu6state={
             "type": "str",
@@ -4803,7 +4390,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         acs_control_gpu7state={
             "type": "str",
@@ -4812,7 +4398,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         acs_control_gpu8state={
             "type": "str",
@@ -4821,7 +4406,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         acs_control_slot11state={
             "type": "str",
@@ -4830,7 +4414,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         acs_control_slot12state={
             "type": "str",
@@ -4839,7 +4422,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         acs_control_slot13state={
             "type": "str",
@@ -4848,7 +4430,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         acs_control_slot14state={
             "type": "str",
@@ -4857,7 +4438,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         adaptive_refresh_mgmt_level={
             "type": "str",
@@ -4868,7 +4448,6 @@ def main():
                 'Level B',
                 'Level C'
             ],
-            "default": "platform-default"
         },
         adjacent_cache_line_prefetch={
             "type": "str",
@@ -4877,7 +4456,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         advanced_mem_test={
             "type": "str",
@@ -4887,7 +4465,6 @@ def main():
                 'disabled',
                 'enabled'
             ],
-            "default": "platform-default"
         },
         all_usb_devices={
             "type": "str",
@@ -4896,7 +4473,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         altitude={
             "type": "str",
@@ -4908,7 +4484,6 @@ def main():
                 '3000-m',
                 'auto'
             ],
-            "default": "platform-default"
         },
         aspm_support={
             "type": "str",
@@ -4919,7 +4494,6 @@ def main():
                 'Force L0s',
                 'L1 Only'
             ],
-            "default": "platform-default"
         },
         assert_nmi_on_perr={
             "type": "str",
@@ -4928,7 +4502,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         assert_nmi_on_serr={
             "type": "str",
@@ -4937,7 +4510,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         auto_cc_state={
             "type": "str",
@@ -4946,7 +4518,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         autonumous_cstate_enable={
             "type": "str",
@@ -4955,7 +4526,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         baud_rate={
             "type": "str",
@@ -4967,7 +4537,6 @@ def main():
                 '57600',
                 '115200'
             ],
-            "default": "platform-default"
         },
         bme_dma_mitigation={
             "type": "str",
@@ -4976,7 +4545,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         boot_option_num_retry={
             "type": "str",
@@ -4986,7 +4554,6 @@ def main():
                 '13',
                 'Infinite'
             ],
-            "default": "platform-default"
         },
         boot_option_re_cool_down={
             "type": "str",
@@ -4996,7 +4563,6 @@ def main():
                 '45',
                 '90'
             ],
-            "default": "platform-default"
         },
         boot_option_retry={
             "type": "str",
@@ -5005,7 +4571,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         boot_performance_mode={
             "type": "str",
@@ -5015,7 +4580,6 @@ def main():
                 'Max Performance',
                 'Set by Intel NM'
             ],
-            "default": "platform-default"
         },
         burst_and_postponed_refresh={
             "type": "str",
@@ -5024,7 +4588,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         c1auto_demotion={
             "type": "str",
@@ -5033,7 +4596,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         c1auto_un_demotion={
             "type": "str",
@@ -5042,7 +4604,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         cbs_cmn_apbdis={
             "type": "str",
@@ -5052,7 +4613,6 @@ def main():
                 '1',
                 'Auto'
             ],
-            "default": "platform-default"
         },
         cbs_cmn_cpu_cpb={
             "type": "str",
@@ -5061,7 +4621,6 @@ def main():
                 'Auto',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         cbs_cmn_cpu_gen_downcore_ctrl={
             "type": "str",
@@ -5075,7 +4634,6 @@ def main():
                 'TWO (1 + 1)',
                 'TWO (2 + 0)'
             ],
-            "default": "platform-default"
         },
         cbs_cmn_cpu_global_cstate_ctrl={
             "type": "str",
@@ -5085,7 +4643,6 @@ def main():
                 'disabled',
                 'enabled'
             ],
-            "default": "platform-default"
         },
         cbs_cmn_cpu_l1stream_hw_prefetcher={
             "type": "str",
@@ -5095,7 +4652,6 @@ def main():
                 'disabled',
                 'enabled'
             ],
-            "default": "platform-default"
         },
         cbs_cmn_cpu_l2stream_hw_prefetcher={
             "type": "str",
@@ -5105,7 +4661,6 @@ def main():
                 'disabled',
                 'enabled'
             ],
-            "default": "platform-default"
         },
         cbs_cmn_cpu_smee={
             "type": "str",
@@ -5115,7 +4670,6 @@ def main():
                 'disabled',
                 'enabled'
             ],
-            "default": "platform-default"
         },
         cbs_cmn_cpu_streaming_stores_ctrl={
             "type": "str",
@@ -5125,7 +4679,6 @@ def main():
                 'disabled',
                 'enabled'
             ],
-            "default": "platform-default"
         },
         cbs_cmnc_tdp_ctl={
             "type": "str",
@@ -5134,7 +4687,6 @@ def main():
                 'Auto',
                 'Manual'
             ],
-            "default": "platform-default"
         },
         cbs_cmn_determinism_slider={
             "type": "str",
@@ -5144,7 +4696,6 @@ def main():
                 'Performance',
                 'Power'
             ],
-            "default": "platform-default"
         },
         cbs_cmn_efficiency_mode_en={
             "type": "str",
@@ -5153,7 +4704,6 @@ def main():
                 'Auto',
                 'Enabled'
             ],
-            "default": "platform-default"
         },
         cbs_cmn_fixed_soc_pstate={
             "type": "str",
@@ -5165,7 +4715,6 @@ def main():
                 'P2',
                 'P3'
             ],
-            "default": "platform-default"
         },
         cbs_cmn_gnb_nb_iommu={
             "type": "str",
@@ -5175,7 +4724,6 @@ def main():
                 'disabled',
                 'enabled'
             ],
-            "default": "platform-default"
         },
         cbs_cmn_gnb_smucppc={
             "type": "str",
@@ -5185,7 +4733,6 @@ def main():
                 'disabled',
                 'enabled'
             ],
-            "default": "platform-default"
         },
         cbs_cmn_gnb_smu_df_cstates={
             "type": "str",
@@ -5195,7 +4742,6 @@ def main():
                 'disabled',
                 'enabled'
             ],
-            "default": "platform-default"
         },
         cbs_cmn_mem_ctrl_bank_group_swap_ddr4={
             "type": "str",
@@ -5205,7 +4751,6 @@ def main():
                 'disabled',
                 'enabled'
             ],
-            "default": "platform-default"
         },
         cbs_cmn_mem_map_bank_interleave_ddr4={
             "type": "str",
@@ -5214,7 +4759,6 @@ def main():
                 'Auto',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         cbs_cpu_ccd_ctrl_ssp={
             "type": "str",
@@ -5226,7 +4770,6 @@ def main():
                 '6 CCDs',
                 'Auto'
             ],
-            "default": "platform-default"
         },
         cbs_cpu_core_ctrl={
             "type": "str",
@@ -5241,7 +4784,6 @@ def main():
                 'THREE (3 + 0)',
                 'TWO (2 + 0)'
             ],
-            "default": "platform-default"
         },
         cbs_cpu_smt_ctrl={
             "type": "str",
@@ -5251,7 +4793,6 @@ def main():
                 'disabled',
                 'enabled'
             ],
-            "default": "platform-default"
         },
         cbs_dbg_cpu_snp_mem_cover={
             "type": "str",
@@ -5262,11 +4803,9 @@ def main():
                 'disabled',
                 'enabled'
             ],
-            "default": "platform-default"
         },
         cbs_dbg_cpu_snp_mem_size_cover={
             "type": "str",
-            "default": "platform-default"
         },
         cbs_df_cmn_acpi_srat_l3numa={
             "type": "str",
@@ -5276,7 +4815,6 @@ def main():
                 'disabled',
                 'enabled'
             ],
-            "default": "platform-default"
         },
         cbs_df_cmn_dram_nps={
             "type": "str",
@@ -5288,7 +4826,6 @@ def main():
                 'NPS2',
                 'NPS4'
             ],
-            "default": "platform-default"
         },
         cbs_df_cmn_mem_intlv={
             "type": "str",
@@ -5300,7 +4837,6 @@ def main():
                 'None',
                 'Socket'
             ],
-            "default": "platform-default"
         },
         cbs_df_cmn_mem_intlv_size={
             "type": "str",
@@ -5313,7 +4849,6 @@ def main():
                 '4 KB',
                 'Auto'
             ],
-            "default": "platform-default"
         },
         cbs_sev_snp_support={
             "type": "str",
@@ -5322,7 +4857,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         cdn_enable={
             "type": "str",
@@ -5331,7 +4865,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         cdn_support={
             "type": "str",
@@ -5341,7 +4874,6 @@ def main():
                 'enabled',
                 'LOMs Only'
             ],
-            "default": "platform-default"
         },
         channel_inter_leave={
             "type": "str",
@@ -5353,7 +4885,6 @@ def main():
                 '4-way',
                 'auto'
             ],
-            "default": "platform-default"
         },
         cisco_adaptive_mem_training={
             "type": "str",
@@ -5362,7 +4893,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         cisco_debug_level={
             "type": "str",
@@ -5372,7 +4902,6 @@ def main():
                 'Minimum',
                 'Normal'
             ],
-            "default": "platform-default"
         },
         cisco_oprom_launch_optimization={
             "type": "str",
@@ -5381,7 +4910,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         cisco_xgmi_max_speed={
             "type": "str",
@@ -5390,7 +4918,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         cke_low_policy={
             "type": "str",
@@ -5401,7 +4928,6 @@ def main():
                 'fast',
                 'slow'
             ],
-            "default": "platform-default"
         },
         closed_loop_therm_throtl={
             "type": "str",
@@ -5410,7 +4936,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         cmci_enable={
             "type": "str",
@@ -5419,7 +4944,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         config_tdp={
             "type": "str",
@@ -5428,7 +4952,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         config_tdp_level={
             "type": "str",
@@ -5438,7 +4961,6 @@ def main():
                 'Level 2',
                 'Normal'
             ],
-            "default": "platform-default"
         },
         console_redirection={
             "type": "str",
@@ -5450,7 +4972,6 @@ def main():
                 'enabled',
                 'serial-port-a'
             ],
-            "default": "platform-default"
         },
         core_multi_processing={
             "type": "str",
@@ -5522,7 +5043,6 @@ def main():
                 '64',
                 'all'
             ],
-            "default": "platform-default"
         },
         cpu_energy_performance={
             "type": "str",
@@ -5535,7 +5055,6 @@ def main():
                 'performance',
                 'power'
             ],
-            "default": "platform-default"
         },
         cpu_frequency_floor={
             "type": "str",
@@ -5544,7 +5063,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         cpu_pa_limit={
             "type": "str",
@@ -5553,7 +5071,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         cpu_perf_enhancement={
             "type": "str",
@@ -5562,7 +5079,6 @@ def main():
                 'Auto',
                 'Disabled'
             ],
-            "default": "platform-default"
         },
         cpu_performance={
             "type": "str",
@@ -5573,7 +5089,6 @@ def main():
                 'high-throughput',
                 'hpc'
             ],
-            "default": "platform-default"
         },
         cpu_power_management={
             "type": "str",
@@ -5584,7 +5099,6 @@ def main():
                 'energy-efficient',
                 'performance'
             ],
-            "default": "platform-default"
         },
         crfastgo_config={
             "type": "str",
@@ -5600,7 +5114,6 @@ def main():
                 'Option 4',
                 'Option 5'
             ],
-            "default": "platform-default"
         },
         cr_qos={
             "type": "str",
@@ -5615,7 +5128,6 @@ def main():
                 'Recipe 2',
                 'Recipe 3'
             ],
-            "default": "platform-default"
         },
         dcpmm_firmware_downgrade={
             "type": "str",
@@ -5624,7 +5136,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         demand_scrub={
             "type": "str",
@@ -5633,7 +5144,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         direct_cache_access={
             "type": "str",
@@ -5643,7 +5153,6 @@ def main():
                 'disabled',
                 'enabled'
             ],
-            "default": "platform-default"
         },
         dma_ctrl_opt_in={
             "type": "str",
@@ -5652,7 +5161,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         dram_clock_throttling={
             "type": "str",
@@ -5663,7 +5171,6 @@ def main():
                 'Energy Efficient',
                 'Performance'
             ],
-            "default": "platform-default"
         },
         dram_refresh_rate={
             "type": "str",
@@ -5675,7 +5182,6 @@ def main():
                 '4x',
                 'Auto'
             ],
-            "default": "platform-default"
         },
         dram_sw_thermal_throttling={
             "type": "str",
@@ -5684,7 +5190,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         eadr_support={
             "type": "str",
@@ -5694,7 +5199,6 @@ def main():
                 'disabled',
                 'enabled'
             ],
-            "default": "platform-default"
         },
         edpc_en={
             "type": "str",
@@ -5704,7 +5208,6 @@ def main():
                 'On Fatal Error',
                 'On Fatal and Non-Fatal Errors'
             ],
-            "default": "platform-default"
         },
         enable_clock_spread_spec={
             "type": "str",
@@ -5717,7 +5220,6 @@ def main():
                 'Hardware',
                 'Off'
             ],
-            "default": "platform-default"
         },
         enable_mktme={
             "type": "str",
@@ -5726,7 +5228,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         enable_rmt={
             "type": "str",
@@ -5735,7 +5236,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         enable_sgx={
             "type": "str",
@@ -5744,7 +5244,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         enable_tme={
             "type": "str",
@@ -5753,7 +5252,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         energy_efficient_turbo={
             "type": "str",
@@ -5762,7 +5260,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         eng_perf_tuning={
             "type": "str",
@@ -5771,7 +5268,6 @@ def main():
                 'BIOS',
                 'OS'
             ],
-            "default": "platform-default"
         },
         enhanced_intel_speed_step_tech={
             "type": "str",
@@ -5780,7 +5276,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         epoch_update={
             "type": "str",
@@ -5790,7 +5285,6 @@ def main():
                 'Manual User Defined Owner EPOCHs',
                 'SGX Owner EPOCH activated'
             ],
-            "default": "platform-default"
         },
         epp_enable={
             "type": "str",
@@ -5799,7 +5293,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         epp_profile={
             "type": "str",
@@ -5810,7 +5303,6 @@ def main():
                 'Performance',
                 'Power'
             ],
-            "default": "platform-default"
         },
         error_check_scrub={
             "type": "str",
@@ -5820,7 +5312,6 @@ def main():
                 'Enabled with Result Collection',
                 'Enabled without Result Collection'
             ],
-            "default": "platform-default"
         },
         execute_disable_bit={
             "type": "str",
@@ -5829,7 +5320,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         extended_apic={
             "type": "str",
@@ -5840,7 +5330,6 @@ def main():
                 'X2APIC',
                 'XAPIC'
             ],
-            "default": "platform-default"
         },
         flow_control={
             "type": "str",
@@ -5849,7 +5338,6 @@ def main():
                 'none',
                 'rts-cts'
             ],
-            "default": "platform-default"
         },
         frb2enable={
             "type": "str",
@@ -5858,7 +5346,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         hardware_prefetch={
             "type": "str",
@@ -5867,7 +5354,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         hwpm_enable={
             "type": "str",
@@ -5880,7 +5366,6 @@ def main():
                 'Native Mode with no Legacy',
                 'OOB MODE'
             ],
-            "default": "platform-default"
         },
         imc_interleave={
             "type": "str",
@@ -5890,7 +5375,6 @@ def main():
                 '2-way Interleave',
                 'Auto'
             ],
-            "default": "platform-default"
         },
         intel_dynamic_speed_select={
             "type": "str",
@@ -5899,7 +5383,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         intel_hyper_threading_tech={
             "type": "str",
@@ -5908,7 +5391,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         intel_speed_select={
             "type": "str",
@@ -5921,7 +5403,6 @@ def main():
                 'Config 3',
                 'Config 4'
             ],
-            "default": "platform-default"
         },
         intel_turbo_boost_tech={
             "type": "str",
@@ -5930,7 +5411,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         intel_virtualization_technology={
             "type": "str",
@@ -5939,7 +5419,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         intel_vtdats_support={
             "type": "str",
@@ -5948,7 +5427,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         intel_vtd_coherency_support={
             "type": "str",
@@ -5957,7 +5435,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         intel_vtd_interrupt_remapping={
             "type": "str",
@@ -5966,7 +5443,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         intel_vtd_pass_through_dma_support={
             "type": "str",
@@ -5975,7 +5451,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         intel_vt_for_directed_io={
             "type": "str",
@@ -5984,7 +5459,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         ioh_error_enable={
             "type": "str",
@@ -5993,7 +5467,6 @@ def main():
                 'No',
                 'Yes'
             ],
-            "default": "platform-default"
         },
         ioh_resource={
             "type": "str",
@@ -6005,7 +5478,6 @@ def main():
                 'IOH0 48k IOH1 16k',
                 'IOH0 56k IOH1 8k'
             ],
-            "default": "platform-default"
         },
         ip_prefetch={
             "type": "str",
@@ -6014,7 +5486,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         ipv4http={
             "type": "str",
@@ -6023,7 +5494,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         ipv4pxe={
             "type": "str",
@@ -6032,7 +5502,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         ipv6http={
             "type": "str",
@@ -6041,7 +5510,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         ipv6pxe={
             "type": "str",
@@ -6050,7 +5518,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         kti_prefetch={
             "type": "str",
@@ -6060,7 +5527,6 @@ def main():
                 'disabled',
                 'enabled'
             ],
-            "default": "platform-default"
         },
         legacy_os_redirection={
             "type": "str",
@@ -6069,7 +5535,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         legacy_usb_support={
             "type": "str",
@@ -6079,7 +5544,6 @@ def main():
                 'disabled',
                 'enabled'
             ],
-            "default": "platform-default"
         },
         llc_alloc={
             "type": "str",
@@ -6089,7 +5553,6 @@ def main():
                 'disabled',
                 'enabled'
             ],
-            "default": "platform-default"
         },
         llc_prefetch={
             "type": "str",
@@ -6098,7 +5561,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         lom_port0state={
             "type": "str",
@@ -6109,7 +5571,6 @@ def main():
                 'Legacy Only',
                 'UEFI Only'
             ],
-            "default": "platform-default"
         },
         lom_port1state={
             "type": "str",
@@ -6120,7 +5581,6 @@ def main():
                 'Legacy Only',
                 'UEFI Only'
             ],
-            "default": "platform-default"
         },
         lom_port2state={
             "type": "str",
@@ -6131,7 +5591,6 @@ def main():
                 'Legacy Only',
                 'UEFI Only'
             ],
-            "default": "platform-default"
         },
         lom_port3state={
             "type": "str",
@@ -6142,7 +5601,6 @@ def main():
                 'Legacy Only',
                 'UEFI Only'
             ],
-            "default": "platform-default"
         },
         lom_ports_all_state={
             "type": "str",
@@ -6151,7 +5609,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         lv_ddr_mode={
             "type": "str",
@@ -6161,7 +5618,6 @@ def main():
                 'performance-mode',
                 'power-saving-mode'
             ],
-            "default": "platform-default"
         },
         make_device_non_bootable={
             "type": "str",
@@ -6170,7 +5626,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         memory_bandwidth_boost={
             "type": "str",
@@ -6179,7 +5634,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         memory_inter_leave={
             "type": "str",
@@ -6192,7 +5646,6 @@ def main():
                 'disabled',
                 'enabled'
             ],
-            "default": "platform-default"
         },
         memory_mapped_io_above4gb={
             "type": "str",
@@ -6201,7 +5654,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         memory_refresh_rate={
             "type": "str",
@@ -6210,11 +5662,9 @@ def main():
                 '1x Refresh',
                 '2x Refresh'
             ],
-            "default": "platform-default"
         },
         memory_size_limit={
             "type": "str",
-            "default": "platform-default"
         },
         memory_thermal_throttling={
             "type": "str",
@@ -6223,7 +5673,6 @@ def main():
                 'CLTT with PECI',
                 'Disabled'
             ],
-            "default": "platform-default"
         },
         mirroring_mode={
             "type": "str",
@@ -6232,7 +5681,6 @@ def main():
                 'inter-socket',
                 'intra-socket'
             ],
-            "default": "platform-default"
         },
         mmcfg_base={
             "type": "str",
@@ -6244,7 +5692,6 @@ def main():
                 '3 GB',
                 'Auto'
             ],
-            "default": "platform-default"
         },
         network_stack={
             "type": "str",
@@ -6253,7 +5700,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         numa_optimized={
             "type": "str",
@@ -6262,7 +5708,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         nvmdimm_perform_config={
             "type": "str",
@@ -6272,7 +5717,6 @@ def main():
                 'Balanced Profile',
                 'Latency Optimized'
             ],
-            "default": "platform-default"
         },
         onboard10gbit_lom={
             "type": "str",
@@ -6281,7 +5725,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         onboard_gbit_lom={
             "type": "str",
@@ -6290,7 +5733,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         onboard_scu_storage_support={
             "type": "str",
@@ -6299,7 +5741,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         onboard_scu_storage_sw_stack={
             "type": "str",
@@ -6308,7 +5749,6 @@ def main():
                 'Intel RSTe',
                 'LSI SW RAID'
             ],
-            "default": "platform-default"
         },
         operation_mode={
             "type": "str",
@@ -6317,7 +5757,6 @@ def main():
                 'Test Only',
                 'Test and Repair'
             ],
-            "default": "platform-default"
         },
         os_boot_watchdog_timer={
             "type": "str",
@@ -6326,7 +5765,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         os_boot_watchdog_timer_policy={
             "type": "str",
@@ -6336,7 +5774,6 @@ def main():
                 'power-off',
                 'reset'
             ],
-            "default": "platform-default"
         },
         os_boot_watchdog_timer_timeout={
             "type": "str",
@@ -6347,7 +5784,6 @@ def main():
                 '15-minutes',
                 '20-minutes'
             ],
-            "default": "platform-default"
         },
         out_of_band_mgmt_port={
             "type": "str",
@@ -6356,7 +5792,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         package_cstate_limit={
             "type": "str",
@@ -6370,7 +5805,6 @@ def main():
                 'C6 Retention',
                 'No Limit'
             ],
-            "default": "platform-default"
         },
         panic_high_watermark={
             "type": "str",
@@ -6379,7 +5813,6 @@ def main():
                 'High',
                 'Low'
             ],
-            "default": "platform-default"
         },
         partial_cache_line_sparing={
             "type": "str",
@@ -6388,7 +5821,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         partial_mirror_mode_config={
             "type": "str",
@@ -6398,27 +5830,21 @@ def main():
                 'Percentage',
                 'Value in GB'
             ],
-            "default": "platform-default"
         },
         partial_mirror_percent={
             "type": "str",
-            "default": "platform-default"
         },
         partial_mirror_value1={
             "type": "str",
-            "default": "platform-default"
         },
         partial_mirror_value2={
             "type": "str",
-            "default": "platform-default"
         },
         partial_mirror_value3={
             "type": "str",
-            "default": "platform-default"
         },
         partial_mirror_value4={
             "type": "str",
-            "default": "platform-default"
         },
         patrol_scrub={
             "type": "str",
@@ -6428,15 +5854,12 @@ def main():
                 'Enable at End of POST',
                 'enabled'
             ],
-            "default": "platform-default"
         },
         patrol_scrub_duration={
             "type": "str",
-            "default": "platform-default"
         },
         pch_pcie_pll_ssc={
             "type": "str",
-            "default": "platform-default"
         },
         pch_usb30mode={
             "type": "str",
@@ -6445,7 +5868,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         pcie_ari_support={
             "type": "str",
@@ -6455,7 +5877,6 @@ def main():
                 'disabled',
                 'enabled'
             ],
-            "default": "platform-default"
         },
         pcie_pll_ssc={
             "type": "str",
@@ -6465,7 +5886,6 @@ def main():
                 'Disabled',
                 'ZeroPointFive'
             ],
-            "default": "platform-default"
         },
         pc_ie_ras_support={
             "type": "str",
@@ -6474,7 +5894,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         pcie_slot_mraid1link_speed={
             "type": "str",
@@ -6488,7 +5907,6 @@ def main():
                 'GEN4',
                 'GEN5'
             ],
-            "default": "platform-default"
         },
         pcie_slot_mraid1option_rom={
             "type": "str",
@@ -6497,7 +5915,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         pcie_slot_mraid2link_speed={
             "type": "str",
@@ -6511,7 +5928,6 @@ def main():
                 'GEN4',
                 'GEN5'
             ],
-            "default": "platform-default"
         },
         pcie_slot_mraid2option_rom={
             "type": "str",
@@ -6520,7 +5936,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         pcie_slot_mstorraid_link_speed={
             "type": "str",
@@ -6533,7 +5948,6 @@ def main():
                 'GEN3',
                 'GEN4'
             ],
-            "default": "platform-default"
         },
         pcie_slot_mstorraid_option_rom={
             "type": "str",
@@ -6542,7 +5956,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         pcie_slot_nvme1link_speed={
             "type": "str",
@@ -6554,7 +5967,6 @@ def main():
                 'GEN2',
                 'GEN3'
             ],
-            "default": "platform-default"
         },
         pcie_slot_nvme1option_rom={
             "type": "str",
@@ -6563,7 +5975,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         pcie_slot_nvme2link_speed={
             "type": "str",
@@ -6575,7 +5986,6 @@ def main():
                 'GEN2',
                 'GEN3'
             ],
-            "default": "platform-default"
         },
         pcie_slot_nvme2option_rom={
             "type": "str",
@@ -6584,7 +5994,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         pcie_slot_nvme3link_speed={
             "type": "str",
@@ -6596,7 +6005,6 @@ def main():
                 'GEN2',
                 'GEN3'
             ],
-            "default": "platform-default"
         },
         pcie_slot_nvme3option_rom={
             "type": "str",
@@ -6605,7 +6013,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         pcie_slot_nvme4link_speed={
             "type": "str",
@@ -6617,7 +6024,6 @@ def main():
                 'GEN2',
                 'GEN3'
             ],
-            "default": "platform-default"
         },
         pcie_slot_nvme4option_rom={
             "type": "str",
@@ -6626,7 +6032,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         pcie_slot_nvme5link_speed={
             "type": "str",
@@ -6638,7 +6043,6 @@ def main():
                 'GEN2',
                 'GEN3'
             ],
-            "default": "platform-default"
         },
         pcie_slot_nvme5option_rom={
             "type": "str",
@@ -6647,7 +6051,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         pcie_slot_nvme6link_speed={
             "type": "str",
@@ -6659,7 +6062,6 @@ def main():
                 'GEN2',
                 'GEN3'
             ],
-            "default": "platform-default"
         },
         pcie_slot_nvme6option_rom={
             "type": "str",
@@ -6668,7 +6070,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         pcie_slots_cdn_enable={
             "type": "str",
@@ -6677,7 +6078,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         pc_ie_ssd_hot_plug_support={
             "type": "str",
@@ -6686,7 +6086,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         pci_option_ro_ms={
             "type": "str",
@@ -6697,7 +6096,6 @@ def main():
                 'Legacy Only',
                 'UEFI Only'
             ],
-            "default": "platform-default"
         },
         pci_rom_clp={
             "type": "str",
@@ -6706,7 +6104,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         pop_support={
             "type": "str",
@@ -6715,7 +6112,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         post_error_pause={
             "type": "str",
@@ -6724,7 +6120,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         post_package_repair={
             "type": "str",
@@ -6733,7 +6128,6 @@ def main():
                 'Disabled',
                 'Hard PPR'
             ],
-            "default": "platform-default"
         },
         processor_c1e={
             "type": "str",
@@ -6742,7 +6136,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         processor_c3report={
             "type": "str",
@@ -6751,7 +6144,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         processor_c6report={
             "type": "str",
@@ -6760,7 +6152,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         processor_cstate={
             "type": "str",
@@ -6769,7 +6160,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         psata={
             "type": "str",
@@ -6779,7 +6169,6 @@ def main():
                 'Disabled',
                 'LSI SW RAID'
             ],
-            "default": "platform-default"
         },
         pstate_coord_type={
             "type": "str",
@@ -6789,7 +6178,6 @@ def main():
                 'SW ALL',
                 'SW ANY'
             ],
-            "default": "platform-default"
         },
         putty_key_pad={
             "type": "str",
@@ -6802,7 +6190,6 @@ def main():
                 'VT400',
                 'XTERMR6'
             ],
-            "default": "platform-default"
         },
         pwr_perf_tuning={
             "type": "str",
@@ -6812,7 +6199,6 @@ def main():
                 'os',
                 'peci'
             ],
-            "default": "platform-default"
         },
         qpi_link_frequency={
             "type": "str",
@@ -6824,7 +6210,6 @@ def main():
                 '9.6-gt/s',
                 'auto'
             ],
-            "default": "platform-default"
         },
         qpi_link_speed={
             "type": "str",
@@ -6838,7 +6223,6 @@ def main():
                 '9.6GT/s',
                 'Auto'
             ],
-            "default": "platform-default"
         },
         qpi_snoop_mode={
             "type": "str",
@@ -6851,7 +6235,6 @@ def main():
                 'home-directory-snoop-with-osb',
                 'home-snoop'
             ],
-            "default": "platform-default"
         },
         rank_inter_leave={
             "type": "str",
@@ -6863,7 +6246,6 @@ def main():
                 '8-way',
                 'auto'
             ],
-            "default": "platform-default"
         },
         redirection_after_post={
             "type": "str",
@@ -6872,7 +6254,6 @@ def main():
                 'Always Enable',
                 'Bootloader'
             ],
-            "default": "platform-default"
         },
         sata_mode_select={
             "type": "str",
@@ -6882,7 +6263,6 @@ def main():
                 'Disabled',
                 'LSI SW RAID'
             ],
-            "default": "platform-default"
         },
         select_memory_ras_configuration={
             "type": "str",
@@ -6896,7 +6276,6 @@ def main():
                 'partial-mirror-mode-1lm',
                 'sparing'
             ],
-            "default": "platform-default"
         },
         select_ppr_type={
             "type": "str",
@@ -6906,7 +6285,6 @@ def main():
                 'Hard PPR',
                 'Soft PPR'
             ],
-            "default": "platform-default"
         },
         serial_port_aenable={
             "type": "str",
@@ -6915,7 +6293,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         sev={
             "type": "str",
@@ -6925,7 +6302,6 @@ def main():
                 '509 ASIDs',
                 'Auto'
             ],
-            "default": "platform-default"
         },
         sgx_auto_registration_agent={
             "type": "str",
@@ -6934,15 +6310,12 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         sgx_epoch0={
             "type": "str",
-            "default": "platform-default"
         },
         sgx_epoch1={
             "type": "str",
-            "default": "platform-default"
         },
         sgx_factory_reset={
             "type": "str",
@@ -6951,23 +6324,18 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         sgx_le_pub_key_hash0={
             "type": "str",
-            "default": "platform-default"
         },
         sgx_le_pub_key_hash1={
             "type": "str",
-            "default": "platform-default"
         },
         sgx_le_pub_key_hash2={
             "type": "str",
-            "default": "platform-default"
         },
         sgx_le_pub_key_hash3={
             "type": "str",
-            "default": "platform-default"
         },
         sgx_le_wr={
             "type": "str",
@@ -6976,7 +6344,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         sgx_package_info_in_band_access={
             "type": "str",
@@ -6985,7 +6352,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         sgx_qos={
             "type": "str",
@@ -6994,7 +6360,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         sha1pcr_bank={
             "type": "str",
@@ -7003,7 +6368,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         sha256pcr_bank={
             "type": "str",
@@ -7012,7 +6376,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         single_pctl_enable={
             "type": "str",
@@ -7021,7 +6384,6 @@ def main():
                 'No',
                 'Yes'
             ],
-            "default": "platform-default"
         },
         slot10link_speed={
             "type": "str",
@@ -7033,7 +6395,6 @@ def main():
                 'GEN2',
                 'GEN3'
             ],
-            "default": "platform-default"
         },
         slot10state={
             "type": "str",
@@ -7044,7 +6405,6 @@ def main():
                 'Legacy Only',
                 'UEFI Only'
             ],
-            "default": "platform-default"
         },
         slot11link_speed={
             "type": "str",
@@ -7056,7 +6416,6 @@ def main():
                 'GEN2',
                 'GEN3'
             ],
-            "default": "platform-default"
         },
         slot11state={
             "type": "str",
@@ -7065,7 +6424,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         slot12link_speed={
             "type": "str",
@@ -7077,7 +6435,6 @@ def main():
                 'GEN2',
                 'GEN3'
             ],
-            "default": "platform-default"
         },
         slot12state={
             "type": "str",
@@ -7086,7 +6443,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         slot13state={
             "type": "str",
@@ -7095,7 +6451,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         slot14state={
             "type": "str",
@@ -7104,7 +6459,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         slot1link_speed={
             "type": "str",
@@ -7118,7 +6472,6 @@ def main():
                 'GEN4',
                 'GEN5'
             ],
-            "default": "platform-default"
         },
         slot1state={
             "type": "str",
@@ -7129,7 +6482,6 @@ def main():
                 'Legacy Only',
                 'UEFI Only'
             ],
-            "default": "platform-default"
         },
         slot2link_speed={
             "type": "str",
@@ -7143,7 +6495,6 @@ def main():
                 'GEN4',
                 'GEN5'
             ],
-            "default": "platform-default"
         },
         slot2state={
             "type": "str",
@@ -7154,7 +6505,6 @@ def main():
                 'Legacy Only',
                 'UEFI Only'
             ],
-            "default": "platform-default"
         },
         slot3link_speed={
             "type": "str",
@@ -7168,7 +6518,6 @@ def main():
                 'GEN4',
                 'GEN5'
             ],
-            "default": "platform-default"
         },
         slot3state={
             "type": "str",
@@ -7179,7 +6528,6 @@ def main():
                 'Legacy Only',
                 'UEFI Only'
             ],
-            "default": "platform-default"
         },
         slot4link_speed={
             "type": "str",
@@ -7193,7 +6541,6 @@ def main():
                 'GEN4',
                 'GEN5'
             ],
-            "default": "platform-default"
         },
         slot4state={
             "type": "str",
@@ -7204,7 +6551,6 @@ def main():
                 'Legacy Only',
                 'UEFI Only'
             ],
-            "default": "platform-default"
         },
         slot5link_speed={
             "type": "str",
@@ -7218,7 +6564,6 @@ def main():
                 'GEN4',
                 'GEN5'
             ],
-            "default": "platform-default"
         },
         slot5state={
             "type": "str",
@@ -7229,7 +6574,6 @@ def main():
                 'Legacy Only',
                 'UEFI Only'
             ],
-            "default": "platform-default"
         },
         slot6link_speed={
             "type": "str",
@@ -7243,7 +6587,6 @@ def main():
                 'GEN4',
                 'GEN5'
             ],
-            "default": "platform-default"
         },
         slot6state={
             "type": "str",
@@ -7254,7 +6597,6 @@ def main():
                 'Legacy Only',
                 'UEFI Only'
             ],
-            "default": "platform-default"
         },
         slot7link_speed={
             "type": "str",
@@ -7268,7 +6610,6 @@ def main():
                 'GEN4',
                 'GEN5'
             ],
-            "default": "platform-default"
         },
         slot7state={
             "type": "str",
@@ -7279,7 +6620,6 @@ def main():
                 'Legacy Only',
                 'UEFI Only'
             ],
-            "default": "platform-default"
         },
         slot8link_speed={
             "type": "str",
@@ -7293,7 +6633,6 @@ def main():
                 'GEN4',
                 'GEN5'
             ],
-            "default": "platform-default"
         },
         slot8state={
             "type": "str",
@@ -7304,7 +6643,6 @@ def main():
                 'Legacy Only',
                 'UEFI Only'
             ],
-            "default": "platform-default"
         },
         slot9link_speed={
             "type": "str",
@@ -7317,7 +6655,6 @@ def main():
                 'GEN3',
                 'GEN4'
             ],
-            "default": "platform-default"
         },
         slot9state={
             "type": "str",
@@ -7328,7 +6665,6 @@ def main():
                 'Legacy Only',
                 'UEFI Only'
             ],
-            "default": "platform-default"
         },
         slot_flom_link_speed={
             "type": "str",
@@ -7340,7 +6676,6 @@ def main():
                 'GEN2',
                 'GEN3'
             ],
-            "default": "platform-default"
         },
         slot_front_nvme10link_speed={
             "type": "str",
@@ -7354,7 +6689,6 @@ def main():
                 'GEN4',
                 'GEN5'
             ],
-            "default": "platform-default"
         },
         slot_front_nvme10option_rom={
             "type": "str",
@@ -7363,7 +6697,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         slot_front_nvme11link_speed={
             "type": "str",
@@ -7377,7 +6710,6 @@ def main():
                 'GEN4',
                 'GEN5'
             ],
-            "default": "platform-default"
         },
         slot_front_nvme11option_rom={
             "type": "str",
@@ -7386,7 +6718,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         slot_front_nvme12link_speed={
             "type": "str",
@@ -7400,7 +6731,6 @@ def main():
                 'GEN4',
                 'GEN5'
             ],
-            "default": "platform-default"
         },
         slot_front_nvme12option_rom={
             "type": "str",
@@ -7409,7 +6739,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         slot_front_nvme13link_speed={
             "type": "str",
@@ -7423,7 +6752,6 @@ def main():
                 'GEN4',
                 'GEN5'
             ],
-            "default": "platform-default"
         },
         slot_front_nvme13option_rom={
             "type": "str",
@@ -7432,7 +6760,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         slot_front_nvme14link_speed={
             "type": "str",
@@ -7446,7 +6773,6 @@ def main():
                 'GEN4',
                 'GEN5'
             ],
-            "default": "platform-default"
         },
         slot_front_nvme14option_rom={
             "type": "str",
@@ -7455,7 +6781,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         slot_front_nvme15link_speed={
             "type": "str",
@@ -7469,7 +6794,6 @@ def main():
                 'GEN4',
                 'GEN5'
             ],
-            "default": "platform-default"
         },
         slot_front_nvme15option_rom={
             "type": "str",
@@ -7478,7 +6802,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         slot_front_nvme16link_speed={
             "type": "str",
@@ -7492,7 +6815,6 @@ def main():
                 'GEN4',
                 'GEN5'
             ],
-            "default": "platform-default"
         },
         slot_front_nvme16option_rom={
             "type": "str",
@@ -7501,7 +6823,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         slot_front_nvme17link_speed={
             "type": "str",
@@ -7515,7 +6836,6 @@ def main():
                 'GEN4',
                 'GEN5'
             ],
-            "default": "platform-default"
         },
         slot_front_nvme17option_rom={
             "type": "str",
@@ -7524,7 +6844,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         slot_front_nvme18link_speed={
             "type": "str",
@@ -7538,7 +6857,6 @@ def main():
                 'GEN4',
                 'GEN5'
             ],
-            "default": "platform-default"
         },
         slot_front_nvme18option_rom={
             "type": "str",
@@ -7547,7 +6865,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         slot_front_nvme19link_speed={
             "type": "str",
@@ -7561,7 +6878,6 @@ def main():
                 'GEN4',
                 'GEN5'
             ],
-            "default": "platform-default"
         },
         slot_front_nvme19option_rom={
             "type": "str",
@@ -7570,7 +6886,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         slot_front_nvme1link_speed={
             "type": "str",
@@ -7584,7 +6899,6 @@ def main():
                 'GEN4',
                 'GEN5'
             ],
-            "default": "platform-default"
         },
         slot_front_nvme1option_rom={
             "type": "str",
@@ -7593,7 +6907,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         slot_front_nvme20link_speed={
             "type": "str",
@@ -7607,7 +6920,6 @@ def main():
                 'GEN4',
                 'GEN5'
             ],
-            "default": "platform-default"
         },
         slot_front_nvme20option_rom={
             "type": "str",
@@ -7616,7 +6928,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         slot_front_nvme21link_speed={
             "type": "str",
@@ -7630,7 +6941,6 @@ def main():
                 'GEN4',
                 'GEN5'
             ],
-            "default": "platform-default"
         },
         slot_front_nvme21option_rom={
             "type": "str",
@@ -7639,7 +6949,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         slot_front_nvme22link_speed={
             "type": "str",
@@ -7653,7 +6962,6 @@ def main():
                 'GEN4',
                 'GEN5'
             ],
-            "default": "platform-default"
         },
         slot_front_nvme22option_rom={
             "type": "str",
@@ -7662,7 +6970,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         slot_front_nvme23link_speed={
             "type": "str",
@@ -7676,7 +6983,6 @@ def main():
                 'GEN4',
                 'GEN5'
             ],
-            "default": "platform-default"
         },
         slot_front_nvme23option_rom={
             "type": "str",
@@ -7685,7 +6991,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         slot_front_nvme24link_speed={
             "type": "str",
@@ -7699,7 +7004,6 @@ def main():
                 'GEN4',
                 'GEN5'
             ],
-            "default": "platform-default"
         },
         slot_front_nvme24option_rom={
             "type": "str",
@@ -7708,7 +7012,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         slot_front_nvme2link_speed={
             "type": "str",
@@ -7722,7 +7025,6 @@ def main():
                 'GEN4',
                 'GEN5'
             ],
-            "default": "platform-default"
         },
         slot_front_nvme2option_rom={
             "type": "str",
@@ -7731,7 +7033,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         slot_front_nvme3link_speed={
             "type": "str",
@@ -7745,7 +7046,6 @@ def main():
                 'GEN4',
                 'GEN5'
             ],
-            "default": "platform-default"
         },
         slot_front_nvme3option_rom={
             "type": "str",
@@ -7754,7 +7054,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         slot_front_nvme4link_speed={
             "type": "str",
@@ -7768,7 +7067,6 @@ def main():
                 'GEN4',
                 'GEN5'
             ],
-            "default": "platform-default"
         },
         slot_front_nvme4option_rom={
             "type": "str",
@@ -7777,7 +7075,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         slot_front_nvme5link_speed={
             "type": "str",
@@ -7791,7 +7088,6 @@ def main():
                 'GEN4',
                 'GEN5'
             ],
-            "default": "platform-default"
         },
         slot_front_nvme5option_rom={
             "type": "str",
@@ -7800,7 +7096,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         slot_front_nvme6link_speed={
             "type": "str",
@@ -7814,7 +7109,6 @@ def main():
                 'GEN4',
                 'GEN5'
             ],
-            "default": "platform-default"
         },
         slot_front_nvme6option_rom={
             "type": "str",
@@ -7823,7 +7117,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         slot_front_nvme7link_speed={
             "type": "str",
@@ -7837,7 +7130,6 @@ def main():
                 'GEN4',
                 'GEN5'
             ],
-            "default": "platform-default"
         },
         slot_front_nvme7option_rom={
             "type": "str",
@@ -7846,7 +7138,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         slot_front_nvme8link_speed={
             "type": "str",
@@ -7860,7 +7151,6 @@ def main():
                 'GEN4',
                 'GEN5'
             ],
-            "default": "platform-default"
         },
         slot_front_nvme8option_rom={
             "type": "str",
@@ -7869,7 +7159,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         slot_front_nvme9link_speed={
             "type": "str",
@@ -7883,7 +7172,6 @@ def main():
                 'GEN4',
                 'GEN5'
             ],
-            "default": "platform-default"
         },
         slot_front_nvme9option_rom={
             "type": "str",
@@ -7892,7 +7180,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         slot_front_slot5link_speed={
             "type": "str",
@@ -7904,7 +7191,6 @@ def main():
                 'GEN2',
                 'GEN3'
             ],
-            "default": "platform-default"
         },
         slot_front_slot6link_speed={
             "type": "str",
@@ -7916,7 +7202,6 @@ def main():
                 'GEN2',
                 'GEN3'
             ],
-            "default": "platform-default"
         },
         slot_gpu1state={
             "type": "str",
@@ -7925,7 +7210,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         slot_gpu2state={
             "type": "str",
@@ -7934,7 +7218,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         slot_gpu3state={
             "type": "str",
@@ -7943,7 +7226,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         slot_gpu4state={
             "type": "str",
@@ -7952,7 +7234,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         slot_gpu5state={
             "type": "str",
@@ -7961,7 +7242,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         slot_gpu6state={
             "type": "str",
@@ -7970,7 +7250,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         slot_gpu7state={
             "type": "str",
@@ -7979,7 +7258,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         slot_gpu8state={
             "type": "str",
@@ -7988,7 +7266,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         slot_hba_link_speed={
             "type": "str",
@@ -8000,7 +7277,6 @@ def main():
                 'GEN2',
                 'GEN3'
             ],
-            "default": "platform-default"
         },
         slot_hba_state={
             "type": "str",
@@ -8011,7 +7287,6 @@ def main():
                 'Legacy Only',
                 'UEFI Only'
             ],
-            "default": "platform-default"
         },
         slot_lom1link={
             "type": "str",
@@ -8020,7 +7295,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         slot_lom2link={
             "type": "str",
@@ -8029,7 +7303,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         slot_mezz_state={
             "type": "str",
@@ -8040,7 +7313,6 @@ def main():
                 'Legacy Only',
                 'UEFI Only'
             ],
-            "default": "platform-default"
         },
         slot_mlom_link_speed={
             "type": "str",
@@ -8054,7 +7326,6 @@ def main():
                 'GEN4',
                 'GEN5'
             ],
-            "default": "platform-default"
         },
         slot_mlom_state={
             "type": "str",
@@ -8065,7 +7336,6 @@ def main():
                 'Legacy Only',
                 'UEFI Only'
             ],
-            "default": "platform-default"
         },
         slot_mraid_link_speed={
             "type": "str",
@@ -8079,7 +7349,6 @@ def main():
                 'GEN4',
                 'GEN5'
             ],
-            "default": "platform-default"
         },
         slot_mraid_state={
             "type": "str",
@@ -8088,7 +7357,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         slot_n10state={
             "type": "str",
@@ -8097,7 +7365,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         slot_n11state={
             "type": "str",
@@ -8106,7 +7373,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         slot_n12state={
             "type": "str",
@@ -8115,7 +7381,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         slot_n13state={
             "type": "str",
@@ -8124,7 +7389,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         slot_n14state={
             "type": "str",
@@ -8133,7 +7397,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         slot_n15state={
             "type": "str",
@@ -8142,7 +7405,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         slot_n16state={
             "type": "str",
@@ -8151,7 +7413,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         slot_n17state={
             "type": "str",
@@ -8160,7 +7421,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         slot_n18state={
             "type": "str",
@@ -8169,7 +7429,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         slot_n19state={
             "type": "str",
@@ -8178,7 +7437,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         slot_n1state={
             "type": "str",
@@ -8189,7 +7447,6 @@ def main():
                 'Legacy Only',
                 'UEFI Only'
             ],
-            "default": "platform-default"
         },
         slot_n20state={
             "type": "str",
@@ -8198,7 +7455,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         slot_n21state={
             "type": "str",
@@ -8207,7 +7463,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         slot_n22state={
             "type": "str",
@@ -8216,7 +7471,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         slot_n23state={
             "type": "str",
@@ -8225,7 +7479,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         slot_n24state={
             "type": "str",
@@ -8234,7 +7487,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         slot_n2state={
             "type": "str",
@@ -8245,7 +7497,6 @@ def main():
                 'Legacy Only',
                 'UEFI Only'
             ],
-            "default": "platform-default"
         },
         slot_n3state={
             "type": "str",
@@ -8254,7 +7505,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         slot_n4state={
             "type": "str",
@@ -8263,7 +7513,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         slot_n5state={
             "type": "str",
@@ -8272,7 +7521,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         slot_n6state={
             "type": "str",
@@ -8281,7 +7529,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         slot_n7state={
             "type": "str",
@@ -8290,7 +7537,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         slot_n8state={
             "type": "str",
@@ -8299,7 +7545,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         slot_n9state={
             "type": "str",
@@ -8308,7 +7553,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         slot_raid_link_speed={
             "type": "str",
@@ -8320,7 +7564,6 @@ def main():
                 'GEN2',
                 'GEN3'
             ],
-            "default": "platform-default"
         },
         slot_raid_state={
             "type": "str",
@@ -8329,7 +7572,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         slot_rear_nvme1link_speed={
             "type": "str",
@@ -8343,7 +7585,6 @@ def main():
                 'GEN4',
                 'GEN5'
             ],
-            "default": "platform-default"
         },
         slot_rear_nvme1state={
             "type": "str",
@@ -8352,7 +7593,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         slot_rear_nvme2link_speed={
             "type": "str",
@@ -8366,7 +7606,6 @@ def main():
                 'GEN4',
                 'GEN5'
             ],
-            "default": "platform-default"
         },
         slot_rear_nvme2state={
             "type": "str",
@@ -8375,7 +7614,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         slot_rear_nvme3link_speed={
             "type": "str",
@@ -8389,7 +7627,6 @@ def main():
                 'GEN4',
                 'GEN5'
             ],
-            "default": "platform-default"
         },
         slot_rear_nvme3state={
             "type": "str",
@@ -8398,7 +7635,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         slot_rear_nvme4link_speed={
             "type": "str",
@@ -8412,7 +7648,6 @@ def main():
                 'GEN4',
                 'GEN5'
             ],
-            "default": "platform-default"
         },
         slot_rear_nvme4state={
             "type": "str",
@@ -8421,7 +7656,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         slot_rear_nvme5state={
             "type": "str",
@@ -8430,7 +7664,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         slot_rear_nvme6state={
             "type": "str",
@@ -8439,7 +7672,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         slot_rear_nvme7state={
             "type": "str",
@@ -8448,7 +7680,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         slot_rear_nvme8state={
             "type": "str",
@@ -8457,7 +7688,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         slot_riser1link_speed={
             "type": "str",
@@ -8469,7 +7699,6 @@ def main():
                 'GEN2',
                 'GEN3'
             ],
-            "default": "platform-default"
         },
         slot_riser1slot1link_speed={
             "type": "str",
@@ -8481,7 +7710,6 @@ def main():
                 'GEN2',
                 'GEN3'
             ],
-            "default": "platform-default"
         },
         slot_riser1slot2link_speed={
             "type": "str",
@@ -8493,7 +7721,6 @@ def main():
                 'GEN2',
                 'GEN3'
             ],
-            "default": "platform-default"
         },
         slot_riser1slot3link_speed={
             "type": "str",
@@ -8505,7 +7732,6 @@ def main():
                 'GEN2',
                 'GEN3'
             ],
-            "default": "platform-default"
         },
         slot_riser2link_speed={
             "type": "str",
@@ -8517,7 +7743,6 @@ def main():
                 'GEN2',
                 'GEN3'
             ],
-            "default": "platform-default"
         },
         slot_riser2slot4link_speed={
             "type": "str",
@@ -8529,7 +7754,6 @@ def main():
                 'GEN2',
                 'GEN3'
             ],
-            "default": "platform-default"
         },
         slot_riser2slot5link_speed={
             "type": "str",
@@ -8541,7 +7765,6 @@ def main():
                 'GEN2',
                 'GEN3'
             ],
-            "default": "platform-default"
         },
         slot_riser2slot6link_speed={
             "type": "str",
@@ -8553,7 +7776,6 @@ def main():
                 'GEN2',
                 'GEN3'
             ],
-            "default": "platform-default"
         },
         slot_sas_state={
             "type": "str",
@@ -8564,7 +7786,6 @@ def main():
                 'Legacy Only',
                 'UEFI Only'
             ],
-            "default": "platform-default"
         },
         slot_ssd_slot1link_speed={
             "type": "str",
@@ -8576,7 +7797,6 @@ def main():
                 'GEN2',
                 'GEN3'
             ],
-            "default": "platform-default"
         },
         slot_ssd_slot2link_speed={
             "type": "str",
@@ -8588,7 +7808,6 @@ def main():
                 'GEN2',
                 'GEN3'
             ],
-            "default": "platform-default"
         },
         smee={
             "type": "str",
@@ -8597,7 +7816,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         smt_mode={
             "type": "str",
@@ -8606,7 +7824,6 @@ def main():
                 'Auto',
                 'Off'
             ],
-            "default": "platform-default"
         },
         snc={
             "type": "str",
@@ -8618,7 +7835,6 @@ def main():
                 'SNC2',
                 'SNC4'
             ],
-            "default": "platform-default"
         },
         snoopy_mode_for2lm={
             "type": "str",
@@ -8627,7 +7843,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         snoopy_mode_for_ad={
             "type": "str",
@@ -8636,7 +7851,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         sparing_mode={
             "type": "str",
@@ -8645,7 +7859,6 @@ def main():
                 'dimm-sparing',
                 'rank-sparing'
             ],
-            "default": "platform-default"
         },
         sr_iov={
             "type": "str",
@@ -8654,7 +7867,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         streamer_prefetch={
             "type": "str",
@@ -8663,7 +7875,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         svm_mode={
             "type": "str",
@@ -8672,7 +7883,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         terminal_type={
             "type": "str",
@@ -8683,7 +7893,6 @@ def main():
                 'vt100-plus',
                 'vt-utf8'
             ],
-            "default": "platform-default"
         },
         tpm_control={
             "type": "str",
@@ -8692,7 +7901,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         tpm_pending_operation={
             "type": "str",
@@ -8701,7 +7909,6 @@ def main():
                 'None',
                 'TpmClear'
             ],
-            "default": "platform-default"
         },
         tpm_ppi_required={
             "type": "str",
@@ -8710,7 +7917,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         tpm_support={
             "type": "str",
@@ -8719,7 +7925,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         tsme={
             "type": "str",
@@ -8729,7 +7934,6 @@ def main():
                 'disabled',
                 'enabled'
             ],
-            "default": "platform-default"
         },
         txt_support={
             "type": "str",
@@ -8738,7 +7942,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         ucsm_boot_order_rule={
             "type": "str",
@@ -8747,7 +7950,6 @@ def main():
                 'Loose',
                 'Strict'
             ],
-            "default": "platform-default"
         },
         ufs_disable={
             "type": "str",
@@ -8756,7 +7958,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         uma_based_clustering={
             "type": "str",
@@ -8766,7 +7967,6 @@ def main():
                 'Hemisphere (2-clusters)',
                 'Quadrant (4-clusters)'
             ],
-            "default": "platform-default"
         },
         upi_link_enablement={
             "type": "str",
@@ -8777,7 +7977,6 @@ def main():
                 '3',
                 'Auto'
             ],
-            "default": "platform-default"
         },
         upi_power_management={
             "type": "str",
@@ -8786,7 +7985,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         usb_emul6064={
             "type": "str",
@@ -8795,7 +7993,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         usb_port_front={
             "type": "str",
@@ -8804,7 +8001,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         usb_port_internal={
             "type": "str",
@@ -8813,7 +8009,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         usb_port_kvm={
             "type": "str",
@@ -8822,7 +8017,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         usb_port_rear={
             "type": "str",
@@ -8831,7 +8025,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         usb_port_sd_card={
             "type": "str",
@@ -8840,7 +8033,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         usb_port_vmedia={
             "type": "str",
@@ -8849,7 +8041,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         usb_xhci_support={
             "type": "str",
@@ -8858,7 +8049,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         vga_priority={
             "type": "str",
@@ -8868,7 +8058,6 @@ def main():
                 'Onboard',
                 'Onboard VGA Disabled'
             ],
-            "default": "platform-default"
         },
         virtual_numa={
             "type": "str",
@@ -8877,7 +8066,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         vmd_enable={
             "type": "str",
@@ -8886,7 +8074,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         vol_memory_mode={
             "type": "str",
@@ -8895,7 +8082,6 @@ def main():
                 '1LM',
                 '2LM'
             ],
-            "default": "platform-default"
         },
         work_load_config={
             "type": "str",
@@ -8906,7 +8092,6 @@ def main():
                 'NUMA',
                 'UMA'
             ],
-            "default": "platform-default"
         },
         x2apic_opt_out={
             "type": "str",
@@ -8915,7 +8100,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         xpt_prefetch={
             "type": "str",
@@ -8925,7 +8109,6 @@ def main():
                 'disabled',
                 'enabled'
             ],
-            "default": "platform-default"
         },
         xpt_remote_prefetch={
             "type": "str",
@@ -8935,7 +8118,6 @@ def main():
                 'disabled',
                 'enabled'
             ],
-            "default": "platform-default"
         },
     )
     module = AnsibleModule(
