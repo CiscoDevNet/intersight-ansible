@@ -10,11 +10,13 @@
 
   # --- Setup: Create prerequisite Resource Group ---
   - name: Create test Resource Group for org assignment
-    cisco.intersight.intersight_resource_group:
+    cisco.intersight.intersight_rest_api:
       <<: *api_info
-      name: test_rg_for_org
-      description: "Resource group for organization tests"
-      qualifier: all
+      resource_path: /resource/Groups
+      api_body:
+        Name: test_rg_for_org
+        Description: "Resource group for organization tests"
+        Qualifier: Allow-All
     register: setup_rg
 
   # --- Cleanup environment ---
