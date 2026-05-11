@@ -1,0 +1,101 @@
+---
+- block:
+  - name: Define anchor for Intersight API login info
+    ansible.builtin.set_fact:
+      api_info: &api_info
+        api_private_key: "{{ api_private_key }}"
+        api_key_id: "{{ api_key_id }}"
+        api_uri: "{{ api_uri | default(omit) }}"
+        validate_certs: "{{ validate_certs | default(omit) }}"
+        organization: "{{ organization }}"
+
+  - name: Make sure Env is clean
+    cisco.intersight.intersight_local_user_policy:
+      <<: *api_info
+      name: "{{ item }}"
+      state: absent
+    loop:
+      - test_local_user_basic
+      - test_local_user_updated
+
+  - name: Create basic Local User policy
+    cisco.intersight.intersight_local_user_policy:
+      <<: *api_info
+      name: test_local_user_basic
+      description: "Test local user policy"
+      local_users:
+        - username: testadmin
+          role: admin
+          password: "{{ test_password | default('Ch@ngeMe123!') }}"
+      tags:
+        - Key: Site
+          Value: Test
+    register: basic_creation
+
+  - name: Verify basic Local User policy creation
+    ansible.builtin.assert:
+      that:
+        - basic_creation.changed
+
+  - name: Create basic Local User policy (idempotency check)
+    cisco.intersight.intersight_local_user_policy:
+      <<: *api_info
+      name: test_local_user_basic
+      description: "Test local user policy"
+      local_users:
+        - username: testadmin
+          role: admin
+          password: "{{ test_password | default('Ch@ngeMe123!') }}"
+      tags:
+        - Key: Site
+          Value: Test
+    register: basic_creation_ide
+
+  - name: Verify basic Local User policy creation (idempotency check)
+    ansible.builtin.assert:
+      that:
+        - not basic_creation_ide.changed
+
+  # -- Info module tests --
+  - name: Get Local User policy info by name
+    cisco.intersight.intersight_local_user_policy_info:
+      <<: *api_info
+      name: test_local_user_basic
+    register: user_info_by_name
+
+  - name: Verify Local User policy info by name
+    ansible.builtin.assert:
+      that:
+        - user_info_by_name.api_response | length == 1
+        - user_info_by_name.api_response[0].Name == "test_local_user_basic"
+
+  - name: Get all Local User policies info
+    cisco.intersight.intersight_local_user_policy_info:
+      <<: *api_info
+    register: user_info_all
+
+  - name: Verify all Local User policies info returns results
+    ansible.builtin.assert:
+      that:
+        - user_info_all.api_response | length >= 1
+
+  - name: Get Local User policy info for nonexistent policy
+    cisco.intersight.intersight_local_user_policy_info:
+      <<: *api_info
+      name: nonexistent_local_user_12345
+    register: user_info_missing
+
+  - name: Verify nonexistent Local User policy returns empty
+    ansible.builtin.assert:
+      that:
+        - user_info_missing.api_response | length == 0
+
+  always:
+  - name: Remove all test Local User policies
+    cisco.intersight.intersight_local_user_policy:
+      <<: *api_info
+      name: "{{ item }}"
+      state: absent
+    loop:
+      - test_local_user_basic
+      - test_local_user_updated
