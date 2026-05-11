@@ -18,6 +18,7 @@
       - test_bios_policy_minimal
       - test_bios_policy_virtualization
       - test_bios_policy_performance
+      - test_bios_policy_new_tokens
 
   - name: Create BIOS policy with minimal parameters - check-mode
     cisco.intersight.intersight_bios_policy:
@@ -153,15 +154,150 @@
         - creation_info_res_perf.api_response[0].IntelTurboBoostTech == 'enabled'
         - creation_info_res_perf.api_response[0].CpuPerformance == 'hpc'
 
+  # -- Tests for newly added BIOS token parameters (PR #327) --
+  - name: Create BIOS policy with new token parameters
+    cisco.intersight.intersight_bios_policy:
+      <<: *api_info
+      name: test_bios_policy_new_tokens
+      description: "Test BIOS policy with newly added token parameters"
+      # Intel VT-d and security tokens
+      intel_vt_for_directed_io: enabled
+      intel_vtdats_support: enabled
+      enable_tdx: disabled
+      enable_tdx_seamldr: disabled
+      pre_boot_dma_protection: disabled
+      sha384pcr_bank: enabled
+      prmrr_size: "platform-default"
+      # GPU Direct tokens
+      gpu_direct_cpu1: disabled
+      gpu_direct_cpu2: disabled
+      # PCIe tokens
+      resize_bar_support: enabled
+      pc_ie_ras_support: enabled
+      pc_ie_ssd_hot_plug_support: disabled
+      pci_option_ro_ms: enabled
+      pci_rom_clp: disabled
+      # Memory and power tokens
+      optimized_power_mode: disabled
+      latency_optimized_mode: disabled
+      mmioh_base: "platform-default"
+      mmioh_size: "platform-default"
+      # AMD CBS tokens
+      cbs_cmn_cpu_avx512: "Auto"
+      cbs_cmn_efficiency_mode_en_rs: "Auto"
+      cbs_cmnc_tdp_ctl: "Auto"
+      cbs_cmn_mem_speed_ddr47xx2: "Auto"
+      # POST and repair tokens
+      post_error_pause: "platform-default"
+      post_package_repair: "platform-default"
+      runtime_post_package_repair: "platform-default"
+      # NVMe slot tokens
+      slot_front_nvme25link_speed: "Auto"
+      slot_front_nvme25option_rom: "platform-default"
+      slot_front_nvme26link_speed: "Auto"
+      slot_front_nvme26option_rom: "platform-default"
+      # Misc tokens
+      cr_qos: "platform-default"
+      serial_mux: "platform-default"
+      pop_support: "platform-default"
+      ioat_config_cpm: "platform-default"
+      acpi_srat_sp_flag_en: "platform-default"
+      dfx_osb_en: "platform-default"
+      tags:
+        - Key: Test
+          Value: NewTokens
+    register: new_tokens_creation
+
+  - name: Fetch info for new tokens BIOS policy
+    cisco.intersight.intersight_bios_policy_info:
+      <<: *api_info
+      name: test_bios_policy_new_tokens
+    register: new_tokens_info
+
+  - name: Verify new tokens BIOS policy creation
+    ansible.builtin.assert:
+      that:
+        - new_tokens_creation.changed
+        - new_tokens_info.api_response[0].Name == 'test_bios_policy_new_tokens'
+        - new_tokens_info.api_response[0].IntelVtForDirectedIo == 'enabled'
+        - new_tokens_info.api_response[0].ResizeBarSupport == 'enabled'
+
+  - name: Create new tokens BIOS policy (idempotency check)
+    cisco.intersight.intersight_bios_policy:
+      <<: *api_info
+      name: test_bios_policy_new_tokens
+      description: "Test BIOS policy with newly added token parameters"
+      intel_vt_for_directed_io: enabled
+      intel_vtdats_support: enabled
+      enable_tdx: disabled
+      enable_tdx_seamldr: disabled
+      pre_boot_dma_protection: disabled
+      sha384pcr_bank: enabled
+      prmrr_size: "platform-default"
+      gpu_direct_cpu1: disabled
+      gpu_direct_cpu2: disabled
+      resize_bar_support: enabled
+      pc_ie_ras_support: enabled
+      pc_ie_ssd_hot_plug_support: disabled
+      pci_option_ro_ms: enabled
+      pci_rom_clp: disabled
+      optimized_power_mode: disabled
+      latency_optimized_mode: disabled
+      mmioh_base: "platform-default"
+      mmioh_size: "platform-default"
+      cbs_cmn_cpu_avx512: "Auto"
+      cbs_cmn_efficiency_mode_en_rs: "Auto"
+      cbs_cmnc_tdp_ctl: "Auto"
+      cbs_cmn_mem_speed_ddr47xx2: "Auto"
+      post_error_pause: "platform-default"
+      post_package_repair: "platform-default"
+      runtime_post_package_repair: "platform-default"
+      slot_front_nvme25link_speed: "Auto"
+      slot_front_nvme25option_rom: "platform-default"
+      slot_front_nvme26link_speed: "Auto"
+      slot_front_nvme26option_rom: "platform-default"
+      cr_qos: "platform-default"
+      serial_mux: "platform-default"
+      pop_support: "platform-default"
+      ioat_config_cpm: "platform-default"
+      acpi_srat_sp_flag_en: "platform-default"
+      dfx_osb_en: "platform-default"
+      tags:
+        - Key: Test
+          Value: NewTokens
+    register: new_tokens_ide
+
+  - name: Verify new tokens BIOS policy (idempotency check)
+    ansible.builtin.assert:
+      that:
+        - not new_tokens_ide.changed
+
+  - name: Update new tokens BIOS policy - change GPU Direct settings
+    cisco.intersight.intersight_bios_policy:
+      <<: *api_info
+      name: test_bios_policy_new_tokens
+      description: "Updated BIOS policy with GPU Direct enabled"
+      gpu_direct_cpu1: enabled
+      gpu_direct_cpu2: enabled
+      tags:
+        - Key: Test
+          Value: NewTokensUpdated
+    register: new_tokens_update
+
+  - name: Verify new tokens BIOS policy update
+    ansible.builtin.assert:
+      that:
+        - new_tokens_update.changed
+
   - name: Fetch all BIOS policies under the organization
     cisco.intersight.intersight_bios_policy_info:
       <<: *api_info
     register: all_policies_res
 
-  - name: Check that there are at least 3 BIOS policies under this organization
+  - name: Check that there are at least 4 BIOS policies under this organization
     ansible.builtin.assert:
       that:
-        - all_policies_res.api_response | length >= 3
+        - all_policies_res.api_response | length >= 4
 
   - name: Verify specific policies exist in the list
     ansible.builtin.assert:
@@ -169,6 +305,7 @@
         - all_policies_res.api_response | selectattr('Name', 'equalto', 'test_bios_policy_minimal') | list | length == 1
         - all_policies_res.api_response | selectattr('Name', 'equalto', 'test_bios_policy_virtualization') | list | length == 1
         - all_policies_res.api_response | selectattr('Name', 'equalto', 'test_bios_policy_performance') | list | length == 1
+        - all_policies_res.api_response | selectattr('Name', 'equalto', 'test_bios_policy_new_tokens') | list | length == 1
 
   - name: Delete BIOS policy - test_bios_policy_performance
     cisco.intersight.intersight_bios_policy:
@@ -215,3 +352,4 @@
       - test_bios_policy_minimal
       - test_bios_policy_virtualization
       - test_bios_policy_performance
+      - test_bios_policy_new_tokens
