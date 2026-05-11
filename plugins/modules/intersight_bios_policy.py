@@ -725,7 +725,10 @@ options:
       -  THREE (3 + 0) - Value - THREE (3 + 0) for configuring cbs_cpu_down_core_ctrl_genoa token.
       -  TWO (1 + 1) - Value - TWO (1 + 1) for configuring cbs_cpu_down_core_ctrl_genoa token.
       -  TWO (2 + 0) - Value - TWO (2 + 0) for configuring cbs_cpu_down_core_ctrl_genoa token.
-    choices: ['platform-default' , 'Auto' , 'FIVE (5 + 0)' , 'FOUR (2 + 2)' , 'FOUR (4 + 0)' , 'ONE (1 + 0)' , 'SEVEN (7 + 0)' , 'SIX (3 + 3)' , 'SIX (6 + 0)' , 'THREE (3 + 0)' , 'TWO (1 + 1)' , 'TWO (2 + 0)']
+    choices: ['platform-default' , 'Auto' , 'FIVE (5 + 0)' ,
+      'FOUR (2 + 2)' , 'FOUR (4 + 0)' , 'ONE (1 + 0)' ,
+      'SEVEN (7 + 0)' , 'SIX (3 + 3)' , 'SIX (6 + 0)' ,
+      'THREE (3 + 0)' , 'TWO (1 + 1)' , 'TWO (2 + 0)']
     default: platform-default
     type: str
   cbs_cpu_smt_ctrl:
@@ -2473,7 +2476,10 @@ options:
       -  256GB - Value - 256GB for configuring prmrr_size token.
       -  512GB - Value - 512GB for configuring prmrr_size token.
       -  Auto - Value - Auto for configuring prmrr_size token.
-    choices: ['platform-default' , 'Invalid Config' , '32MB' , '64MB' , '128MB' , '256MB' , '512MB' , '1GB' , '2GB' , '4GB' , '8GB' , '16GB' , '32GB' , '64GB' , '128GB' , '256GB' , '512GB' , 'Auto']
+    choices: ['platform-default' , 'Invalid Config' , '32MB' ,
+      '64MB' , '128MB' , '256MB' , '512MB' , '1GB' , '2GB' ,
+      '4GB' , '8GB' , '16GB' , '32GB' , '64GB' , '128GB' ,
+      '256GB' , '512GB' , 'Auto']
     default: platform-default
     type: str
   processor_c1e:
