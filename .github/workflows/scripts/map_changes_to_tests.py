@@ -12,7 +12,8 @@ def get_changed_files():
     """Get list of changed files in the current PR/commit."""
     try:
         # For PR context, compare against the base branch
-        if os.getenv('GITHUB_EVENT_NAME') == 'pull_request':
+        event_name = os.getenv('GITHUB_EVENT_NAME', '')
+        if event_name in ('pull_request', 'pull_request_target'):
             base_ref = os.getenv('GITHUB_BASE_REF', 'main')
             result = subprocess.run(
                 ['git', 'diff', '--name-only', f'origin/{base_ref}...HEAD'],
