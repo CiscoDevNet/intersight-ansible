@@ -246,7 +246,7 @@
   - name: Verify nonexistent NTP policy returns empty
     ansible.builtin.assert:
       that:
-        - ntp_info_missing.api_response | length == 0
+        - ntp_info_missing.count == 0
 
   always:
   - name: Remove all test NTP policies

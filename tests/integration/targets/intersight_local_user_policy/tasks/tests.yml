@@ -88,7 +88,7 @@
   - name: Verify nonexistent Local User policy returns empty
     ansible.builtin.assert:
       that:
-        - user_info_missing.api_response | length == 0
+        - user_info_missing.count == 0
 
   always:
   - name: Remove all test Local User policies

@@ -18,12 +18,33 @@
       - test_imc_access_basic
       - test_imc_access_updated
 
+  - name: Remove prerequisite IP pool if leftover
+    cisco.intersight.intersight_ip_pool:
+      <<: *api_info
+      name: test_imc_access_ip_pool
+      state: absent
+
+  - name: Create prerequisite IP pool for IMC Access tests
+    cisco.intersight.intersight_ip_pool:
+      <<: *api_info
+      name: test_imc_access_ip_pool
+      description: "IP pool for IMC access policy tests"
+      ipv4_config:
+        netmask: "255.255.255.0"
+        gateway: "172.17.200.1"
+        primary_dns: "172.17.200.2"
+        secondary_dns: ""
+      ipv4_blocks:
+        - from: "172.17.200.10"
+          size: 8
+
   - name: Create basic IMC Access policy
     cisco.intersight.intersight_imc_access_policy:
       <<: *api_info
       name: test_imc_access_basic
       description: "Test IMC access policy"
       vlan_id: 100
+      ip_pool: test_imc_access_ip_pool
       tags:
         - Key: Site
           Value: Test
@@ -40,6 +61,7 @@
       name: test_imc_access_basic
       description: "Test IMC access policy"
       vlan_id: 100
+      ip_pool: test_imc_access_ip_pool
       tags:
         - Key: Site
           Value: Test
@@ -82,7 +104,7 @@
   - name: Verify nonexistent IMC Access policy returns empty
     ansible.builtin.assert:
       that:
-        - imc_info_missing.api_response | length == 0
+        - imc_info_missing.count == 0
 
   always:
   - name: Remove all test IMC Access policies
@@ -93,3 +115,9 @@
     loop:
       - test_imc_access_basic
       - test_imc_access_updated
+
+  - name: Remove prerequisite IP pool
+    cisco.intersight.intersight_ip_pool:
+      <<: *api_info
+      name: test_imc_access_ip_pool
+      state: absent
