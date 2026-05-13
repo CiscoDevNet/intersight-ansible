@@ -70,7 +70,6 @@ options:
         constrained storage capacity.
     type: str
     choices: [inference_optimized, training_data, model_cache, edge_compact]
-    required: true
   nvme_slots:
     description:
       - NVMe drive slots to configure in the selected mode.
@@ -285,7 +284,6 @@ def main():
         storage_profile=dict(
             type='str',
             choices=['inference_optimized', 'training_data', 'model_cache', 'edge_compact'],
-            required=True,
         ),
         nvme_slots=dict(type='str'),
         nvme_mode=dict(type='str', choices=['direct', 'controller']),
@@ -314,6 +312,9 @@ def main():
     }
 
     if module.params['state'] == 'present':
+        if not module.params.get('storage_profile'):
+            module.fail_json(msg="storage_profile is required when state is 'present'")
+
         intersight.set_tags_and_description()
 
         # Deep copy profile settings

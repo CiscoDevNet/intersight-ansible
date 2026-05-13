@@ -80,7 +80,7 @@
   - name: Verify nonexistent Virtual Media policy returns empty
     ansible.builtin.assert:
       that:
-        - vmedia_info_missing.api_response | length == 0
+        - vmedia_info_missing.count == 0
 
   always:
   - name: Remove all test Virtual Media policies

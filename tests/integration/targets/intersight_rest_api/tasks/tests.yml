@@ -8,7 +8,6 @@
         api_uri: "{{ api_uri | default(omit) }}"
         validate_certs: "{{ validate_certs | default(omit) }}"
 
-  
   # Fetch Organization MOID
   - name: Get organization details using REST API
     cisco.intersight.intersight_rest_api:
