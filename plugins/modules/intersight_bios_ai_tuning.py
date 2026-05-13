@@ -69,7 +69,6 @@ options:
         and NUMA optimization suitable for edge deployment constraints.
     type: str
     choices: [gpu_inference, gpu_training, cpu_inference, edge_ai]
-    required: true
   gpu_count:
     description:
       - Number of GPUs to enable via ACS Control (1-8).

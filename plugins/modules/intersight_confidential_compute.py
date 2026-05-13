@@ -70,7 +70,6 @@ options:
         simplified attestation service enrollment.
     type: str
     choices: [amd_sev, amd_sev_snp, intel_sgx, intel_sgx_with_auto_reg]
-    required: true
   sev_asid_count:
     description:
       - Number of AMD SEV Address Space Identifiers (ASIDs) to allocate.

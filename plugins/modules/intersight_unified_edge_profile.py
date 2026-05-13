@@ -69,7 +69,6 @@ options:
         for demanding edge AI inference and light training workloads.
     type: str
     choices: [xe9305, xe130c_m8, xe150c_m8]
-    required: true
   bios_policy:
     description:
       - Name of BIOS Policy to associate with this template.

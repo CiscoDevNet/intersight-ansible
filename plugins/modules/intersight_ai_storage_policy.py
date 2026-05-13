@@ -70,7 +70,6 @@ options:
         constrained storage capacity.
     type: str
     choices: [inference_optimized, training_data, model_cache, edge_compact]
-    required: true
   nvme_slots:
     description:
       - NVMe drive slots to configure in the selected mode.
