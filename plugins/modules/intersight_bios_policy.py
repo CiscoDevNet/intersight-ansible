@@ -4690,7 +4690,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         cbs_cmn_apbdis_df_pstate_rs={
             "type": "str",
@@ -4700,7 +4699,6 @@ def main():
                 '0',
                 '1'
             ],
-            "default": "platform-default"
         },
         cbs_cmn_cpu_frequency_control={
             "type": "str",
@@ -4710,7 +4708,6 @@ def main():
                 'disabled',
                 'enabled'
             ],
-            "default": "platform-default"
         },
         cbs_cmn_cpu_sev_asid_space_limit={
             "type": "str",
@@ -4723,7 +4720,6 @@ def main():
                 '253',
                 '509'
             ],
-            "default": "platform-default"
         },
         cbs_cmn_edc_control_throttle={
             "type": "str",
@@ -4733,7 +4729,6 @@ def main():
                 'disabled',
                 'enabled'
             ],
-            "default": "platform-default"
         },
         cbs_cmn_efficiency_mode_en_rs={
             "type": "str",
@@ -4742,7 +4737,6 @@ def main():
                 'Auto',
                 'Enabled'
             ],
-            "default": "platform-default"
         },
         cbs_cmn_gnb_smu_dffo_rs={
             "type": "str",
@@ -4752,7 +4746,6 @@ def main():
                 'disabled',
                 'enabled'
             ],
-            "default": "platform-default"
         },
         cbs_cmn_gnb_smu_dlwm_support={
             "type": "str",
@@ -4762,7 +4755,6 @@ def main():
                 'disabled',
                 'enabled'
             ],
-            "default": "platform-default"
         },
         cbs_cmn_mem_ctrller_pwr_dn_en_ddr={
             "type": "str",
@@ -4772,7 +4764,6 @@ def main():
                 'disabled',
                 'enabled'
             ],
-            "default": "platform-default"
         },
         cbs_cmnx_gmi_force_link_width_rs={
             "type": "str",
@@ -4783,7 +4774,6 @@ def main():
                 '1',
                 '2'
             ],
-            "default": "platform-default"
         },
         cbs_cpu_down_core_ctrl_bergamo={
             "type": "str",
@@ -4795,7 +4785,6 @@ def main():
                 'SIX (3 + 3)',
                 'EIGHT (4 + 4)'
             ],
-            "default": "platform-default"
         },
         cbs_cpu_down_core_ctrl_genoa={
             "type": "str",
@@ -4813,7 +4802,6 @@ def main():
                 'TWO (1 + 1)',
                 'TWO (2 + 0)'
             ],
-            "default": "platform-default"
         },
         cbs_dbg_cpu_gen_cpu_wdt={
             "type": "str",
@@ -4823,7 +4811,6 @@ def main():
                 'disabled',
                 'enabled'
             ],
-            "default": "platform-default"
         },
         cbs_dbg_cpu_lapic_mode={
             "type": "str",
@@ -4834,7 +4821,6 @@ def main():
                 'X2APIC',
                 'XAPIC'
             ],
-            "default": "platform-default"
         },
         cbs_df_cmn_dram_scrub_time={
             "type": "str",
@@ -4849,7 +4835,6 @@ def main():
                 '24 hours',
                 '48 hours'
             ],
-            "default": "platform-default"
         },
         cbs_df_cmn_mem_intlv_control={
             "type": "str",
@@ -4859,7 +4844,6 @@ def main():
                 'disabled',
                 'enabled'
             ],
-            "default": "platform-default"
         },
         cbs_df_dbg_xgmi_link_cfg={
             "type": "str",
@@ -4870,7 +4854,6 @@ def main():
                 '3 xGMI Links',
                 '4 xGMI Links'
             ],
-            "default": "platform-default"
         },
         cbs_gnb_dbg_pcie_tbt_support={
             "type": "str",
@@ -4880,7 +4863,6 @@ def main():
                 'disabled',
                 'enabled'
             ],
-            "default": "platform-default"
         },
         dfx_osb_en={
             "type": "str",
@@ -4890,7 +4872,6 @@ def main():
                 'disabled',
                 'enabled'
             ],
-            "default": "platform-default"
         },
         enable_tdx={
             "type": "str",
@@ -4899,7 +4880,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         enable_tdx_seamldr={
             "type": "str",
@@ -4908,7 +4888,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         ioat_config_cpm={
             "type": "str",
@@ -4917,7 +4896,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         latency_optimized_mode={
             "type": "str",
@@ -4926,7 +4904,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         mmioh_base={
             "type": "str",
@@ -4940,7 +4917,6 @@ def main():
                 '512G',
                 'Auto'
             ],
-            "default": "platform-default"
         },
         mmioh_size={
             "type": "str",
@@ -4957,7 +4933,6 @@ def main():
                 '1G',
                 'Auto'
             ],
-            "default": "platform-default"
         },
         optimized_power_mode={
             "type": "str",
@@ -4966,7 +4941,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         pre_boot_dma_protection={
             "type": "str",
@@ -4975,7 +4949,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         prmrr_size={
             "type": "str",
@@ -4999,7 +4972,6 @@ def main():
                 '512GB',
                 'Auto'
             ],
-            "default": "platform-default"
         },
         resize_bar_support={
             "type": "str",
@@ -5008,7 +4980,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         runtime_post_package_repair={
             "type": "str",
@@ -5017,7 +4988,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         serial_mux={
             "type": "str",
@@ -5026,7 +4996,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         speculative_lock_enable={
             "type": "str",
@@ -5035,7 +5004,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         state={"type": "str", "choices": ['present', 'absent'], "default": "present"},
         organization={"type": "str", "default": "default"},
@@ -8657,7 +8625,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         ufs_disable={
             "type": "str",
@@ -8674,7 +8641,6 @@ def main():
                 'enabled',
                 'disabled'
             ],
-            "default": "platform-default"
         },
         uma_based_clustering={
             "type": "str",
