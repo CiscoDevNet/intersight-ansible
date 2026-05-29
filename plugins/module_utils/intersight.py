@@ -55,10 +55,10 @@ except ImportError:
     HAS_CRYPTOGRAPHY = False
 
 intersight_argument_spec = dict(
-    api_private_key=dict(fallback=(env_fallback, ['INTERSIGHT_API_PRIVATE_KEY']), type='path', required=True,
-                         no_log=True),
+    api_private_key=dict(fallback=(env_fallback, ['INTERSIGHT_API_PRIVATE_KEY']), type='path', no_log=True),
     api_uri=dict(fallback=(env_fallback, ['INTERSIGHT_API_URI']), type='str', default='https://intersight.com/api/v1'),
-    api_key_id=dict(fallback=(env_fallback, ['INTERSIGHT_API_KEY_ID']), type='str', required=True),
+    api_key_id=dict(fallback=(env_fallback, ['INTERSIGHT_API_KEY_ID']), type='str'),
+    api_bearer_token=dict(fallback=(env_fallback, ['INTERSIGHT_API_BEARER_TOKEN']), type='str', no_log=True),
     validate_certs=dict(type='bool', default=True),
     use_proxy=dict(type='bool', default=True),
 )
@@ -177,18 +177,32 @@ class IntersightModule():
     def __init__(self, module):
         self.module = module
         self.result = dict(changed=False)
-        if not HAS_CRYPTOGRAPHY:
-            self.module.fail_json(msg='cryptography is required for this module')
         self.host = self.module.params['api_uri']
-        self.public_key = self.module.params['api_key_id']
-        try:
-            with open(self.module.params['api_private_key'], 'r') as f:
-                self.private_key = f.read()
-        except (FileNotFoundError, OSError):
-            self.private_key = self.module.params['api_private_key']
+        self.bearer_token = self.module.params.get('api_bearer_token')
         self.digest_algorithm = ''
         self.response_list = []
         self.update_method = ''
+
+        if self.bearer_token:
+            self.public_key = None
+            self.private_key = None
+        else:
+            if not self.module.params.get('api_key_id'):
+                self.module.fail_json(
+                    msg='api_key_id is required when api_bearer_token is not provided'
+                )
+            if not self.module.params.get('api_private_key'):
+                self.module.fail_json(
+                    msg='api_private_key is required when api_bearer_token is not provided'
+                )
+            if not HAS_CRYPTOGRAPHY:
+                self.module.fail_json(msg='cryptography is required for this module')
+            self.public_key = self.module.params['api_key_id']
+            try:
+                with open(self.module.params['api_private_key'], 'r') as f:
+                    self.private_key = f.read()
+            except (FileNotFoundError, OSError):
+                self.private_key = self.module.params['api_private_key']
 
     def get_sig_b64encode(self, data):
         """
@@ -324,34 +338,43 @@ class IntersightModule():
         # Get the current GMT Date/Time
         cdate = get_gmt_date()
 
-        # Generate the body digest
-        body_digest = get_sha256_digest(bodyString)
-        b64_body_digest = b64encode(body_digest.digest())
-
-        # Generate the authorization header
-        auth_header = {
-            'Host': target_host,
-            'Date': cdate,
-            'Digest': "SHA-256=" + b64_body_digest.decode('ascii'),
-        }
-
-        string_to_sign = prepare_str_to_sign(request_target, auth_header)
-        b64_signed_msg = self.get_sig_b64encode(string_to_sign)
-        auth_header = self.get_auth_header(auth_header, b64_signed_msg)
-
-        # Generate the HTTP requests header
         if self.update_method == 'json-patch':
             content_type = 'application/json-patch+json'
         else:
             content_type = 'application/json'
-        request_header = {
-            'Accept': 'application/json',
-            'Content-Type': content_type,
-            'Host': '{0}'.format(target_host),
-            'Date': '{0}'.format(cdate),
-            'Digest': 'SHA-256={0}'.format(b64_body_digest.decode('ascii')),
-            'Authorization': '{0}'.format(auth_header),
-        }
+
+        if self.bearer_token:
+            request_header = {
+                'Accept': 'application/json',
+                'Content-Type': content_type,
+                'Host': '{0}'.format(target_host),
+                'Date': '{0}'.format(cdate),
+                'Authorization': 'Bearer {0}'.format(self.bearer_token),
+            }
+        else:
+            # Generate the body digest
+            body_digest = get_sha256_digest(bodyString)
+            b64_body_digest = b64encode(body_digest.digest())
+
+            # Generate the authorization header
+            auth_header = {
+                'Host': target_host,
+                'Date': cdate,
+                'Digest': "SHA-256=" + b64_body_digest.decode('ascii'),
+            }
+
+            string_to_sign = prepare_str_to_sign(request_target, auth_header)
+            b64_signed_msg = self.get_sig_b64encode(string_to_sign)
+            auth_header = self.get_auth_header(auth_header, b64_signed_msg)
+
+            request_header = {
+                'Accept': 'application/json',
+                'Content-Type': content_type,
+                'Host': '{0}'.format(target_host),
+                'Date': '{0}'.format(cdate),
+                'Digest': 'SHA-256={0}'.format(b64_body_digest.decode('ascii')),
+                'Authorization': '{0}'.format(auth_header),
+            }
 
         response, info = fetch_url(self.module, target_url, data=bodyString, headers=request_header, method=method,
                                    use_proxy=self.module.params['use_proxy'])
