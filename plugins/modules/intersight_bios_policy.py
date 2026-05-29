@@ -20,6 +20,334 @@ description:
   - For more information see L(Cisco Intersight,https://intersight.com/apidocs).
 extends_documentation_fragment: intersight
 options:
+  acpi_srat_sp_flag_en:
+    description:
+      -  BIOS Token for setting ACPI SRAT SP Flag Enable configuration.
+      -  platform-default - Default value used by the platform for the BIOS setting.
+      -  enabled - Enables the BIOS setting.
+      -  disabled - Disables the BIOS setting.
+    choices: ['platform-default' , 'enabled' , 'disabled']
+    type: str
+  cbs_cmn_apbdis_df_pstate_rs:
+    description:
+      -  BIOS Token for setting APBDIS DF P-State configuration.
+      -  platform-default - Default value used by the platform for the BIOS setting.
+      -  Auto - Value - Auto for configuring cbs_cmn_apbdis_df_pstate_rs token.
+      -  0 - Value - 0 for configuring cbs_cmn_apbdis_df_pstate_rs token.
+      -  1 - Value - 1 for configuring cbs_cmn_apbdis_df_pstate_rs token.
+    choices: ['platform-default' , 'Auto' , '0' , '1']
+    type: str
+  cbs_cmn_cpu_frequency_control:
+    description:
+      -  BIOS Token for setting CPU Frequency Control configuration.
+      -  platform-default - Default value used by the platform for the BIOS setting.
+      -  Auto - Value - Auto for configuring cbs_cmn_cpu_frequency_control token.
+      -  disabled - Value - disabled for configuring cbs_cmn_cpu_frequency_control token.
+      -  enabled - Value - enabled for configuring cbs_cmn_cpu_frequency_control token.
+    choices: ['platform-default' , 'Auto' , 'disabled' , 'enabled']
+    type: str
+  cbs_cmn_cpu_sev_asid_space_limit:
+    description:
+      -  BIOS Token for setting SEV ASID Space Limit configuration.
+      -  platform-default - Default value used by the platform for the BIOS setting.
+      -  Auto - Value - Auto for configuring cbs_cmn_cpu_sev_asid_space_limit token.
+      -  1 - Value - 1 for configuring cbs_cmn_cpu_sev_asid_space_limit token.
+      -  100 - Value - 100 for configuring cbs_cmn_cpu_sev_asid_space_limit token.
+      -  163 - Value - 163 for configuring cbs_cmn_cpu_sev_asid_space_limit token.
+      -  253 - Value - 253 for configuring cbs_cmn_cpu_sev_asid_space_limit token.
+      -  509 - Value - 509 for configuring cbs_cmn_cpu_sev_asid_space_limit token.
+    choices: ['platform-default' , 'Auto' , '1' , '100' , '163' , '253' , '509']
+    type: str
+  cbs_cmn_edc_control_throttle:
+    description:
+      -  BIOS Token for setting EDC Control Throttle configuration.
+      -  platform-default - Default value used by the platform for the BIOS setting.
+      -  Auto - Value - Auto for configuring cbs_cmn_edc_control_throttle token.
+      -  disabled - Value - disabled for configuring cbs_cmn_edc_control_throttle token.
+      -  enabled - Value - enabled for configuring cbs_cmn_edc_control_throttle token.
+    choices: ['platform-default' , 'Auto' , 'disabled' , 'enabled']
+    type: str
+  cbs_cmn_efficiency_mode_en_rs:
+    description:
+      -  BIOS Token for setting Efficiency Mode Enable configuration.
+      -  platform-default - Default value used by the platform for the BIOS setting.
+      -  Auto - Value - Auto for configuring cbs_cmn_efficiency_mode_en_rs token.
+      -  Enabled - Value - Enabled for configuring cbs_cmn_efficiency_mode_en_rs token.
+    choices: ['platform-default' , 'Auto' , 'Enabled']
+    type: str
+  cbs_cmn_gnb_smu_dffo_rs:
+    description:
+      -  BIOS Token for setting DF Frequency Optimizer configuration.
+      -  platform-default - Default value used by the platform for the BIOS setting.
+      -  Auto - Value - Auto for configuring cbs_cmn_gnb_smu_dffo_rs token.
+      -  disabled - Value - disabled for configuring cbs_cmn_gnb_smu_dffo_rs token.
+      -  enabled - Value - enabled for configuring cbs_cmn_gnb_smu_dffo_rs token.
+    choices: ['platform-default' , 'Auto' , 'disabled' , 'enabled']
+    type: str
+  cbs_cmn_gnb_smu_dlwm_support:
+    description:
+      -  BIOS Token for setting DLWM Support configuration.
+      -  platform-default - Default value used by the platform for the BIOS setting.
+      -  Auto - Value - Auto for configuring cbs_cmn_gnb_smu_dlwm_support token.
+      -  disabled - Value - disabled for configuring cbs_cmn_gnb_smu_dlwm_support token.
+      -  enabled - Value - enabled for configuring cbs_cmn_gnb_smu_dlwm_support token.
+    choices: ['platform-default' , 'Auto' , 'disabled' , 'enabled']
+    type: str
+  cbs_cmn_mem_ctrller_pwr_dn_en_ddr:
+    description:
+      -  BIOS Token for setting Memory Controller Power Down Enable configuration.
+      -  platform-default - Default value used by the platform for the BIOS setting.
+      -  Auto - Value - Auto for configuring cbs_cmn_mem_ctrller_pwr_dn_en_ddr token.
+      -  disabled - Value - disabled for configuring cbs_cmn_mem_ctrller_pwr_dn_en_ddr token.
+      -  enabled - Value - enabled for configuring cbs_cmn_mem_ctrller_pwr_dn_en_ddr token.
+    choices: ['platform-default' , 'Auto' , 'disabled' , 'enabled']
+    type: str
+  cbs_cmnx_gmi_force_link_width_rs:
+    description:
+      -  BIOS Token for setting xGMI Force Link Width configuration.
+      -  platform-default - Default value used by the platform for the BIOS setting.
+      -  Auto - Value - Auto for configuring cbs_cmnx_gmi_force_link_width_rs token.
+      -  0 - Value - 0 for configuring cbs_cmnx_gmi_force_link_width_rs token.
+      -  1 - Value - 1 for configuring cbs_cmnx_gmi_force_link_width_rs token.
+      -  2 - Value - 2 for configuring cbs_cmnx_gmi_force_link_width_rs token.
+    choices: ['platform-default' , 'Auto' , '0' , '1' , '2']
+    type: str
+  cbs_cpu_down_core_ctrl_bergamo:
+    description:
+      -  BIOS Token for setting Downcore Control Bergamo configuration.
+      -  platform-default - Default value used by the platform for the BIOS setting.
+      -  Auto - Value - Auto for configuring cbs_cpu_down_core_ctrl_bergamo token.
+      -  TWO (1 + 1) - Value - TWO (1 + 1) for configuring cbs_cpu_down_core_ctrl_bergamo token.
+      -  FOUR (2 + 2) - Value - FOUR (2 + 2) for configuring cbs_cpu_down_core_ctrl_bergamo token.
+      -  SIX (3 + 3) - Value - SIX (3 + 3) for configuring cbs_cpu_down_core_ctrl_bergamo token.
+      -  EIGHT (4 + 4) - Value - EIGHT (4 + 4) for configuring cbs_cpu_down_core_ctrl_bergamo token.
+    choices: ['platform-default' , 'Auto' , 'TWO (1 + 1)' , 'FOUR (2 + 2)' , 'SIX (3 + 3)' , 'EIGHT (4 + 4)']
+    type: str
+  cbs_cpu_down_core_ctrl_genoa:
+    description:
+      -  BIOS Token for setting Downcore Control Genoa configuration.
+      -  platform-default - Default value used by the platform for the BIOS setting.
+      -  Auto - Value - Auto for configuring cbs_cpu_down_core_ctrl_genoa token.
+      -  FIVE (5 + 0) - Value - FIVE (5 + 0) for configuring cbs_cpu_down_core_ctrl_genoa token.
+      -  FOUR (2 + 2) - Value - FOUR (2 + 2) for configuring cbs_cpu_down_core_ctrl_genoa token.
+      -  FOUR (4 + 0) - Value - FOUR (4 + 0) for configuring cbs_cpu_down_core_ctrl_genoa token.
+      -  ONE (1 + 0) - Value - ONE (1 + 0) for configuring cbs_cpu_down_core_ctrl_genoa token.
+      -  SEVEN (7 + 0) - Value - SEVEN (7 + 0) for configuring cbs_cpu_down_core_ctrl_genoa token.
+      -  SIX (3 + 3) - Value - SIX (3 + 3) for configuring cbs_cpu_down_core_ctrl_genoa token.
+      -  SIX (6 + 0) - Value - SIX (6 + 0) for configuring cbs_cpu_down_core_ctrl_genoa token.
+      -  THREE (3 + 0) - Value - THREE (3 + 0) for configuring cbs_cpu_down_core_ctrl_genoa token.
+      -  TWO (1 + 1) - Value - TWO (1 + 1) for configuring cbs_cpu_down_core_ctrl_genoa token.
+      -  TWO (2 + 0) - Value - TWO (2 + 0) for configuring cbs_cpu_down_core_ctrl_genoa token.
+    choices: ['platform-default' , 'Auto' , 'FIVE (5 + 0)' ,
+      'FOUR (2 + 2)' , 'FOUR (4 + 0)' , 'ONE (1 + 0)' ,
+      'SEVEN (7 + 0)' , 'SIX (3 + 3)' , 'SIX (6 + 0)' ,
+      'THREE (3 + 0)' , 'TWO (1 + 1)' , 'TWO (2 + 0)']
+    type: str
+  cbs_dbg_cpu_gen_cpu_wdt:
+    description:
+      -  BIOS Token for setting Core Watchdog Timer configuration.
+      -  platform-default - Default value used by the platform for the BIOS setting.
+      -  Auto - Value - Auto for configuring cbs_dbg_cpu_gen_cpu_wdt token.
+      -  disabled - Value - disabled for configuring cbs_dbg_cpu_gen_cpu_wdt token.
+      -  enabled - Value - enabled for configuring cbs_dbg_cpu_gen_cpu_wdt token.
+    choices: ['platform-default' , 'Auto' , 'disabled' , 'enabled']
+    type: str
+  cbs_dbg_cpu_lapic_mode:
+    description:
+      -  BIOS Token for setting Local APIC Mode configuration.
+      -  platform-default - Default value used by the platform for the BIOS setting.
+      -  Auto - Value - Auto for configuring cbs_dbg_cpu_lapic_mode token.
+      -  Compatibility - Value - Compatibility for configuring cbs_dbg_cpu_lapic_mode token.
+      -  X2APIC - Value - X2APIC for configuring cbs_dbg_cpu_lapic_mode token.
+      -  XAPIC - Value - XAPIC for configuring cbs_dbg_cpu_lapic_mode token.
+    choices: ['platform-default' , 'Auto' , 'Compatibility' , 'X2APIC' , 'XAPIC']
+    type: str
+  cbs_df_cmn_dram_scrub_time:
+    description:
+      -  BIOS Token for setting DRAM Scrub Time configuration.
+      -  platform-default - Default value used by the platform for the BIOS setting.
+      -  Auto - Value - Auto for configuring cbs_df_cmn_dram_scrub_time token.
+      -  disabled - Value - disabled for configuring cbs_df_cmn_dram_scrub_time token.
+      -  1 hour - Value - 1 hour for configuring cbs_df_cmn_dram_scrub_time token.
+      -  4 hours - Value - 4 hours for configuring cbs_df_cmn_dram_scrub_time token.
+      -  8 hours - Value - 8 hours for configuring cbs_df_cmn_dram_scrub_time token.
+      -  16 hours - Value - 16 hours for configuring cbs_df_cmn_dram_scrub_time token.
+      -  24 hours - Value - 24 hours for configuring cbs_df_cmn_dram_scrub_time token.
+      -  48 hours - Value - 48 hours for configuring cbs_df_cmn_dram_scrub_time token.
+    choices: ['platform-default' , 'Auto' , 'disabled' , '1 hour' , '4 hours' , '8 hours' , '16 hours' , '24 hours' , '48 hours']
+    type: str
+  cbs_df_cmn_mem_intlv_control:
+    description:
+      -  BIOS Token for setting Memory Interleave Control configuration.
+      -  platform-default - Default value used by the platform for the BIOS setting.
+      -  Auto - Value - Auto for configuring cbs_df_cmn_mem_intlv_control token.
+      -  disabled - Value - disabled for configuring cbs_df_cmn_mem_intlv_control token.
+      -  enabled - Value - enabled for configuring cbs_df_cmn_mem_intlv_control token.
+    choices: ['platform-default' , 'Auto' , 'disabled' , 'enabled']
+    type: str
+  cbs_df_dbg_xgmi_link_cfg:
+    description:
+      -  BIOS Token for setting xGMI Link Configuration configuration.
+      -  platform-default - Default value used by the platform for the BIOS setting.
+      -  Auto - Value - Auto for configuring cbs_df_dbg_xgmi_link_cfg token.
+      -  2 xGMI Links - Value - 2 xGMI Links for configuring cbs_df_dbg_xgmi_link_cfg token.
+      -  3 xGMI Links - Value - 3 xGMI Links for configuring cbs_df_dbg_xgmi_link_cfg token.
+      -  4 xGMI Links - Value - 4 xGMI Links for configuring cbs_df_dbg_xgmi_link_cfg token.
+    choices: ['platform-default' , 'Auto' , '2 xGMI Links' , '3 xGMI Links' , '4 xGMI Links']
+    type: str
+  cbs_gnb_dbg_pcie_tbt_support:
+    description:
+      -  BIOS Token for setting PCIe TBT Support configuration.
+      -  platform-default - Default value used by the platform for the BIOS setting.
+      -  Auto - Value - Auto for configuring cbs_gnb_dbg_pcie_tbt_support token.
+      -  disabled - Value - disabled for configuring cbs_gnb_dbg_pcie_tbt_support token.
+      -  enabled - Value - enabled for configuring cbs_gnb_dbg_pcie_tbt_support token.
+    choices: ['platform-default' , 'Auto' , 'disabled' , 'enabled']
+    type: str
+  dfx_osb_en:
+    description:
+      -  BIOS Token for setting DFX OSB Enable configuration.
+      -  platform-default - Default value used by the platform for the BIOS setting.
+      -  Auto - Value - Auto for configuring dfx_osb_en token.
+      -  disabled - Value - disabled for configuring dfx_osb_en token.
+      -  enabled - Value - enabled for configuring dfx_osb_en token.
+    choices: ['platform-default' , 'Auto' , 'disabled' , 'enabled']
+    type: str
+  enable_tdx:
+    description:
+      -  BIOS Token for setting Trust Domain Extension  (TDX) configuration.
+      -  platform-default - Default value used by the platform for the BIOS setting.
+      -  enabled - Enables the BIOS setting.
+      -  disabled - Disables the BIOS setting.
+    choices: ['platform-default' , 'enabled' , 'disabled']
+    type: str
+  enable_tdx_seamldr:
+    description:
+      -  BIOS Token for setting TDX Secure Arbitration Mode  (SEAM) Loader configuration.
+      -  platform-default - Default value used by the platform for the BIOS setting.
+      -  enabled - Enables the BIOS setting.
+      -  disabled - Disables the BIOS setting.
+    choices: ['platform-default' , 'enabled' , 'disabled']
+    type: str
+  ioat_config_cpm:
+    description:
+      -  BIOS Token for setting IOAT Configuration CPM configuration.
+      -  platform-default - Default value used by the platform for the BIOS setting.
+      -  enabled - Enables the BIOS setting.
+      -  disabled - Disables the BIOS setting.
+    choices: ['platform-default' , 'enabled' , 'disabled']
+    type: str
+  latency_optimized_mode:
+    description:
+      -  BIOS Token for setting Latency Optimized Mode configuration.
+      -  platform-default - Default value used by the platform for the BIOS setting.
+      -  enabled - Enables the BIOS setting.
+      -  disabled - Disables the BIOS setting.
+    choices: ['platform-default' , 'enabled' , 'disabled']
+    type: str
+  mmioh_base:
+    description:
+      -  BIOS Token for setting MMIO High Base configuration.
+      -  platform-default - Default value used by the platform for the BIOS setting.
+      -  56T - Value - 56T for configuring mmioh_base token.
+      -  40T - Value - 40T for configuring mmioh_base token.
+      -  24T - Value - 24T for configuring mmioh_base token.
+      -  16T - Value - 16T for configuring mmioh_base token.
+      -  12T - Value - 12T for configuring mmioh_base token.
+      -  512G - Value - 512G for configuring mmioh_base token.
+      -  Auto - Value - Auto for configuring mmioh_base token.
+    choices: ['platform-default' , '56T' , '40T' , '24T' , '16T' , '12T' , '512G' , 'Auto']
+    type: str
+  mmioh_size:
+    description:
+      -  BIOS Token for setting MMIO High Granularity Size configuration.
+      -  platform-default - Default value used by the platform for the BIOS setting.
+      -  256G - Value - 256G for configuring mmioh_size token.
+      -  128G - Value - 128G for configuring mmioh_size token.
+      -  64G - Value - 64G for configuring mmioh_size token.
+      -  32G - Value - 32G for configuring mmioh_size token.
+      -  16G - Value - 16G for configuring mmioh_size token.
+      -  8G - Value - 8G for configuring mmioh_size token.
+      -  4G - Value - 4G for configuring mmioh_size token.
+      -  2G - Value - 2G for configuring mmioh_size token.
+      -  1G - Value - 1G for configuring mmioh_size token.
+      -  Auto - Value - Auto for configuring mmioh_size token.
+    choices: ['platform-default' , '256G' , '128G' , '64G' , '32G' , '16G' , '8G' , '4G' , '2G' , '1G' , 'Auto']
+    type: str
+  optimized_power_mode:
+    description:
+      -  BIOS Token for setting Optimized Power Mode configuration.
+      -  platform-default - Default value used by the platform for the BIOS setting.
+      -  enabled - Enables the BIOS setting.
+      -  disabled - Disables the BIOS setting.
+    choices: ['platform-default' , 'enabled' , 'disabled']
+    type: str
+  pre_boot_dma_protection:
+    description:
+      -  BIOS Token for setting Pre-Boot DMA Protection configuration.
+      -  platform-default - Default value used by the platform for the BIOS setting.
+      -  enabled - Enables the BIOS setting.
+      -  disabled - Disables the BIOS setting.
+    choices: ['platform-default' , 'enabled' , 'disabled']
+    type: str
+  prmrr_size:
+    description:
+      -  BIOS Token for setting PRMRR Size configuration.
+      -  platform-default - Default value used by the platform for the BIOS setting.
+      -  Invalid Config - Value - Invalid Config for configuring prmrr_size token.
+      -  32MB - Value - 32MB for configuring prmrr_size token.
+      -  64MB - Value - 64MB for configuring prmrr_size token.
+      -  128MB - Value - 128MB for configuring prmrr_size token.
+      -  256MB - Value - 256MB for configuring prmrr_size token.
+      -  512MB - Value - 512MB for configuring prmrr_size token.
+      -  1GB - Value - 1GB for configuring prmrr_size token.
+      -  2GB - Value - 2GB for configuring prmrr_size token.
+      -  4GB - Value - 4GB for configuring prmrr_size token.
+      -  8GB - Value - 8GB for configuring prmrr_size token.
+      -  16GB - Value - 16GB for configuring prmrr_size token.
+      -  32GB - Value - 32GB for configuring prmrr_size token.
+      -  64GB - Value - 64GB for configuring prmrr_size token.
+      -  128GB - Value - 128GB for configuring prmrr_size token.
+      -  256GB - Value - 256GB for configuring prmrr_size token.
+      -  512GB - Value - 512GB for configuring prmrr_size token.
+      -  Auto - Value - Auto for configuring prmrr_size token.
+    choices: ['platform-default' , 'Invalid Config' , '32MB' ,
+      '64MB' , '128MB' , '256MB' , '512MB' , '1GB' , '2GB' ,
+      '4GB' , '8GB' , '16GB' , '32GB' , '64GB' , '128GB' ,
+      '256GB' , '512GB' , 'Auto']
+    type: str
+  resize_bar_support:
+    description:
+      -  BIOS Token for setting Re-Size BAR Support configuration.
+      -  platform-default - Default value used by the platform for the BIOS setting.
+      -  enabled - Enables the BIOS setting.
+      -  disabled - Disables the BIOS setting.
+    choices: ['platform-default' , 'enabled' , 'disabled']
+    type: str
+  runtime_post_package_repair:
+    description:
+      -  BIOS Token for setting Runtime Post Package Repair configuration.
+      -  platform-default - Default value used by the platform for the BIOS setting.
+      -  enabled - Enables the BIOS setting.
+      -  disabled - Disables the BIOS setting.
+    choices: ['platform-default' , 'enabled' , 'disabled']
+    type: str
+  serial_mux:
+    description:
+      -  BIOS Token for setting Serial Mux configuration.
+      -  platform-default - Default value used by the platform for the BIOS setting.
+      -  enabled - Enables the BIOS setting.
+      -  disabled - Disables the BIOS setting.
+    choices: ['platform-default' , 'enabled' , 'disabled']
+    type: str
+  speculative_lock_enable:
+    description:
+      -  BIOS Token for setting Speculative Lock Enable configuration.
+      -  platform-default - Default value used by the platform for the BIOS setting.
+      -  enabled - Enables the BIOS setting.
+      -  disabled - Disables the BIOS setting.
+    choices: ['platform-default' , 'enabled' , 'disabled']
+    type: str
   state:
     description:
       - If C(present), will verify the resource is present and will create if needed.
@@ -3680,6 +4008,14 @@ options:
       -  Strict - Value - Strict for configuring ucsm_boot_order_rule token.
     choices: ['platform-default' , 'Loose' , 'Strict']
     type: str
+  uefi_mem_map_sp_flag_en:
+    description:
+      -  BIOS Token for setting UEFI Memory Map SP Flag Enable configuration.
+      -  platform-default - Default value used by the platform for the BIOS setting.
+      -  enabled - Enables the BIOS setting.
+      -  disabled - Disables the BIOS setting.
+    choices: ['platform-default' , 'enabled' , 'disabled']
+    type: str
   ufs_disable:
     description:
       -  BIOS Token for setting Uncore Frequency Scaling configuration.
@@ -3688,6 +4024,15 @@ options:
       -  disabled - Disables the BIOS setting.
     choices: ['platform-default' , 'enabled' , 'disabled']
     type: str
+  ufs_disable_io:
+    description:
+      -  BIOS Token for setting UFS Disable IO configuration.
+      -  platform-default - Default value used by the platform for the BIOS setting.
+      -  enabled - Enables the BIOS setting.
+      -  disabled - Disables the BIOS setting.
+    choices: ['platform-default' , 'enabled' , 'disabled']
+    type: str
+
   uma_based_clustering:
     description:
       -  BIOS Token for setting UMA Based Clustering configuration.
@@ -4338,6 +4683,328 @@ def apply_bios_properties(params, api_body):
 def main():
     argument_spec = intersight_argument_spec.copy()
     argument_spec.update(
+        acpi_srat_sp_flag_en={
+            "type": "str",
+            "choices": [
+                'platform-default',
+                'enabled',
+                'disabled'
+            ],
+        },
+        cbs_cmn_apbdis_df_pstate_rs={
+            "type": "str",
+            "choices": [
+                'platform-default',
+                'Auto',
+                '0',
+                '1'
+            ],
+        },
+        cbs_cmn_cpu_frequency_control={
+            "type": "str",
+            "choices": [
+                'platform-default',
+                'Auto',
+                'disabled',
+                'enabled'
+            ],
+        },
+        cbs_cmn_cpu_sev_asid_space_limit={
+            "type": "str",
+            "choices": [
+                'platform-default',
+                'Auto',
+                '1',
+                '100',
+                '163',
+                '253',
+                '509'
+            ],
+        },
+        cbs_cmn_edc_control_throttle={
+            "type": "str",
+            "choices": [
+                'platform-default',
+                'Auto',
+                'disabled',
+                'enabled'
+            ],
+        },
+        cbs_cmn_efficiency_mode_en_rs={
+            "type": "str",
+            "choices": [
+                'platform-default',
+                'Auto',
+                'Enabled'
+            ],
+        },
+        cbs_cmn_gnb_smu_dffo_rs={
+            "type": "str",
+            "choices": [
+                'platform-default',
+                'Auto',
+                'disabled',
+                'enabled'
+            ],
+        },
+        cbs_cmn_gnb_smu_dlwm_support={
+            "type": "str",
+            "choices": [
+                'platform-default',
+                'Auto',
+                'disabled',
+                'enabled'
+            ],
+        },
+        cbs_cmn_mem_ctrller_pwr_dn_en_ddr={
+            "type": "str",
+            "choices": [
+                'platform-default',
+                'Auto',
+                'disabled',
+                'enabled'
+            ],
+        },
+        cbs_cmnx_gmi_force_link_width_rs={
+            "type": "str",
+            "choices": [
+                'platform-default',
+                'Auto',
+                '0',
+                '1',
+                '2'
+            ],
+        },
+        cbs_cpu_down_core_ctrl_bergamo={
+            "type": "str",
+            "choices": [
+                'platform-default',
+                'Auto',
+                'TWO (1 + 1)',
+                'FOUR (2 + 2)',
+                'SIX (3 + 3)',
+                'EIGHT (4 + 4)'
+            ],
+        },
+        cbs_cpu_down_core_ctrl_genoa={
+            "type": "str",
+            "choices": [
+                'platform-default',
+                'Auto',
+                'FIVE (5 + 0)',
+                'FOUR (2 + 2)',
+                'FOUR (4 + 0)',
+                'ONE (1 + 0)',
+                'SEVEN (7 + 0)',
+                'SIX (3 + 3)',
+                'SIX (6 + 0)',
+                'THREE (3 + 0)',
+                'TWO (1 + 1)',
+                'TWO (2 + 0)'
+            ],
+        },
+        cbs_dbg_cpu_gen_cpu_wdt={
+            "type": "str",
+            "choices": [
+                'platform-default',
+                'Auto',
+                'disabled',
+                'enabled'
+            ],
+        },
+        cbs_dbg_cpu_lapic_mode={
+            "type": "str",
+            "choices": [
+                'platform-default',
+                'Auto',
+                'Compatibility',
+                'X2APIC',
+                'XAPIC'
+            ],
+        },
+        cbs_df_cmn_dram_scrub_time={
+            "type": "str",
+            "choices": [
+                'platform-default',
+                'Auto',
+                'disabled',
+                '1 hour',
+                '4 hours',
+                '8 hours',
+                '16 hours',
+                '24 hours',
+                '48 hours'
+            ],
+        },
+        cbs_df_cmn_mem_intlv_control={
+            "type": "str",
+            "choices": [
+                'platform-default',
+                'Auto',
+                'disabled',
+                'enabled'
+            ],
+        },
+        cbs_df_dbg_xgmi_link_cfg={
+            "type": "str",
+            "choices": [
+                'platform-default',
+                'Auto',
+                '2 xGMI Links',
+                '3 xGMI Links',
+                '4 xGMI Links'
+            ],
+        },
+        cbs_gnb_dbg_pcie_tbt_support={
+            "type": "str",
+            "choices": [
+                'platform-default',
+                'Auto',
+                'disabled',
+                'enabled'
+            ],
+        },
+        dfx_osb_en={
+            "type": "str",
+            "choices": [
+                'platform-default',
+                'Auto',
+                'disabled',
+                'enabled'
+            ],
+        },
+        enable_tdx={
+            "type": "str",
+            "choices": [
+                'platform-default',
+                'enabled',
+                'disabled'
+            ],
+        },
+        enable_tdx_seamldr={
+            "type": "str",
+            "choices": [
+                'platform-default',
+                'enabled',
+                'disabled'
+            ],
+        },
+        ioat_config_cpm={
+            "type": "str",
+            "choices": [
+                'platform-default',
+                'enabled',
+                'disabled'
+            ],
+        },
+        latency_optimized_mode={
+            "type": "str",
+            "choices": [
+                'platform-default',
+                'enabled',
+                'disabled'
+            ],
+        },
+        mmioh_base={
+            "type": "str",
+            "choices": [
+                'platform-default',
+                '56T',
+                '40T',
+                '24T',
+                '16T',
+                '12T',
+                '512G',
+                'Auto'
+            ],
+        },
+        mmioh_size={
+            "type": "str",
+            "choices": [
+                'platform-default',
+                '256G',
+                '128G',
+                '64G',
+                '32G',
+                '16G',
+                '8G',
+                '4G',
+                '2G',
+                '1G',
+                'Auto'
+            ],
+        },
+        optimized_power_mode={
+            "type": "str",
+            "choices": [
+                'platform-default',
+                'enabled',
+                'disabled'
+            ],
+        },
+        pre_boot_dma_protection={
+            "type": "str",
+            "choices": [
+                'platform-default',
+                'enabled',
+                'disabled'
+            ],
+        },
+        prmrr_size={
+            "type": "str",
+            "choices": [
+                'platform-default',
+                'Invalid Config',
+                '32MB',
+                '64MB',
+                '128MB',
+                '256MB',
+                '512MB',
+                '1GB',
+                '2GB',
+                '4GB',
+                '8GB',
+                '16GB',
+                '32GB',
+                '64GB',
+                '128GB',
+                '256GB',
+                '512GB',
+                'Auto'
+            ],
+        },
+        resize_bar_support={
+            "type": "str",
+            "choices": [
+                'platform-default',
+                'enabled',
+                'disabled'
+            ],
+        },
+        runtime_post_package_repair={
+            "type": "str",
+            "choices": [
+                'platform-default',
+                'enabled',
+                'disabled'
+            ],
+        },
+        serial_mux={
+            "type": "str",
+            "choices": [
+                'platform-default',
+                'enabled',
+                'disabled'
+            ],
+        },
+        speculative_lock_enable={
+            "type": "str",
+            "choices": [
+                'platform-default',
+                'enabled',
+                'disabled'
+            ],
+        },
         state={"type": "str", "choices": ['present', 'absent'], "default": "present"},
         organization={"type": "str", "default": "default"},
         name={"type": "str", "required": True},
@@ -7951,7 +8618,23 @@ def main():
                 'Strict'
             ],
         },
+        uefi_mem_map_sp_flag_en={
+            "type": "str",
+            "choices": [
+                'platform-default',
+                'enabled',
+                'disabled'
+            ],
+        },
         ufs_disable={
+            "type": "str",
+            "choices": [
+                'platform-default',
+                'enabled',
+                'disabled'
+            ],
+        },
+        ufs_disable_io={
             "type": "str",
             "choices": [
                 'platform-default',

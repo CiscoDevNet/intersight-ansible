@@ -28,6 +28,7 @@ jobs:
         env:
           INTERSIGHT_API_KEY_ID: ${{ secrets.INTERSIGHT_API_KEY_ID }}
           INTERSIGHT_API_PRIVATE_KEY: ${{ secrets.INTERSIGHT_API_PRIVATE_KEY }}
+          ANSIBLE_API_KEY: ${{ secrets.ANSIBLE_API_KEY }}
         run: |
           cd playbooks
-          ansible-playbook -i 'localhost,' --connection=local --extra-vars "ansible_api_key=${{ secrets.ANSIBLE_API_KEY }}" count_vms.yml -vvv
+          ansible-playbook -i 'localhost,' --connection=local -e "ansible_api_key=${ANSIBLE_API_KEY}" count_vms.yml -vvv
