@@ -1,5 +1,9 @@
 # cisco.intersight Ansible Collection Changelog
 
+## Version 2.19.0
+- Added OAuth2 bearer token support for API authentication.
+- BIOS policy and CI fixes.
+
 ## Version 2.18.0
 - Added AI storage, GPU, Confidential Compute, and BIOS tuning policies.
 - Added Organization aware lookup for IP pools.
