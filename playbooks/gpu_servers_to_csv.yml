@@ -1,0 +1,90 @@
+---
+- name: Query Intersight servers with GPUs and save CSV
+  hosts: localhost
+  connection: local
+  gather_facts: false
+
+  vars:
+    api_info: &api_info
+      api_private_key: "{{ api_private_key | default(omit) }}"
+      api_key_id: "{{ api_key_id | default(omit) }}"
+      api_uri: "{{ api_uri | default(omit) }}"
+      validate_certs: "{{ validate_certs | default(omit) }}"
+
+    gpu_servers_csv: "{{ playbook_dir }}/../debug/intersight_gpu_servers.csv"
+
+  tasks:
+    - name: Query GPU cards
+      cisco.intersight.intersight_rest_api:
+        <<: *api_info
+        resource_path: /graphics/Cards
+        return_list: true
+      register: gpu_cards
+
+    - name: Query rack servers
+      cisco.intersight.intersight_rest_api:
+        <<: *api_info
+        resource_path: /compute/RackUnits
+        return_list: true
+      register: rack_servers
+
+    - name: Query blade servers
+      cisco.intersight.intersight_rest_api:
+        <<: *api_info
+        resource_path: /compute/Blades
+        return_list: true
+      register: blade_servers
+
+    - name: Combine server inventory
+      ansible.builtin.set_fact:
+        intersight_servers: "{{ (rack_servers.api_response | default([])) + (blade_servers.api_response | default([])) }}"
+
+    - name: Ensure CSV output directory exists
+      ansible.builtin.file:
+        path: "{{ gpu_servers_csv | dirname }}"
+        state: directory
+        mode: "0755"
+
+    - name: Write GPU server inventory CSV
+      ansible.builtin.copy:
+        dest: "{{ gpu_servers_csv }}"
+        mode: "0644"
+        content: |
+          {% macro csv(value) -%}
+          "{{ (value | default('', true) | string) | replace('"', '""') }}"
+          {%- endmacro %}
+          {%- set server_by_moid = {} -%}
+          {%- for server in intersight_servers | default([]) -%}
+          {%-   if server.Moid is defined -%}
+          {%-     set _ = server_by_moid.update({server.Moid: server}) -%}
+          {%-   endif -%}
+          {%- endfor -%}
+          {%- set ns = namespace(seen=[]) -%}
+          server_name,server_model,serial_number,gpu_model
+          {% for gpu in gpu_cards.api_response | default([]) -%}
+          {%-   set presence = gpu.Presence | default('equipped', true) | lower -%}
+          {%-   if presence not in ['absent', 'missing', 'empty'] -%}
+          {%-     set rack_moid = gpu.ComputeRackUnit.Moid if (gpu.ComputeRackUnit is defined and gpu.ComputeRackUnit.Moid is defined) else '' -%}
+          {%-     set blade_moid = gpu.ComputeBlade.Moid if (gpu.ComputeBlade is defined and gpu.ComputeBlade.Moid is defined) else '' -%}
+          {%-     set server_lookup = namespace(moid=(rack_moid or blade_moid)) -%}
+          {%-     if not server_lookup.moid -%}
+          {%-       for ancestor in gpu.Ancestors | default([]) -%}
+          {%-         if not server_lookup.moid and ancestor.ObjectType is defined and ancestor.ObjectType in ['compute.RackUnit', 'compute.Blade'] and ancestor.Moid is defined -%}
+          {%-           set server_lookup.moid = ancestor.Moid -%}
+          {%-         endif -%}
+          {%-       endfor -%}
+          {%-     endif -%}
+          {%-     set server_moid = server_lookup.moid -%}
+          {%-     set server = server_by_moid.get(server_moid, {}) -%}
+          {%-     set gpu_model = gpu.Model | default(gpu.Pid | default(gpu.PartNumber | default(gpu.Description | default('', true), true), true), true) -%}
+          {%-     set row_key = (server_moid ~ '|' ~ gpu_model) -%}
+          {%-     if gpu_model and row_key not in ns.seen %}
+          {{ csv(server.Name | default('')) }},{{ csv(server.Model | default('')) }},{{ csv(server.Serial | default('')) }},{{ csv(gpu_model) }}
+          {%       set ns.seen = ns.seen + [row_key] -%}
+          {%-     endif -%}
+          {%-   endif -%}
+          {%- endfor %}
+
+    - name: Report CSV location
+      ansible.builtin.debug:
+        msg: "GPU server CSV written to {{ gpu_servers_csv }}"
