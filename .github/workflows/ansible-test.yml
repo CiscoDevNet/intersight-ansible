@@ -163,7 +163,12 @@ jobs:
           ansible-core-version: ${{ matrix.ansible }}
           testing-type: integration
           target: ${{ needs.detect-changes.outputs.targets }}
-          pre-test-cmd: chmod +x ./tests/integration/targets/prepare_test_run/generate_integration_config.sh && ./tests/integration/targets/prepare_test_run/generate_integration_config.sh
+          pre-test-cmd: >-
+            chmod +x ./tests/integration/targets/prepare_test_run/generate_integration_config.sh &&
+            ./tests/integration/targets/prepare_test_run/generate_integration_config.sh &&
+            git add --force --
+            ./tests/integration/targets/prepare_test_run/api_private_key.pem
+            ./tests/integration/targets/prepare_test_run/integration_config.yml
           git-checkout-ref: ${{ github.event.pull_request.head.sha }}
         env:
           API_PRIVATE_KEY: ${{ secrets.INTERSIGHT_API_PRIVATE_KEY_CI }}
