@@ -1,6 +1,5 @@
 import unittest
-from unittest.mock import patch, MagicMock, call
-from types import SimpleNamespace
+from unittest.mock import patch, MagicMock
 
 from ansible_collections.cisco.intersight.plugins.modules.intersight_server_profile import (
     wait_for_profile_action,
