@@ -66,23 +66,25 @@
         - idempotent_res is not changed
 
   # --- Test: Verify action param accepted with valid choices ---
-  - name: Create profile with action=Deploy and wait_for_action=false (no server assigned, will fail gracefully)
+  - name: Validate Deploy action parameters - check-mode
     cisco.intersight.intersight_server_profile:
       <<: *api_info
-      name: test_sp_deploy_action
+      name: test_sp_deploy_basic
       target_platform: Standalone
-      description: "Test profile for deploy"
+      description: "Test profile without deploy"
       action: Deploy
       wait_for_action: false
       action_timeout: 60
       action_poll_interval: 10
+    check_mode: true
     register: deploy_res
-    ignore_errors: true
 
   - name: Verify action parameters were accepted
     ansible.builtin.assert:
       that:
+        - deploy_res is changed
         - deploy_res.api_response is defined
+        - deploy_res.api_response.Name == 'test_sp_deploy_basic'
 
   # --- Test: Verify action=Undeploy param accepted ---
   - name: Attempt Undeploy on unassigned profile (should be no-op)

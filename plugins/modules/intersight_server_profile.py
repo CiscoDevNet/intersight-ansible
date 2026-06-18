@@ -852,6 +852,9 @@ def main():
             if intersight.module.params[k]:
                 post_profile_to_policy(intersight, moid, resource_path=v, policy_name=intersight.module.params[k])
 
+    if intersight.module.check_mode and intersight.module.params['action'] and not moid:
+        module.exit_json(**intersight.result)
+
     if intersight.module.params['action'] and intersight.module.params['state'] == 'present':
         action = intersight.module.params['action']
         profile_name = intersight.module.params['name']

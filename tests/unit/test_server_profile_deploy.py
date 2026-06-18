@@ -1,6 +1,7 @@
 import unittest
 from unittest.mock import patch, MagicMock
 
+from ansible_collections.cisco.intersight.plugins.modules import intersight_server_profile as server_profile_module
 from ansible_collections.cisco.intersight.plugins.modules.intersight_server_profile import (
     wait_for_profile_action,
     get_deploy_failure_reason,
@@ -12,6 +13,10 @@ from ansible_collections.cisco.intersight.plugins.modules.intersight_server_prof
 
 
 class FailJsonException(Exception):
+    pass
+
+
+class ExitJsonException(Exception):
     pass
 
 
@@ -40,6 +45,32 @@ def make_profile_response(control_action='No-op', config_state='Associated', ope
             },
         }],
     }
+
+
+def make_module_params(**overrides):
+    """Build a complete parameter dict for main() tests."""
+    params = {
+        'state': 'present',
+        'organization': 'Demo-DevNet',
+        'name': 'test-profile',
+        'target_platform': 'Standalone',
+        'tags': [],
+        'description': '',
+        'assigned_server': None,
+        'assigned_server_serial': None,
+        'uuid_address_type': None,
+        'uuid_pool': None,
+        'static_uuid_address': None,
+        'action': None,
+        'server_profile_template': None,
+        'wait_for_action': True,
+        'action_timeout': 1200,
+        'action_poll_interval': 60,
+    }
+    for policy_name in server_profile_module.policy_resource_path:
+        params[policy_name] = None
+    params.update(overrides)
+    return params
 
 
 class TestWaitForProfileAction(unittest.TestCase):
@@ -347,6 +378,71 @@ class TestPerformDetach(unittest.TestCase):
 
         with self.assertRaises(FailJsonException):
             perform_detach(intersight, 'nonexistent')
+
+
+class TestMain(unittest.TestCase):
+    @patch.object(server_profile_module, 'perform_profile_action')
+    @patch.object(server_profile_module, 'IntersightModule')
+    @patch.object(server_profile_module, 'AnsibleModule')
+    def test_check_mode_create_with_action_skips_action(
+        self,
+        ansible_module_mock,
+        intersight_module_mock,
+        perform_profile_action_mock,
+    ):
+        module = MagicMock()
+        module.check_mode = True
+        module.params = make_module_params(action='Deploy', wait_for_action=False)
+        module.exit_json.side_effect = ExitJsonException
+        module.fail_json.side_effect = FailJsonException
+        ansible_module_mock.return_value = module
+
+        intersight = MagicMock()
+        intersight.module = module
+        intersight.result = {'changed': True, 'api_response': {}, 'trace_id': ''}
+        intersight.configure_policy_or_profile.return_value = None
+        intersight_module_mock.return_value = intersight
+
+        with self.assertRaises(ExitJsonException):
+            server_profile_module.main()
+
+        perform_profile_action_mock.assert_not_called()
+        module.exit_json.assert_called_once_with(**intersight.result)
+
+    @patch.object(server_profile_module, 'perform_profile_action')
+    @patch.object(server_profile_module, 'IntersightModule')
+    @patch.object(server_profile_module, 'AnsibleModule')
+    def test_check_mode_existing_profile_runs_action(
+        self,
+        ansible_module_mock,
+        intersight_module_mock,
+        perform_profile_action_mock,
+    ):
+        module = MagicMock()
+        module.check_mode = True
+        module.params = make_module_params(action='Deploy', wait_for_action=False)
+        module.exit_json.side_effect = ExitJsonException
+        module.fail_json.side_effect = FailJsonException
+        ansible_module_mock.return_value = module
+
+        intersight = MagicMock()
+        intersight.module = module
+        intersight.result = {'changed': False, 'api_response': {}, 'trace_id': ''}
+        intersight.configure_policy_or_profile.return_value = 'profile-123'
+        intersight_module_mock.return_value = intersight
+
+        with self.assertRaises(ExitJsonException):
+            server_profile_module.main()
+
+        perform_profile_action_mock.assert_called_once_with(
+            intersight,
+            profile_name='test-profile',
+            action='Deploy',
+            wait=False,
+            timeout=1200,
+            poll_interval=60,
+        )
+        module.exit_json.assert_called_once_with(**intersight.result)
 
 
 if __name__ == '__main__':
