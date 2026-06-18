@@ -248,16 +248,18 @@ def main():
     if not organization_moid:
         module.fail_json(msg="Organization '%s' not found." % organization_name)
 
-    template_moid = get_template_moid(intersight, template_name, organization_moid)
-    if not template_moid:
-        module.fail_json(msg="Server Profile Template '%s' not found in organization '%s'." % (template_name, organization_name))
-
     result_summary = {
         'derived': [],
         'synced': [],
         'skipped': [],
         'deleted': [],
     }
+
+    template_moid = None
+    if state == 'present':
+        template_moid = get_template_moid(intersight, template_name, organization_moid)
+        if not template_moid:
+            module.fail_json(msg="Server Profile Template '%s' not found in organization '%s'." % (template_name, organization_name))
 
     for profile_name in profile_names:
         existing_profile = get_profile_by_name(intersight, profile_name)

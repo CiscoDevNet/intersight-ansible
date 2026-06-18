@@ -32,7 +32,7 @@
     cisco.intersight.intersight_server_profile_template:
       <<: *api_info
       name: test_derive_template
-      target_platform: Standalone
+      target_platform: standalone
       description: "Template for derive integration tests"
     register: template_res
 

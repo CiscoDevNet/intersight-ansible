@@ -1,6 +1,7 @@
 import unittest
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
+from ansible_collections.cisco.intersight.plugins.modules import intersight_server_profile_derive as derive_module
 from ansible_collections.cisco.intersight.plugins.modules.intersight_server_profile_derive import (
     get_profile_by_name,
     get_template_moid,
@@ -12,6 +13,10 @@ from ansible_collections.cisco.intersight.plugins.modules.intersight_server_prof
 
 
 class FailJsonException(Exception):
+    pass
+
+
+class ExitJsonException(Exception):
     pass
 
 
@@ -142,6 +147,80 @@ class TestProfileNeedsSync(unittest.TestCase):
     def test_assigned_no_sync(self):
         profile = make_profile(config_state='Assigned')
         self.assertFalse(profile_needs_sync(profile, force_sync=False))
+
+
+class TestMain(unittest.TestCase):
+    @patch.object(derive_module, 'get_template_moid')
+    @patch.object(derive_module, 'get_profile_by_name')
+    @patch.object(derive_module, 'IntersightModule')
+    @patch.object(derive_module, 'AnsibleModule')
+    def test_absent_does_not_require_template(
+        self,
+        ansible_module_mock,
+        intersight_module_mock,
+        get_profile_by_name_mock,
+        get_template_moid_mock,
+    ):
+        module = MagicMock()
+        module.check_mode = False
+        module.params = {
+            'organization': 'Demo-DevNet',
+            'template_name': 'missing-template',
+            'profile_names': ['test-profile'],
+            'state': 'absent',
+            'force_sync': False,
+        }
+        module.exit_json.side_effect = ExitJsonException
+        module.fail_json.side_effect = FailJsonException
+        ansible_module_mock.return_value = module
+
+        intersight = MagicMock()
+        intersight.result = {'changed': False, 'api_response': {}, 'trace_id': ''}
+        intersight.get_moid_by_name.return_value = 'org-123'
+        intersight_module_mock.return_value = intersight
+        get_profile_by_name_mock.return_value = None
+
+        with self.assertRaises(ExitJsonException):
+            derive_module.main()
+
+        get_template_moid_mock.assert_not_called()
+        module.fail_json.assert_not_called()
+        module.exit_json.assert_called_once()
+        result = module.exit_json.call_args.kwargs
+        self.assertFalse(result['changed'])
+        self.assertEqual(result['api_response']['skipped'], ['test-profile'])
+
+    @patch.object(derive_module, 'get_template_moid')
+    @patch.object(derive_module, 'IntersightModule')
+    @patch.object(derive_module, 'AnsibleModule')
+    def test_present_requires_template(
+        self,
+        ansible_module_mock,
+        intersight_module_mock,
+        get_template_moid_mock,
+    ):
+        module = MagicMock()
+        module.params = {
+            'organization': 'Demo-DevNet',
+            'template_name': 'missing-template',
+            'profile_names': ['test-profile'],
+            'state': 'present',
+            'force_sync': False,
+        }
+        module.fail_json.side_effect = FailJsonException
+        ansible_module_mock.return_value = module
+
+        intersight = MagicMock()
+        intersight.result = {'changed': False, 'api_response': {}, 'trace_id': ''}
+        intersight.get_moid_by_name.return_value = 'org-123'
+        intersight_module_mock.return_value = intersight
+        get_template_moid_mock.return_value = None
+
+        with self.assertRaises(FailJsonException):
+            derive_module.main()
+
+        get_template_moid_mock.assert_called_once_with(intersight, 'missing-template', 'org-123')
+        module.exit_json.assert_not_called()
 
 
 if __name__ == '__main__':
