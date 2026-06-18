@@ -32,11 +32,19 @@ options:
       - The action to perform on the server profile after it has been configured.
       - C(Deploy) will deploy the profile to the assigned server. The profile must have a server assigned.
       - C(Undeploy) will undeploy the profile from the assigned server.
+      - C(Unassign) will unassign the server from the profile by clearing the AssignedServer and setting ServerAssignmentMode to None.
+      - C(Attach) will attach the profile to a server profile template using the Intersight MoMerger API.
+        Requires C(server_profile_template) to specify the template name.
+      - C(Detach) will detach the profile from its associated server profile template.
       - If not specified, no action is taken beyond configuring the profile.
-      - Deploy is idempotent and will not re-deploy if the profile is already in the C(Associated) state.
-      - Undeploy is idempotent and will not undeploy if the profile has no associated server.
+      - All actions are idempotent and will not repeat if the profile is already in the desired state.
     type: str
-    choices: [Deploy, Undeploy]
+    choices: [Deploy, Undeploy, Unassign, Attach, Detach]
+  server_profile_template:
+    description:
+      - Name of the Server Profile Template to attach to when C(action) is C(Attach).
+      - The template must exist in the same organization as the server profile.
+    type: str
   wait_for_action:
     description:
       - Whether to wait for the deploy or undeploy action to complete before returning.
@@ -307,6 +315,28 @@ EXAMPLES = r'''
     name: SP-Server1
     action: Undeploy
 
+- name: Unassign server from profile
+  cisco.intersight.intersight_server_profile:
+    api_private_key: "{{ api_private_key }}"
+    api_key_id: "{{ api_key_id }}"
+    name: SP-Server1
+    action: Unassign
+
+- name: Attach profile to a template
+  cisco.intersight.intersight_server_profile:
+    api_private_key: "{{ api_private_key }}"
+    api_key_id: "{{ api_key_id }}"
+    name: SP-Server1
+    action: Attach
+    server_profile_template: My-Standard-Template
+
+- name: Detach profile from its template
+  cisco.intersight.intersight_server_profile:
+    api_private_key: "{{ api_private_key }}"
+    api_key_id: "{{ api_key_id }}"
+    name: SP-Server1
+    action: Detach
+
 - name: Delete Server Profile
   cisco.intersight.intersight_server_profile:
     api_private_key: "{{ api_private_key }}"
@@ -549,6 +579,150 @@ def perform_profile_action(intersight, profile_name, action, wait, timeout, poll
         intersight.result['api_response'] = response
 
 
+def perform_unassign(intersight, profile_name):
+    """Unassign the server from a profile."""
+    options = {
+        'http_method': 'get',
+        'resource_path': '/server/Profiles',
+        'query_params': {
+            '$filter': "Name eq '" + profile_name + "'",
+        },
+    }
+    response = intersight.call_api(**options)
+    if not response.get('Results'):
+        intersight.module.fail_json(msg="Profile '%s' not found." % profile_name)
+
+    profile = response['Results'][0]
+
+    if not profile.get('AssignedServer') or not profile['AssignedServer'].get('Moid'):
+        intersight.result['api_response'] = profile
+        return
+
+    if intersight.module.check_mode:
+        intersight.result['changed'] = True
+        intersight.result['api_response'] = profile
+        return
+
+    patch_options = {
+        'http_method': 'patch',
+        'resource_path': '/server/Profiles',
+        'body': {
+            'AssignedServer': None,
+            'ServerAssignmentMode': 'None',
+        },
+        'moid': profile['Moid'],
+    }
+    resp = intersight.call_api(**patch_options)
+    intersight.result['changed'] = True
+    intersight.result['api_response'] = resp
+
+
+def perform_attach(intersight, profile_name, template_name, organization_name):
+    """Attach a server profile to a template via MoMerger."""
+    options = {
+        'http_method': 'get',
+        'resource_path': '/server/Profiles',
+        'query_params': {
+            '$filter': "Name eq '" + profile_name + "'",
+        },
+    }
+    response = intersight.call_api(**options)
+    if not response.get('Results'):
+        intersight.module.fail_json(msg="Profile '%s' not found." % profile_name)
+
+    profile = response['Results'][0]
+    profile_moid = profile['Moid']
+
+    src_template_ref = profile.get('SrcTemplate')
+    if src_template_ref and src_template_ref.get('Moid'):
+        template_moid = intersight.get_moid_by_name(
+            resource_path='/server/ProfileTemplates',
+            resource_name=template_name,
+        )
+        if template_moid and src_template_ref['Moid'] == template_moid:
+            intersight.result['api_response'] = profile
+            return
+
+    template_moid = intersight.get_moid_by_name(
+        resource_path='/server/ProfileTemplates',
+        resource_name=template_name,
+    )
+    if not template_moid:
+        intersight.module.fail_json(
+            msg="Server Profile Template '%s' not found." % template_name,
+        )
+
+    if intersight.module.check_mode:
+        intersight.result['changed'] = True
+        intersight.result['api_response'] = profile
+        return
+
+    merge_options = {
+        'http_method': 'post',
+        'resource_path': '/bulk/MoMergers',
+        'body': {
+            'Sources': [
+                {
+                    'ObjectType': 'server.ProfileTemplate',
+                    'Moid': template_moid,
+                }
+            ],
+            'Targets': [
+                {
+                    'ObjectType': 'server.Profile',
+                    'Moid': profile_moid,
+                }
+            ],
+            'MergeAction': 'Replace',
+        },
+    }
+    intersight.call_api(**merge_options)
+    intersight.result['changed'] = True
+
+    options['query_params'] = {'$filter': "Name eq '" + profile_name + "'"}
+    response = intersight.call_api(**options)
+    if response.get('Results'):
+        intersight.result['api_response'] = response['Results'][0]
+
+
+def perform_detach(intersight, profile_name):
+    """Detach a server profile from its template."""
+    options = {
+        'http_method': 'get',
+        'resource_path': '/server/Profiles',
+        'query_params': {
+            '$filter': "Name eq '" + profile_name + "'",
+        },
+    }
+    response = intersight.call_api(**options)
+    if not response.get('Results'):
+        intersight.module.fail_json(msg="Profile '%s' not found." % profile_name)
+
+    profile = response['Results'][0]
+
+    src_template_ref = profile.get('SrcTemplate')
+    if not src_template_ref or not src_template_ref.get('Moid'):
+        intersight.result['api_response'] = profile
+        return
+
+    if intersight.module.check_mode:
+        intersight.result['changed'] = True
+        intersight.result['api_response'] = profile
+        return
+
+    patch_options = {
+        'http_method': 'patch',
+        'resource_path': '/server/Profiles',
+        'body': {
+            'SrcTemplate': None,
+        },
+        'moid': profile['Moid'],
+    }
+    resp = intersight.call_api(**patch_options)
+    intersight.result['changed'] = True
+    intersight.result['api_response'] = resp
+
+
 def main():
     argument_spec = intersight_argument_spec.copy()
     argument_spec.update(
@@ -588,7 +762,8 @@ def main():
         uuid_address_type=dict(type='str', choices=['pool', 'static']),
         uuid_pool=dict(type='str'),
         static_uuid_address=dict(type='str'),
-        action=dict(type='str', choices=['Deploy', 'Undeploy']),
+        action=dict(type='str', choices=['Deploy', 'Undeploy', 'Unassign', 'Attach', 'Detach']),
+        server_profile_template=dict(type='str'),
         wait_for_action=dict(type='bool', default=True),
         action_timeout=dict(type='int', default=1200),
         action_poll_interval=dict(type='int', default=60),
@@ -603,6 +778,7 @@ def main():
         required_if=[
             ['uuid_address_type', 'pool', ['uuid_pool']],
             ['uuid_address_type', 'static', ['static_uuid_address']],
+            ['action', 'Attach', ['server_profile_template']],
         ],
     )
 
@@ -677,14 +853,29 @@ def main():
                 post_profile_to_policy(intersight, moid, resource_path=v, policy_name=intersight.module.params[k])
 
     if intersight.module.params['action'] and intersight.module.params['state'] == 'present':
-        perform_profile_action(
-            intersight,
-            profile_name=intersight.module.params['name'],
-            action=intersight.module.params['action'],
-            wait=intersight.module.params['wait_for_action'],
-            timeout=intersight.module.params['action_timeout'],
-            poll_interval=intersight.module.params['action_poll_interval'],
-        )
+        action = intersight.module.params['action']
+        profile_name = intersight.module.params['name']
+
+        if action in ('Deploy', 'Undeploy'):
+            perform_profile_action(
+                intersight,
+                profile_name=profile_name,
+                action=action,
+                wait=intersight.module.params['wait_for_action'],
+                timeout=intersight.module.params['action_timeout'],
+                poll_interval=intersight.module.params['action_poll_interval'],
+            )
+        elif action == 'Unassign':
+            perform_unassign(intersight, profile_name)
+        elif action == 'Attach':
+            perform_attach(
+                intersight,
+                profile_name=profile_name,
+                template_name=intersight.module.params['server_profile_template'],
+                organization_name=intersight.module.params['organization'],
+            )
+        elif action == 'Detach':
+            perform_detach(intersight, profile_name)
 
     module.exit_json(**intersight.result)
 

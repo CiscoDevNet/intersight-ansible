@@ -6,6 +6,9 @@ from ansible_collections.cisco.intersight.plugins.modules.intersight_server_prof
     wait_for_profile_action,
     get_deploy_failure_reason,
     perform_profile_action,
+    perform_unassign,
+    perform_attach,
+    perform_detach,
 )
 
 
@@ -214,6 +217,137 @@ class TestPerformProfileAction(unittest.TestCase):
             perform_profile_action(intersight, 'nonexistent', 'Deploy', wait=True, timeout=120, poll_interval=10)
 
         intersight.module.fail_json.assert_called_once()
+
+
+class TestPerformUnassign(unittest.TestCase):
+    def test_skips_when_no_server_assigned(self):
+        intersight = make_intersight_mock()
+        intersight.call_api.return_value = make_profile_response(config_state='Not-assigned')
+        # No AssignedServer set
+        intersight.call_api.return_value['Results'][0]['AssignedServer'] = None
+
+        perform_unassign(intersight, 'test-profile')
+
+        self.assertFalse(intersight.result['changed'])
+
+    def test_unassigns_server(self):
+        intersight = make_intersight_mock()
+        profile = make_profile_response(config_state='Assigned')
+        profile['Results'][0]['AssignedServer'] = {'Moid': 'server-123', 'ObjectType': 'compute.Blade'}
+        intersight.call_api.return_value = profile
+
+        perform_unassign(intersight, 'test-profile')
+
+        self.assertTrue(intersight.result['changed'])
+        patch_call = intersight.call_api.call_args_list[-1]
+        self.assertEqual(patch_call.kwargs.get('http_method', patch_call[1].get('http_method')), 'patch')
+
+    def test_check_mode(self):
+        intersight = make_intersight_mock(check_mode=True)
+        profile = make_profile_response()
+        profile['Results'][0]['AssignedServer'] = {'Moid': 'server-123', 'ObjectType': 'compute.Blade'}
+        intersight.call_api.return_value = profile
+
+        perform_unassign(intersight, 'test-profile')
+
+        self.assertTrue(intersight.result['changed'])
+        self.assertEqual(intersight.call_api.call_count, 1)
+
+    def test_fails_profile_not_found(self):
+        intersight = make_intersight_mock()
+        intersight.call_api.return_value = {'Results': []}
+
+        with self.assertRaises(FailJsonException):
+            perform_unassign(intersight, 'nonexistent')
+
+
+class TestPerformAttach(unittest.TestCase):
+    def test_skips_when_already_attached_to_same_template(self):
+        intersight = make_intersight_mock()
+        profile = make_profile_response()
+        profile['Results'][0]['SrcTemplate'] = {'Moid': 'template-abc', 'ObjectType': 'server.ProfileTemplate'}
+        intersight.call_api.return_value = profile
+        intersight.get_moid_by_name = MagicMock(return_value='template-abc')
+
+        perform_attach(intersight, 'test-profile', 'My-Template', 'default')
+
+        self.assertFalse(intersight.result['changed'])
+
+    def test_attaches_to_template(self):
+        intersight = make_intersight_mock()
+        profile = make_profile_response()
+        profile['Results'][0]['SrcTemplate'] = None
+        intersight.call_api.return_value = profile
+        intersight.get_moid_by_name = MagicMock(return_value='template-xyz')
+
+        perform_attach(intersight, 'test-profile', 'My-Template', 'default')
+
+        self.assertTrue(intersight.result['changed'])
+        post_call = [c for c in intersight.call_api.call_args_list if c.kwargs.get('http_method') == 'post']
+        self.assertEqual(len(post_call), 1)
+
+    def test_fails_template_not_found(self):
+        intersight = make_intersight_mock()
+        profile = make_profile_response()
+        profile['Results'][0]['SrcTemplate'] = None
+        intersight.call_api.return_value = profile
+        intersight.get_moid_by_name = MagicMock(return_value=None)
+
+        with self.assertRaises(FailJsonException):
+            perform_attach(intersight, 'test-profile', 'Bad-Template', 'default')
+
+    def test_check_mode(self):
+        intersight = make_intersight_mock(check_mode=True)
+        profile = make_profile_response()
+        profile['Results'][0]['SrcTemplate'] = None
+        intersight.call_api.return_value = profile
+        intersight.get_moid_by_name = MagicMock(return_value='template-xyz')
+
+        perform_attach(intersight, 'test-profile', 'My-Template', 'default')
+
+        self.assertTrue(intersight.result['changed'])
+        post_calls = [c for c in intersight.call_api.call_args_list if c.kwargs.get('http_method') == 'post']
+        self.assertEqual(len(post_calls), 0)
+
+
+class TestPerformDetach(unittest.TestCase):
+    def test_skips_when_not_attached(self):
+        intersight = make_intersight_mock()
+        profile = make_profile_response()
+        profile['Results'][0]['SrcTemplate'] = None
+        intersight.call_api.return_value = profile
+
+        perform_detach(intersight, 'test-profile')
+
+        self.assertFalse(intersight.result['changed'])
+
+    def test_detaches_from_template(self):
+        intersight = make_intersight_mock()
+        profile = make_profile_response()
+        profile['Results'][0]['SrcTemplate'] = {'Moid': 'template-abc', 'ObjectType': 'server.ProfileTemplate'}
+        intersight.call_api.return_value = profile
+
+        perform_detach(intersight, 'test-profile')
+
+        self.assertTrue(intersight.result['changed'])
+
+    def test_check_mode(self):
+        intersight = make_intersight_mock(check_mode=True)
+        profile = make_profile_response()
+        profile['Results'][0]['SrcTemplate'] = {'Moid': 'template-abc', 'ObjectType': 'server.ProfileTemplate'}
+        intersight.call_api.return_value = profile
+
+        perform_detach(intersight, 'test-profile')
+
+        self.assertTrue(intersight.result['changed'])
+        self.assertEqual(intersight.call_api.call_count, 1)
+
+    def test_fails_profile_not_found(self):
+        intersight = make_intersight_mock()
+        intersight.call_api.return_value = {'Results': []}
+
+        with self.assertRaises(FailJsonException):
+            perform_detach(intersight, 'nonexistent')
 
 
 if __name__ == '__main__':

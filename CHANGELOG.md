@@ -1,11 +1,13 @@
 # cisco.intersight Ansible Collection Changelog
 
 ## Version 2.19.0
-- Added Deploy and Undeploy action support to intersight_server_profile module (fixes #85).
-- New parameters: action, wait_for_action, action_timeout, action_poll_interval.
+- Added lifecycle action support to intersight_server_profile module (fixes #85).
+- New action parameter with choices: Deploy, Undeploy, Unassign, Attach, Detach.
+- New server_profile_template parameter for Attach action (uses MoMerger API).
+- New parameters: wait_for_action, action_timeout, action_poll_interval for deploy/undeploy polling.
 - Deploy waits for profile validation, submits action, polls for completion, and retrieves failure reasons on error.
-- Idempotent: skips deploy if already Associated, skips undeploy if already Not-associated.
-- Added unit tests for deploy/undeploy logic.
+- All actions are idempotent.
+- Added 25 unit tests covering all action types.
 - Added integration test target for server profile deploy.
 
 ## Version 2.17.0
