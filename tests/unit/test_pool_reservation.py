@@ -49,7 +49,7 @@ class TestGetExistingReservation(unittest.TestCase):
         reservation = {'Moid': 'res-123', 'Identity': '10.10.10.100'}
         intersight.call_api.return_value = {'Results': [reservation]}
 
-        result = get_existing_reservation(intersight, '/ippool/Reservations', 'pool-123', '10.10.10.100')
+        result = get_existing_reservation(intersight, '/ippool/Reservations', 'pool-123', '10.10.10.100', 'org-123')
 
         self.assertEqual(result['Moid'], 'res-123')
 
@@ -57,7 +57,7 @@ class TestGetExistingReservation(unittest.TestCase):
         intersight = make_intersight_mock()
         intersight.call_api.return_value = {'Results': []}
 
-        result = get_existing_reservation(intersight, '/ippool/Reservations', 'pool-123', '10.10.10.200')
+        result = get_existing_reservation(intersight, '/ippool/Reservations', 'pool-123', '10.10.10.200', 'org-123')
 
         self.assertIsNone(result)
 
@@ -65,12 +65,13 @@ class TestGetExistingReservation(unittest.TestCase):
         intersight = make_intersight_mock()
         intersight.call_api.return_value = {'Results': []}
 
-        get_existing_reservation(intersight, '/ippool/Reservations', 'pool-123', '10.10.10.100')
+        get_existing_reservation(intersight, '/ippool/Reservations', 'pool-123', '10.10.10.100', 'org-123')
 
         call_args = intersight.call_api.call_args
         filter_str = call_args.kwargs['query_params']['$filter']
         self.assertIn("Identity eq '10.10.10.100'", filter_str)
-        self.assertIn("Pool.Moid eq 'pool-123'", filter_str)
+        self.assertIn("Organization.Moid eq 'org-123'", filter_str)
+        self.assertNotIn("Pool.Moid eq 'pool-123'", filter_str)
 
 
 class TestCreateReservation(unittest.TestCase):
@@ -80,7 +81,7 @@ class TestCreateReservation(unittest.TestCase):
 
         result = create_reservation(
             intersight, '/ippool/Reservations', 'pool-123',
-            '10.10.10.100', 'static', 'ippool.Reservation', 'ip',
+            'org-123', '10.10.10.100', 'static', 'ippool.Reservation', 'ip',
         )
 
         call_args = intersight.call_api.call_args
@@ -88,6 +89,8 @@ class TestCreateReservation(unittest.TestCase):
         body = call_args.kwargs['body']
         self.assertEqual(body['Identity'], '10.10.10.100')
         self.assertEqual(body['AllocationType'], 'static')
+        self.assertNotIn('Pool', body)
+        self.assertEqual(body['Organization']['Moid'], 'org-123')
 
     def test_dynamic_omits_identity(self):
         intersight = make_intersight_mock()
@@ -95,12 +98,14 @@ class TestCreateReservation(unittest.TestCase):
 
         create_reservation(
             intersight, '/ippool/Reservations', 'pool-123',
-            None, 'dynamic', 'ippool.Reservation', 'ip',
+            'org-123', None, 'dynamic', 'ippool.Reservation', 'ip',
         )
 
         call_args = intersight.call_api.call_args
         body = call_args.kwargs['body']
         self.assertNotIn('Identity', body)
+        self.assertEqual(body['Pool']['Moid'], 'pool-123')
+        self.assertEqual(body['Organization']['Moid'], 'org-123')
 
     def test_wwnn_sets_id_purpose(self):
         intersight = make_intersight_mock()
@@ -108,7 +113,7 @@ class TestCreateReservation(unittest.TestCase):
 
         create_reservation(
             intersight, '/fcpool/Reservations', 'pool-123',
-            '20:00:00:25:B5:00:00:01', 'static', 'fcpool.Reservation', 'wwnn',
+            'org-123', '20:00:00:25:B5:00:00:01', 'static', 'fcpool.Reservation', 'wwnn',
         )
 
         call_args = intersight.call_api.call_args
@@ -121,7 +126,7 @@ class TestCreateReservation(unittest.TestCase):
 
         create_reservation(
             intersight, '/fcpool/Reservations', 'pool-123',
-            '20:00:00:25:B5:00:00:02', 'static', 'fcpool.Reservation', 'wwpn',
+            'org-123', '20:00:00:25:B5:00:00:02', 'static', 'fcpool.Reservation', 'wwpn',
         )
 
         call_args = intersight.call_api.call_args
