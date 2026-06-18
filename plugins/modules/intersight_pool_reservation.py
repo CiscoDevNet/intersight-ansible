@@ -174,13 +174,11 @@ def get_pool_moid(intersight, pool_path, pool_name, organization_moid):
     return None
 
 
-def get_existing_reservation(intersight, resource_path, pool_moid, identity, organization_moid):
-    """Check if a reservation already exists for this identity or pool."""
-    filter_str = "Organization.Moid eq '" + organization_moid + "'"
+def get_existing_reservation(intersight, resource_path, pool_moid, identity):
+    """Check if a reservation already exists for this identity in this pool."""
+    filter_str = "Pool.Moid eq '" + pool_moid + "'"
     if identity:
         filter_str += " and Identity eq '" + identity + "'"
-    else:
-        filter_str += " and Pool.Moid eq '" + pool_moid + "'"
     options = {
         'http_method': 'get',
         'resource_path': resource_path,
@@ -194,21 +192,16 @@ def get_existing_reservation(intersight, resource_path, pool_moid, identity, org
     return None
 
 
-def create_reservation(intersight, resource_path, pool_moid, organization_moid, identity, allocation_type, object_type, pool_type):
+def create_reservation(intersight, resource_path, pool_moid, identity, allocation_type, object_type, pool_type):
     """Create a new reservation."""
     body = {
         'ObjectType': object_type,
         'AllocationType': allocation_type,
-        'Organization': {
-            'Moid': organization_moid,
-            'ObjectType': 'organization.Organization',
-        },
-    }
-    if allocation_type == 'dynamic':
-        body['Pool'] = {
+        'Pool': {
             'Moid': pool_moid,
             'ObjectType': POOL_TYPE_MAP[pool_type]['object_type'].replace('Reservation', 'Pool'),
-        }
+        },
+    }
     if identity and allocation_type == 'static':
         body['Identity'] = identity
 
@@ -281,7 +274,7 @@ def main():
 
     existing = None
     if identity:
-        existing = get_existing_reservation(intersight, pool_config['resource_path'], pool_moid, identity, organization_moid)
+        existing = get_existing_reservation(intersight, pool_config['resource_path'], pool_moid, identity)
 
     if state == 'present':
         if existing:
@@ -296,7 +289,6 @@ def main():
             intersight,
             pool_config['resource_path'],
             pool_moid,
-            organization_moid,
             identity,
             allocation_type,
             pool_config['object_type'],

@@ -15,28 +15,19 @@
       <<: *api_info
       name: test_reservation_ip_pool
       description: "IP pool for reservation integration tests"
-      ipv4_blocks:
+      ip_v4_blocks:
         - from: "10.10.99.100"
           size: 10
-      ipv4_config:
+      ip_v4_config:
         gateway: "10.10.99.1"
         netmask: "255.255.255.0"
         primary_dns: "8.8.8.8"
-        secondary_dns: "8.8.4.4"
     register: pool_res
 
   - name: Verify pool created
     ansible.builtin.assert:
       that:
         - pool_res is changed
-
-  - name: Ensure test reservation is absent
-    cisco.intersight.intersight_pool_reservation:
-      <<: *api_info
-      pool_type: ip
-      pool_name: test_reservation_ip_pool
-      identity: "10.10.99.100"
-      state: absent
 
   # --- Test: Reserve IP (check-mode) ---
   - name: Reserve IP - check-mode
@@ -113,15 +104,6 @@
         - noop_res is not changed
 
   always:
-  - name: Final cleanup - reservation
-    cisco.intersight.intersight_pool_reservation:
-      <<: *api_info
-      pool_type: ip
-      pool_name: test_reservation_ip_pool
-      identity: "10.10.99.100"
-      state: absent
-    ignore_errors: true
-
   - name: Final cleanup - pool
     cisco.intersight.intersight_ip_pool:
       <<: *api_info
