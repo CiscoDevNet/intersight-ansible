@@ -1,0 +1,112 @@
+---
+- block:
+  - name: Define anchor for Intersight API login info
+    ansible.builtin.set_fact:
+      api_info: &api_info
+        api_private_key: "{{ api_private_key }}"
+        api_key_id: "{{ api_key_id }}"
+        api_uri: "{{ api_uri | default(omit) }}"
+        validate_certs: "{{ validate_certs | default(omit) }}"
+        organization: "{{ organization }}"
+
+  # --- Setup: Create IP pool ---
+  - name: Create IP Pool for reservation tests
+    cisco.intersight.intersight_ip_pool:
+      <<: *api_info
+      name: test_reservation_ip_pool
+      description: "IP pool for reservation integration tests"
+      ip_v4_blocks:
+        - from: "10.10.99.100"
+          size: 10
+      ip_v4_config:
+        gateway: "10.10.99.1"
+        netmask: "255.255.255.0"
+        primary_dns: "8.8.8.8"
+    register: pool_res
+
+  - name: Verify pool created
+    ansible.builtin.assert:
+      that:
+        - pool_res is changed
+
+  # --- Test: Reserve IP (check-mode) ---
+  - name: Reserve IP - check-mode
+    cisco.intersight.intersight_pool_reservation:
+      <<: *api_info
+      pool_type: ip
+      pool_name: test_reservation_ip_pool
+      identity: "10.10.99.100"
+    check_mode: true
+    register: check_res
+
+  - name: Verify check-mode reports changed
+    ansible.builtin.assert:
+      that:
+        - check_res is changed
+
+  # --- Test: Reserve IP ---
+  - name: Reserve specific IP address
+    cisco.intersight.intersight_pool_reservation:
+      <<: *api_info
+      pool_type: ip
+      pool_name: test_reservation_ip_pool
+      identity: "10.10.99.100"
+    register: reserve_res
+
+  - name: Verify reservation
+    ansible.builtin.assert:
+      that:
+        - reserve_res is changed
+        - reserve_res.api_response is defined
+
+  # --- Test: Idempotency ---
+  - name: Reserve same IP again (idempotency)
+    cisco.intersight.intersight_pool_reservation:
+      <<: *api_info
+      pool_type: ip
+      pool_name: test_reservation_ip_pool
+      identity: "10.10.99.100"
+    register: idem_res
+
+  - name: Verify idempotency
+    ansible.builtin.assert:
+      that:
+        - idem_res is not changed
+
+  # --- Test: Release ---
+  - name: Release reservation
+    cisco.intersight.intersight_pool_reservation:
+      <<: *api_info
+      pool_type: ip
+      pool_name: test_reservation_ip_pool
+      identity: "10.10.99.100"
+      state: absent
+    register: release_res
+
+  - name: Verify release
+    ansible.builtin.assert:
+      that:
+        - release_res is changed
+
+  # --- Test: Release non-existent (idempotent) ---
+  - name: Release non-existent reservation
+    cisco.intersight.intersight_pool_reservation:
+      <<: *api_info
+      pool_type: ip
+      pool_name: test_reservation_ip_pool
+      identity: "10.10.99.200"
+      state: absent
+    register: noop_res
+
+  - name: Verify no-op
+    ansible.builtin.assert:
+      that:
+        - noop_res is not changed
+
+  always:
+  - name: Final cleanup - pool
+    cisco.intersight.intersight_ip_pool:
+      <<: *api_info
+      name: test_reservation_ip_pool
+      state: absent
+    ignore_errors: true
