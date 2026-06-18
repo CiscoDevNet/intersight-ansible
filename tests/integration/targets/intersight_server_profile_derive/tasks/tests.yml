@@ -1,0 +1,157 @@
+---
+- block:
+  - name: Define anchor for Intersight API login info
+    ansible.builtin.set_fact:
+      api_info: &api_info
+        api_private_key: "{{ api_private_key }}"
+        api_key_id: "{{ api_key_id }}"
+        api_uri: "{{ api_uri | default(omit) }}"
+        validate_certs: "{{ validate_certs | default(omit) }}"
+        organization: "{{ organization }}"
+
+  # --- Cleanup ---
+  - name: Clean up test profiles
+    cisco.intersight.intersight_server_profile_derive:
+      <<: *api_info
+      template_name: test_derive_template
+      profile_names:
+        - test_derive_profile_1
+        - test_derive_profile_2
+      state: absent
+    ignore_errors: true
+
+  - name: Clean up test template
+    cisco.intersight.intersight_server_profile_template:
+      <<: *api_info
+      name: test_derive_template
+      state: absent
+    ignore_errors: true
+
+  # --- Setup: Create a template ---
+  - name: Create Server Profile Template for derive tests
+    cisco.intersight.intersight_server_profile_template:
+      <<: *api_info
+      name: test_derive_template
+      target_platform: Standalone
+      description: "Template for derive integration tests"
+    register: template_res
+
+  - name: Verify template created
+    ansible.builtin.assert:
+      that:
+        - template_res is changed
+
+  # --- Test: Derive profile (check-mode) ---
+  - name: Derive profile - check-mode
+    cisco.intersight.intersight_server_profile_derive:
+      <<: *api_info
+      template_name: test_derive_template
+      profile_names:
+        - test_derive_profile_1
+    check_mode: true
+    register: derive_check_res
+
+  - name: Verify check-mode reports changed
+    ansible.builtin.assert:
+      that:
+        - derive_check_res is changed
+        - "'test_derive_profile_1' in derive_check_res.api_response.derived"
+
+  # --- Test: Derive profile ---
+  - name: Derive profile from template
+    cisco.intersight.intersight_server_profile_derive:
+      <<: *api_info
+      template_name: test_derive_template
+      profile_names:
+        - test_derive_profile_1
+    register: derive_res
+
+  - name: Verify derive succeeded
+    ansible.builtin.assert:
+      that:
+        - derive_res is changed
+        - "'test_derive_profile_1' in derive_res.api_response.derived"
+
+  # --- Test: Idempotency ---
+  - name: Derive same profile again (idempotency)
+    cisco.intersight.intersight_server_profile_derive:
+      <<: *api_info
+      template_name: test_derive_template
+      profile_names:
+        - test_derive_profile_1
+    register: idem_res
+
+  - name: Verify idempotency
+    ansible.builtin.assert:
+      that:
+        - idem_res is not changed
+        - "'test_derive_profile_1' in idem_res.api_response.skipped"
+
+  # --- Test: Derive multiple ---
+  - name: Derive multiple profiles
+    cisco.intersight.intersight_server_profile_derive:
+      <<: *api_info
+      template_name: test_derive_template
+      profile_names:
+        - test_derive_profile_1
+        - test_derive_profile_2
+    register: multi_res
+
+  - name: Verify mixed derive (one skipped, one derived)
+    ansible.builtin.assert:
+      that:
+        - multi_res is changed
+        - "'test_derive_profile_1' in multi_res.api_response.skipped"
+        - "'test_derive_profile_2' in multi_res.api_response.derived"
+
+  # --- Test: Force sync ---
+  - name: Force sync profiles
+    cisco.intersight.intersight_server_profile_derive:
+      <<: *api_info
+      template_name: test_derive_template
+      profile_names:
+        - test_derive_profile_1
+      force_sync: true
+    register: sync_res
+
+  - name: Verify sync happened
+    ansible.builtin.assert:
+      that:
+        - sync_res is changed
+        - "'test_derive_profile_1' in sync_res.api_response.synced"
+
+  # --- Test: Delete ---
+  - name: Delete derived profiles
+    cisco.intersight.intersight_server_profile_derive:
+      <<: *api_info
+      template_name: test_derive_template
+      profile_names:
+        - test_derive_profile_1
+        - test_derive_profile_2
+      state: absent
+    register: delete_res
+
+  - name: Verify deletion
+    ansible.builtin.assert:
+      that:
+        - delete_res is changed
+        - "'test_derive_profile_1' in delete_res.api_response.deleted"
+        - "'test_derive_profile_2' in delete_res.api_response.deleted"
+
+  always:
+  - name: Final cleanup - profiles
+    cisco.intersight.intersight_server_profile_derive:
+      <<: *api_info
+      template_name: test_derive_template
+      profile_names:
+        - test_derive_profile_1
+        - test_derive_profile_2
+      state: absent
+    ignore_errors: true
+
+  - name: Final cleanup - template
+    cisco.intersight.intersight_server_profile_template:
+      <<: *api_info
+      name: test_derive_template
+      state: absent
+    ignore_errors: true

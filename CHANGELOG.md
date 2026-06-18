@@ -1,5 +1,9 @@
 # cisco.intersight Ansible Collection Changelog
 
+## Version 2.20.0
+- New intersight_server_profile_derive module for deriving profiles from templates (MoCloner) and syncing back (MoMerger).
+- Supports derive, sync, force_sync, delete, check-mode, and idempotency.
+
 ## Version 2.19.0
 - Added OAuth2 bearer token support for API authentication.
 - BIOS policy and CI fixes.
