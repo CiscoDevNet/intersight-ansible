@@ -58,6 +58,7 @@ class TestIntersightModuleUtilKeyHandling(unittest.TestCase):
         am = SimpleNamespace(params={
             "api_key_id": key_id,
             "api_private_key": secret_key,
+            "api_bearer_token": None,
             "api_uri": "https://intersight.com",
         })
         i = IntersightModule(am)
@@ -96,8 +97,23 @@ class TestIntersightModuleUtilKeyHandling(unittest.TestCase):
         assert sig == expected_sig
 
     def test_with_broken_key(self):
-        with self.assertRaises(ValueError):
-            self.with_key(v2_key_id, "")
+        failed = {}
+
+        def mock_fail_json(msg):
+            failed['msg'] = msg
+            raise SystemExit(1)
+
+        am = SimpleNamespace(params={
+            "api_key_id": v2_key_id,
+            "api_private_key": "",
+            "api_bearer_token": None,
+            "api_uri": "https://intersight.com",
+        })
+        am.fail_json = mock_fail_json
+
+        with self.assertRaises(SystemExit):
+            IntersightModule(am)
+        assert 'api_private_key is required' in failed['msg']
 
     def test_with_invalid_key_type(self):
         with self.assertRaises(Exception) as cm:

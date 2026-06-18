@@ -25,8 +25,8 @@ options:
     - "    <your private key data>"
     - "    -----END EC PRIVATE KEY-----'"
     - If not set, the value of the INTERSIGHT_API_PRIVATE_KEY environment variable is used.
+    - Required if I(api_bearer_token) is not provided.
     type: path
-    required: yes
   api_uri:
     description:
     - URI used to access the Intersight API.
@@ -37,8 +37,14 @@ options:
     description:
     - Public API Key ID associated with the private key.
     - If not set, the value of the INTERSIGHT_API_KEY_ID environment variable is used.
+    - Required if I(api_bearer_token) is not provided.
     type: str
-    required: yes
+  api_bearer_token:
+    description:
+    - Bearer token for OAuth2 authentication with the Intersight API.
+    - When provided, I(api_key_id) and I(api_private_key) are not required and the C(cryptography) Python library is not needed.
+    - If not set, the value of the INTERSIGHT_API_BEARER_TOKEN environment variable is used.
+    type: str
   validate_certs:
     description:
     - Boolean control for verifying the api_uri TLS certificate

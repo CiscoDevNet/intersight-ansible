@@ -28,4 +28,6 @@
             Value: SJC07
         description: Updated OOB IMC access for SJC labs
         out_of_band: true
-        ip_pool: "{{ ip_pool | default('DevNet-SJC07-R14-IPPool') }}"
+        ip_pool:
+          name: "{{ ip_pool_name | default('DevNet-SJC07-R14-IPPool') }}"
+          organization: "{{ ip_pool_organization | default(omit) }}"

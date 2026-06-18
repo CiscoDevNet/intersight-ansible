@@ -1,0 +1,93 @@
+---
+- block:
+  - name: Define anchor for Intersight API login info
+    ansible.builtin.set_fact:
+      api_info: &api_info
+        api_private_key: "{{ api_private_key }}"
+        api_key_id: "{{ api_key_id }}"
+        api_uri: "{{ api_uri | default(omit) }}"
+        validate_certs: "{{ validate_certs | default(omit) }}"
+        organization: "{{ organization }}"
+
+  - name: Make sure Env is clean
+    cisco.intersight.intersight_virtual_media_policy:
+      <<: *api_info
+      name: "{{ item }}"
+      state: absent
+    loop:
+      - test_vmedia_basic
+      - test_vmedia_updated
+
+  - name: Create basic Virtual Media policy
+    cisco.intersight.intersight_virtual_media_policy:
+      <<: *api_info
+      name: test_vmedia_basic
+      description: "Test virtual media policy"
+      tags:
+        - Key: Site
+          Value: Test
+    register: basic_creation
+
+  - name: Verify basic Virtual Media policy creation
+    ansible.builtin.assert:
+      that:
+        - basic_creation.changed
+
+  - name: Create basic Virtual Media policy (idempotency check)
+    cisco.intersight.intersight_virtual_media_policy:
+      <<: *api_info
+      name: test_vmedia_basic
+      description: "Test virtual media policy"
+      tags:
+        - Key: Site
+          Value: Test
+    register: basic_creation_ide
+
+  - name: Verify basic Virtual Media policy creation (idempotency check)
+    ansible.builtin.assert:
+      that:
+        - not basic_creation_ide.changed
+
+  # -- Info module tests --
+  - name: Get Virtual Media policy info by name
+    cisco.intersight.intersight_virtual_media_policy_info:
+      <<: *api_info
+      name: test_vmedia_basic
+    register: vmedia_info_by_name
+
+  - name: Verify Virtual Media policy info by name
+    ansible.builtin.assert:
+      that:
+        - vmedia_info_by_name.api_response | length == 1
+        - vmedia_info_by_name.api_response[0].Name == "test_vmedia_basic"
+
+  - name: Get all Virtual Media policies info
+    cisco.intersight.intersight_virtual_media_policy_info:
+      <<: *api_info
+    register: vmedia_info_all
+
+  - name: Verify all Virtual Media policies info returns results
+    ansible.builtin.assert:
+      that:
+        - vmedia_info_all.api_response | length >= 1
+
+  - name: Get Virtual Media policy info for nonexistent policy
+    cisco.intersight.intersight_virtual_media_policy_info:
+      <<: *api_info
+      name: nonexistent_vmedia_12345
+    register: vmedia_info_missing
+
+  - name: Verify nonexistent Virtual Media policy returns empty
+    ansible.builtin.assert:
+      that:
+        - vmedia_info_missing.count == 0
+
+  always:
+  - name: Remove all test Virtual Media policies
+    cisco.intersight.intersight_virtual_media_policy:
+      <<: *api_info
+      name: "{{ item }}"
+      state: absent
+    loop:
+      - test_vmedia_basic
+      - test_vmedia_updated

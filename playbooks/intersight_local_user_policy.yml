@@ -58,3 +58,14 @@
           - username: user1
             role: readonly
             password: badpassword
+          - username: ipmi_readonly
+            role: readonly
+            password: "{{ vault_password }}"
+            account_types:
+              - IPMI
+          - username: ipmi_local_ro
+            role: readonly
+            password: "{{ vault_password }}"
+            account_types:
+              - IPMI
+              - Local

@@ -36,7 +36,7 @@ options:
   name:
     description:
       - The name assigned to the WWNN/WWPN Pool.
-      - The name must be between 1 and 62 alphanumeric characters, allowing special characters :-_.
+      - The name must be between 1 and 64 alphanumeric characters, allowing special characters :-_.
       - Two pools WWNN and WWNP can have the same name.
     type: str
     required: true
@@ -51,6 +51,14 @@ options:
       - Description can contain letters(a-z, A-Z), numbers(0-9), hyphen(-), period(.), colon(:), or an underscore(_).
     type: str
     aliases: [descr]
+  assignment_order:
+    description:
+      - Assignment order decides the order in which the next identifier is allocated.
+      - If C(sequential), identifiers are assigned in a sequential order.
+      - If C(default), the system determines the assignment order.
+    type: str
+    choices: [default, sequential]
+    default: default
   pool_purpose:
     description:
       - The pool type WWNN or WWPN.
@@ -89,6 +97,7 @@ EXAMPLES = r'''
     api_key_id: "{{ api_key_id }}"
     name: wwn_pool_1
     description: "Test WWNN pool description"
+    assignment_order: sequential
     tags:
       - "Key": "Site"
         "Value": "tag1"
@@ -176,6 +185,7 @@ def main():
         name=dict(type='str', required=True),
         description=dict(type='str', aliases=['descr']),
         tags=dict(type='list', elements='dict'),
+        assignment_order=dict(type='str', choices=['default', 'sequential'], default='default'),
         pool_purpose=dict(type='str', required=True),
         id_blocks=dict(
             type='list',
@@ -205,6 +215,7 @@ def main():
     id_blocks_dict = []
     if module.params['state'] == 'present':
         intersight.set_tags_and_description()
+        intersight.api_body['AssignmentOrder'] = intersight.module.params['assignment_order']
         # Validate that required parameters were passed. We don't mark it as required in order to support absent.
         if not intersight.module.params['id_blocks']:
             module.fail_json(msg="wwn id_blocks parameter must be provided and contain at least one block when state is 'present'.")

@@ -9,6 +9,15 @@
 - All actions are idempotent.
 - Added 25 unit tests covering all action types.
 - Added integration test target for server profile deploy.
+- Added OAuth2 bearer token support for API authentication.
+- BIOS policy and CI fixes.
+
+## Version 2.18.0
+- Added AI storage, GPU, Confidential Compute, and BIOS tuning policies.
+- Added Organization aware lookup for IP pools.
+- Added Unified Edge Profile module.
+- Added assignment order option to all pool modules.
+- Added IPMI/Local account types to Local User Policy module.
 
 ## Version 2.17.0
 - Resource Group resources list and Domain/Server Profile updates to use serial numbers.

@@ -37,7 +37,7 @@ options:
   name:
     description:
       - The name assigned to the UUID Pool.
-      - The name must be between 1 and 62 alphanumeric characters, allowing special characters :-_.
+      - The name must be between 1 and 64 alphanumeric characters, allowing special characters :-_.
     type: str
     required: true
   tags:
@@ -51,6 +51,14 @@ options:
       - Description can contain letters(a-z, A-Z), numbers(0-9), hyphen(-), period(.), colon(:), or an underscore(_).
     type: str
     aliases: [descr]
+  assignment_order:
+    description:
+      - Assignment order decides the order in which the next identifier is allocated.
+      - If C(sequential), identifiers are assigned in a sequential order.
+      - If C(default), the system determines the assignment order.
+    type: str
+    choices: [default, sequential]
+    default: default
   prefix:
     description:
       - The UUID prefix used for all UUID suffix blocks.
@@ -91,6 +99,7 @@ EXAMPLES = r'''
     organization: DevNet
     name: lab-uuid-pool
     description: UUID Pool for lab use
+    assignment_order: sequential
     prefix: "550E8400-E29B-41D4"
     uuid_suffix_blocks:
       - from: "A716-446655440000"
@@ -194,6 +203,7 @@ def main():
         name=dict(type='str', required=True),
         description=dict(type='str', aliases=['descr']),
         tags=dict(type='list', elements='dict'),
+        assignment_order=dict(type='str', choices=['default', 'sequential'], default='default'),
         prefix=dict(type='str'),
         uuid_suffix_blocks=dict(type='list', elements='dict'),
     )
@@ -232,6 +242,7 @@ def main():
     }
     if module.params['state'] == 'present':
         intersight.set_tags_and_description()
+        intersight.api_body['AssignmentOrder'] = intersight.module.params['assignment_order']
         intersight.api_body['Prefix'] = intersight.module.params['prefix']
         UuidSuffixBlocks = []
         for uuid_block in intersight.module.params['uuid_suffix_blocks']:

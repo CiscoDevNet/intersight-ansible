@@ -36,7 +36,7 @@ options:
   name:
     description:
       - The name assigned to the Local User Policy.
-      - The name must be between 1 and 62 alphanumeric characters, allowing special characters :-_.
+      - The name must be between 1 and 64 alphanumeric characters, allowing special characters :-_.
     type: str
     required: true
   tags:
@@ -86,6 +86,7 @@ options:
       username:
         description:
           - Name of the user created on the endpoint.
+          - Cisco Intersight currently limits endpoint usernames to 16 characters.
         type: str
         required: true
       enable:
@@ -104,6 +105,25 @@ options:
           - Valid login password of the user.
         type: str
         required: true
+      endpoint_role_type:
+        description:
+          - The type of endpoint role to assign to the user.
+          - IMC is the supported server management role type for local user roles.
+          - IPMI access should be expressed through C(account_types) such as C(IPMI).
+          - Supplying C(IPMI) here is rejected by the Intersight API for C(iam.EndPointUserRole).
+        type: str
+        choices: [IMC, IPMI]
+        default: IMC
+      account_types:
+        description:
+          - List of account types to assign to the user.
+          - Supported values are C(IPMI) and C(Local).
+          - For backward compatibility, dictionary entries with C(ObjectType) are still accepted.
+          - When provided, the module maps these values to the corresponding Intersight API object types and does not set any separate
+          - account-type toggle field.
+          - Use this to request IPMI or combined local plus IPMI account access while keeping the endpoint role type at C(IMC).
+        type: list
+        elements: raw
   purge:
     description:
       - The purge argument instructs the module to consider the resource definition absolute.
@@ -139,6 +159,33 @@ EXAMPLES = r'''
         role: readonly
         password: vault_reader_password
 
+- name: Configure Local User policy with IPMI user
+  intersight_local_user_policy:
+    api_private_key: "{{ api_private_key }}"
+    api_key_id: "{{ api_key_id }}"
+    name: ipmi-admin
+    description: User with IPMI account type
+    local_users:
+      - username: ipmi-user
+        role: admin
+        password: vault_ipmi_password
+        account_types:
+          - IPMI
+
+- name: Configure Local User policy with local and IPMI access
+  intersight_local_user_policy:
+    api_private_key: "{{ api_private_key }}"
+    api_key_id: "{{ api_key_id }}"
+    name: local-ipmi-admin
+    description: User with local and IPMI account types
+    local_users:
+      - username: local-ipmi
+        role: admin
+        password: vault_local_ipmi_password
+        account_types:
+          - Local
+          - IPMI
+
 - name: Delete Local User policy
   intersight_local_user_policy:
     api_private_key: "{{ api_private_key }}"
@@ -169,12 +216,50 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible_collections.cisco.intersight.plugins.module_utils.intersight import IntersightModule, intersight_argument_spec, compare_values
 
 
+ACCOUNT_TYPE_MAP = {
+    'IPMI': 'iam.AccountTypeIpmi',
+    'LOCAL': 'iam.AccountTypeLocal',
+}
+
+
+def normalize_account_types(module, account_types):
+    normalized_account_types = []
+
+    for account_type in account_types:
+        if isinstance(account_type, str):
+            object_type = ACCOUNT_TYPE_MAP.get(account_type.upper())
+            if not object_type:
+                module.fail_json(
+                    msg=(
+                        "Unsupported account_type '{0}'. Supported values are: {1}."
+                    ).format(account_type, ', '.join(sorted(ACCOUNT_TYPE_MAP.keys())))
+                )
+            normalized_account_types.append({
+                'ObjectType': object_type,
+                'ClassId': object_type,
+            })
+        elif isinstance(account_type, dict):
+            account_type_ref = account_type.copy()
+            object_type = account_type_ref.get('ObjectType')
+            if not object_type:
+                module.fail_json(msg="account_types dict entries must include ObjectType.")
+            if 'ClassId' not in account_type_ref:
+                account_type_ref['ClassId'] = object_type
+            normalized_account_types.append(account_type_ref)
+        else:
+            module.fail_json(msg="account_types entries must be strings like IPMI or Local.")
+
+    return normalized_account_types
+
+
 def main():
     local_user = dict(
         username=dict(type='str', required=True),
         enable=dict(type='bool', default=True),
         role=dict(type='str', choices=['admin', 'readonly', 'user'], required=True),
         password=dict(type='str', required=True, no_log=True),
+        endpoint_role_type=dict(type='str', choices=['IMC', 'IPMI'], default='IMC'),
+        account_types=dict(type='list', elements='raw'),
     )
     argument_spec = intersight_argument_spec.copy()
     argument_spec.update(
@@ -254,7 +339,7 @@ def main():
                         'EndPointRole': [
                             {
                                 'Name': user['role'],
-                                'Type': 'IMC',
+                                'Type': user.get('endpoint_role_type', 'IMC'),
                             },
                         ],
                         'EndPointUser': {
@@ -303,76 +388,118 @@ def main():
 
             # EndPointUser local_users list config
             for user in intersight.module.params['local_users']:
-                intersight.result['api_response'] = {}
-                # check for existing user in this organization
-                filter_str = "Name eq '" + user['username'] + "'"
-                filter_str += " and Organization.Moid eq '" + organization_moid + "'"
-                intersight.get_resource(
-                    resource_path='/iam/EndPointUsers',
-                    query_params={
-                        '$filter': filter_str
-                    },
-                )
-                user_moid = None
-                if intersight.result['api_response'].get('Moid'):
-                    # resource exists and moid was returned
-                    user_moid = intersight.result['api_response']['Moid']
-                else:
-                    # create user if it doesn't exist
-                    intersight.api_body = {
-                        'Name': user['username'],
-                    }
-                    if organization_moid:
-                        intersight.api_body['Organization'] = {
-                            'Moid': organization_moid,
-                        }
-                    intersight.configure_resource(
-                        moid=None,
+                try:
+                    if user.get('endpoint_role_type') == 'IPMI':
+                        module.fail_json(
+                            msg=(
+                                "local_users endpoint_role_type=IPMI is not accepted by the Intersight "
+                                "iam.EndPointUserRole API. Leave endpoint_role_type at IMC and use "
+                                "account_types such as IPMI instead."
+                            )
+                        )
+                    intersight.result['api_response'] = {}
+                    # check for existing user in this organization
+                    filter_str = "Name eq '" + user['username'] + "'"
+                    filter_str += " and Organization.Moid eq '" + organization_moid + "'"
+                    intersight.get_resource(
                         resource_path='/iam/EndPointUsers',
-                        body=intersight.api_body,
                         query_params={
-                            '$filter': "Name eq '" + user['username'] + "'",
+                            '$filter': filter_str
                         },
                     )
                     user_moid = None
                     if intersight.result['api_response'].get('Moid'):
                         # resource exists and moid was returned
                         user_moid = intersight.result['api_response']['Moid']
-                # GET EndPointRole Moid
-                intersight.get_resource(
-                    resource_path='/iam/EndPointRoles',
-                    query_params={
-                        '$filter': "Name eq '" + user['role'] + "' and Type eq 'IMC'",
-                    },
-                )
-                end_point_role_moid = None
-                if intersight.result['api_response'].get('Moid'):
-                    # resource exists and moid was returned
-                    end_point_role_moid = intersight.result['api_response']['Moid']
-                # EndPointUserRole config
-                intersight.api_body = {
-                    'EndPointUser': {
-                        'Moid': user_moid,
-                    },
-                    'EndPointRole': [
-                        {
-                            'Moid': end_point_role_moid,
+                    else:
+                        # create user if it doesn't exist
+                        intersight.api_body = {
+                            'Name': user['username'],
                         }
-                    ],
-                    'Password': user['password'],
-                    'Enabled': user['enable'],
-                    'EndPointUserPolicy': {
-                        'Moid': user_policy_moid,
-                    },
-                }
-                intersight.configure_resource(
-                    moid=None,
-                    resource_path='/iam/EndPointUserRoles',
-                    body=intersight.api_body,
-                    query_params={
-                        '$filter': "EndPointUserPolicy.Moid eq '" + user_policy_moid + "'",
-                    },
-                )
+                        if organization_moid:
+                            intersight.api_body['Organization'] = {
+                                'Moid': organization_moid,
+                            }
+                        intersight.configure_resource(
+                            moid=None,
+                            resource_path='/iam/EndPointUsers',
+                            body=intersight.api_body,
+                            query_params={
+                                '$filter': "Name eq '" + user['username'] + "'",
+                            },
+                        )
+                        user_moid = None
+                        if intersight.result['api_response'].get('Moid'):
+                            # resource exists and moid was returned
+                            user_moid = intersight.result['api_response']['Moid']
+                    # GET EndPointRole Moid
+                    intersight.get_resource(
+                        resource_path='/iam/EndPointRoles',
+                        query_params={
+                            '$filter': "Name eq '" + user['role'] + "' and Type eq '" + user.get('endpoint_role_type', 'IMC') + "'",
+                        },
+                    )
+                    end_point_role_moid = None
+                    if intersight.result['api_response'].get('Moid'):
+                        # resource exists and moid was returned
+                        end_point_role_moid = intersight.result['api_response']['Moid']
+                    # Check for any existing EndPointUserRole objects for this policy, then
+                    # match by expanded username. Filtering on nested user Moid is not
+                    # reliable for this endpoint.
+                    filter_str = "EndPointUserPolicy.Moid eq '" + user_policy_moid + "'"
+                    intersight.get_resource(
+                        resource_path='/iam/EndPointUserRoles',
+                        query_params={
+                            '$filter': filter_str,
+                            '$expand': 'EndPointRole,EndPointUser,EndPointUserPolicy',
+                        },
+                        return_list=True,
+                    )
+                    existing_user_roles = intersight.result['api_response']
+                    if not isinstance(existing_user_roles, list):
+                        existing_user_roles = []
+
+                    # EndPointRole relationships are effectively immutable here, so replace any
+                    # existing role for this username before creating the desired one.
+                    for existing_user_role in existing_user_roles:
+                        existing_user = existing_user_role.get('EndPointUser', {})
+                        if existing_user.get('Name') == user['username']:
+                            intersight.delete_resource(
+                                moid=existing_user_role['Moid'],
+                                resource_path='/iam/EndPointUserRoles',
+                            )
+
+                    # Create a new EndPointUserRole with the required relationships.
+                    intersight.api_body = {
+                        'EndPointUser': {
+                            'Moid': user_moid,
+                            'ObjectType': 'iam.EndPointUser',
+                        },
+                        'EndPointRole': [
+                            {
+                                'Moid': end_point_role_moid,
+                                'ObjectType': 'iam.EndPointRole',
+                            }
+                        ],
+                        'Password': user['password'],
+                        'Enabled': user['enable'],
+                        'EndPointUserPolicy': {
+                            'Moid': user_policy_moid,
+                            'ObjectType': 'iam.EndPointUserPolicy',
+                        },
+                    }
+                    if user.get('account_types'):
+                        intersight.api_body['AccountTypes'] = normalize_account_types(module, user['account_types'])
+                    intersight.configure_resource(
+                        moid=None,
+                        resource_path='/iam/EndPointUserRoles',
+                        body=intersight.api_body,
+                        query_params={
+                            '$filter': filter_str,
+                        },
+                    )
+                except Exception as exc:
+                    module.fail_json(msg="Failed configuring local user '{0}': {1}".format(user['username'], exc))
 
     module.exit_json(**intersight.result)
 

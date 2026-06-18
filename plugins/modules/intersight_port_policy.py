@@ -40,7 +40,7 @@ options:
     description:
       - The name assigned to the Port Policy.
       - Must be unique within the organization.
-      - The name must be between 1 and 62 alphanumeric characters, allowing special characters :-_.
+      - The name must be between 1 and 64 alphanumeric characters, allowing special characters :-_.
     type: str
     required: true
   description:

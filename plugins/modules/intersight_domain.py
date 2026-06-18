@@ -38,7 +38,7 @@ options:
   name:
     description:
       - The name assigned to the UCS Domain Profile.
-      - The name must be between 1 and 62 alphanumeric characters, allowing special characters :-_.
+      - The name must be between 1 and 64 alphanumeric characters, allowing special characters :-_.
       - SwitchProfiles are automatically named C({name}-A) and C({name}-B).
     type: str
     required: true

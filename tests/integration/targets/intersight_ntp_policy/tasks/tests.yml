@@ -214,6 +214,40 @@
       that:
         - disabled_update.changed
 
+  # -- Info module tests --
+  - name: Get NTP policy info by name
+    cisco.intersight.intersight_ntp_policy_info:
+      <<: *api_info
+      name: test_ntp_policy_basic
+    register: ntp_info_by_name
+
+  - name: Verify NTP policy info by name
+    ansible.builtin.assert:
+      that:
+        - ntp_info_by_name.api_response | length == 1
+        - ntp_info_by_name.api_response[0].Name == "test_ntp_policy_basic"
+
+  - name: Get all NTP policies info
+    cisco.intersight.intersight_ntp_policy_info:
+      <<: *api_info
+    register: ntp_info_all
+
+  - name: Verify all NTP policies info returns results
+    ansible.builtin.assert:
+      that:
+        - ntp_info_all.api_response | length >= 1
+
+  - name: Get NTP policy info for nonexistent policy
+    cisco.intersight.intersight_ntp_policy_info:
+      <<: *api_info
+      name: nonexistent_ntp_policy_12345
+    register: ntp_info_missing
+
+  - name: Verify nonexistent NTP policy returns empty
+    ansible.builtin.assert:
+      that:
+        - ntp_info_missing.count == 0
+
   always:
   - name: Remove all test NTP policies
     cisco.intersight.intersight_ntp_policy:

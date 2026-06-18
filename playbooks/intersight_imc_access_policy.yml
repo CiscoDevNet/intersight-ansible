@@ -28,4 +28,6 @@
             Value: SJC02
         description: Updated IMC access for SJC labs
         vlan_id: "{{ imc_access_vlan | default(131) }}"
-        ip_pool: "{{ ip_pool | default('sjc02-d23-ext-mgmt') }}"
+        ip_pool:
+          name: "{{ ip_pool_name | default('sjc02-d23-ext-mgmt') }}"
+          organization: "{{ ip_pool_organization | default(omit) }}"
