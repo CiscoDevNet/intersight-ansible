@@ -27,6 +27,35 @@ options:
     type: str
     choices: [present, absent]
     default: present
+  action:
+    description:
+      - The action to perform on the server profile after it has been configured.
+      - C(Deploy) will deploy the profile to the assigned server. The profile must have a server assigned.
+      - C(Undeploy) will undeploy the profile from the assigned server.
+      - If not specified, no action is taken beyond configuring the profile.
+      - Deploy is idempotent and will not re-deploy if the profile is already in the C(Associated) state.
+      - Undeploy is idempotent and will not undeploy if the profile has no associated server.
+    type: str
+    choices: [Deploy, Undeploy]
+  wait_for_action:
+    description:
+      - Whether to wait for the deploy or undeploy action to complete before returning.
+      - When C(true), the module will poll the profile status until the action completes or times out.
+      - When C(false), the module will submit the action and return immediately.
+    type: bool
+    default: true
+  action_timeout:
+    description:
+      - Maximum time in seconds to wait for a deploy or undeploy action to complete.
+      - Only used when C(wait_for_action) is C(true).
+    type: int
+    default: 1200
+  action_poll_interval:
+    description:
+      - Time in seconds between status polls when waiting for an action to complete.
+      - Only used when C(wait_for_action) is C(true).
+    type: int
+    default: 60
   organization:
     description:
       - The name of the Organization this resource is assigned to.
@@ -251,6 +280,33 @@ EXAMPLES = r'''
     assigned_server_serial: FCH2149V0GN
     boot_order_policy: COS-Boot
 
+- name: Configure and Deploy Server Profile
+  cisco.intersight.intersight_server_profile:
+    api_private_key: "{{ api_private_key }}"
+    api_key_id: "{{ api_key_id }}"
+    name: SP-Server5
+    target_platform: FIAttached
+    description: Profile with auto-deploy
+    assigned_server: 5e3b517d6176752d319a9999
+    boot_order_policy: COS-Boot
+    action: Deploy
+    action_timeout: 1800
+
+- name: Deploy existing Server Profile (fire and forget)
+  cisco.intersight.intersight_server_profile:
+    api_private_key: "{{ api_private_key }}"
+    api_key_id: "{{ api_key_id }}"
+    name: SP-Server1
+    action: Deploy
+    wait_for_action: false
+
+- name: Undeploy Server Profile
+  cisco.intersight.intersight_server_profile:
+    api_private_key: "{{ api_private_key }}"
+    api_key_id: "{{ api_key_id }}"
+    name: SP-Server1
+    action: Undeploy
+
 - name: Delete Server Profile
   cisco.intersight.intersight_server_profile:
     api_private_key: "{{ api_private_key }}"
@@ -283,6 +339,8 @@ api_response:
     }
 '''
 
+
+import time
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible_collections.cisco.intersight.plugins.module_utils.intersight import IntersightModule, intersight_argument_spec
@@ -370,6 +428,127 @@ def post_profile_to_policy(intersight, moid, resource_path, policy_name):
             intersight.result['changed'] = True
 
 
+def wait_for_profile_action(intersight, profile_name, timeout, poll_interval):
+    """Wait for a profile action (Deploy/Undeploy) to reach a terminal state."""
+    elapsed = 0
+    while elapsed < timeout:
+        options = {
+            'http_method': 'get',
+            'resource_path': '/server/Profiles',
+            'query_params': {
+                '$filter': "Name eq '" + profile_name + "'",
+            },
+        }
+        response = intersight.call_api(**options)
+        if response.get('Results'):
+            profile = response['Results'][0]
+            config_context = profile.get('ConfigContext', {})
+            control_action = config_context.get('ControlAction', '')
+            config_state = config_context.get('ConfigState', '')
+            oper_state = config_context.get('OperState', '')
+
+            if control_action == 'No-op' and config_state in ('Associated', 'Not-associated'):
+                intersight.result['api_response'] = profile
+                return True
+
+            if oper_state == 'Failed':
+                failure_msg = get_deploy_failure_reason(intersight, profile_name)
+                intersight.module.fail_json(
+                    msg="Profile action failed: " + failure_msg,
+                    api_response=profile,
+                )
+
+        time.sleep(poll_interval)
+        elapsed += poll_interval
+
+    intersight.module.fail_json(
+        msg="Timed out waiting for profile action to complete after %d seconds." % timeout,
+    )
+
+
+def get_deploy_failure_reason(intersight, profile_name):
+    """Retrieve failure reason from the most recent failed workflow."""
+    options = {
+        'http_method': 'get',
+        'resource_path': '/workflow/WorkflowInfos',
+        'query_params': {
+            '$orderby': 'CreateTime desc',
+            '$filter': "(Status in ('FAILED')) and "
+                       "(Input.workflowContext.TargetCtxList.TargetName eq '" + profile_name + "')",
+            '$expand': 'TaskInfos($select=Status,FailureReason)',
+            '$top': '1',
+        },
+    }
+    response = intersight.call_api(**options)
+    if response.get('Results'):
+        task_infos = response['Results'][0].get('TaskInfos', [])
+        reasons = [t['FailureReason'] for t in task_infos if t.get('Status') == 'FAILED' and t.get('FailureReason')]
+        if reasons:
+            return '; '.join(reasons)
+    return 'Unknown failure reason. Check Intersight UI for details.'
+
+
+def perform_profile_action(intersight, profile_name, action, wait, timeout, poll_interval):
+    """Submit a Deploy or Undeploy action on a server profile."""
+    options = {
+        'http_method': 'get',
+        'resource_path': '/server/Profiles',
+        'query_params': {
+            '$filter': "Name eq '" + profile_name + "'",
+        },
+    }
+    response = intersight.call_api(**options)
+    if not response.get('Results'):
+        intersight.module.fail_json(msg="Profile '%s' not found." % profile_name)
+
+    profile = response['Results'][0]
+    config_context = profile.get('ConfigContext', {})
+    control_action = config_context.get('ControlAction', '')
+    config_state = config_context.get('ConfigState', '')
+
+    if control_action != 'No-op':
+        if wait:
+            wait_for_profile_action(intersight, profile_name, timeout, poll_interval)
+            options['query_params'] = {'$filter': "Name eq '" + profile_name + "'"}
+            response = intersight.call_api(**options)
+            if response.get('Results'):
+                profile = response['Results'][0]
+                config_context = profile.get('ConfigContext', {})
+                config_state = config_context.get('ConfigState', '')
+
+    if action == 'Deploy' and config_state == 'Associated':
+        intersight.result['api_response'] = profile
+        return
+
+    if action == 'Undeploy' and config_state in ('Not-associated', 'Not-assigned'):
+        intersight.result['api_response'] = profile
+        return
+
+    if intersight.module.check_mode:
+        intersight.result['changed'] = True
+        intersight.result['api_response'] = profile
+        return
+
+    patch_options = {
+        'http_method': 'patch',
+        'resource_path': '/server/Profiles',
+        'body': {
+            'Action': action,
+        },
+        'moid': profile['Moid'],
+    }
+    intersight.call_api(**patch_options)
+    intersight.result['changed'] = True
+
+    if wait:
+        wait_for_profile_action(intersight, profile_name, timeout, poll_interval)
+    else:
+        patch_options['http_method'] = 'get'
+        del patch_options['body']
+        response = intersight.call_api(**patch_options)
+        intersight.result['api_response'] = response
+
+
 def main():
     argument_spec = intersight_argument_spec.copy()
     argument_spec.update(
@@ -409,6 +588,10 @@ def main():
         uuid_address_type=dict(type='str', choices=['pool', 'static']),
         uuid_pool=dict(type='str'),
         static_uuid_address=dict(type='str'),
+        action=dict(type='str', choices=['Deploy', 'Undeploy']),
+        wait_for_action=dict(type='bool', default=True),
+        action_timeout=dict(type='int', default=1200),
+        action_poll_interval=dict(type='int', default=60),
     )
 
     module = AnsibleModule(
@@ -492,6 +675,16 @@ def main():
         for k, v in policy_resource_path.items():
             if intersight.module.params[k]:
                 post_profile_to_policy(intersight, moid, resource_path=v, policy_name=intersight.module.params[k])
+
+    if intersight.module.params['action'] and intersight.module.params['state'] == 'present':
+        perform_profile_action(
+            intersight,
+            profile_name=intersight.module.params['name'],
+            action=intersight.module.params['action'],
+            wait=intersight.module.params['wait_for_action'],
+            timeout=intersight.module.params['action_timeout'],
+            poll_interval=intersight.module.params['action_poll_interval'],
+        )
 
     module.exit_json(**intersight.result)
 

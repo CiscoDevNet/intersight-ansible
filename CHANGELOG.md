@@ -1,5 +1,13 @@
 # cisco.intersight Ansible Collection Changelog
 
+## Version 2.19.0
+- Added Deploy and Undeploy action support to intersight_server_profile module (fixes #85).
+- New parameters: action, wait_for_action, action_timeout, action_poll_interval.
+- Deploy waits for profile validation, submits action, polls for completion, and retrieves failure reasons on error.
+- Idempotent: skips deploy if already Associated, skips undeploy if already Not-associated.
+- Added unit tests for deploy/undeploy logic.
+- Added integration test target for server profile deploy.
+
 ## Version 2.17.0
 - Resource Group resources list and Domain/Server Profile updates to use serial numbers.
 

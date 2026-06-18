@@ -1,0 +1,112 @@
+---
+- block:
+  - name: Define anchor for Intersight API login info
+    ansible.builtin.set_fact:
+      api_info: &api_info
+        api_private_key: "{{ api_private_key }}"
+        api_key_id: "{{ api_key_id }}"
+        api_uri: "{{ api_uri | default(omit) }}"
+        validate_certs: "{{ validate_certs | default(omit) }}"
+        organization: "{{ organization }}"
+
+  # --- Cleanup ---
+  - name: Make sure environment is clean
+    cisco.intersight.intersight_server_profile:
+      <<: *api_info
+      name: "{{ item }}"
+      state: absent
+    loop:
+      - test_sp_deploy_basic
+      - test_sp_deploy_action
+
+  # --- Test: Create profile with action param (check-mode) ---
+  - name: Create Server Profile with Deploy action - check-mode
+    cisco.intersight.intersight_server_profile:
+      <<: *api_info
+      name: test_sp_deploy_action
+      target_platform: Standalone
+      description: "Test profile for deploy action"
+      action: Deploy
+      wait_for_action: false
+    check_mode: true
+    register: deploy_check_res
+
+  - name: Verify check-mode reports changed
+    ansible.builtin.assert:
+      that:
+        - deploy_check_res is changed
+
+  # --- Test: Create profile without action (baseline) ---
+  - name: Create Server Profile without action
+    cisco.intersight.intersight_server_profile:
+      <<: *api_info
+      name: test_sp_deploy_basic
+      target_platform: Standalone
+      description: "Test profile without deploy"
+    register: create_res
+
+  - name: Verify profile created
+    ansible.builtin.assert:
+      that:
+        - create_res is changed
+        - create_res.api_response.Name == 'test_sp_deploy_basic'
+
+  # --- Test: Idempotency without action ---
+  - name: Create same profile again (idempotency)
+    cisco.intersight.intersight_server_profile:
+      <<: *api_info
+      name: test_sp_deploy_basic
+      target_platform: Standalone
+      description: "Test profile without deploy"
+    register: idempotent_res
+
+  - name: Verify idempotency
+    ansible.builtin.assert:
+      that:
+        - idempotent_res is not changed
+
+  # --- Test: Verify action param accepted with valid choices ---
+  - name: Create profile with action=Deploy and wait_for_action=false (no server assigned, will fail gracefully)
+    cisco.intersight.intersight_server_profile:
+      <<: *api_info
+      name: test_sp_deploy_action
+      target_platform: Standalone
+      description: "Test profile for deploy"
+      action: Deploy
+      wait_for_action: false
+      action_timeout: 60
+      action_poll_interval: 10
+    register: deploy_res
+    ignore_errors: true
+
+  - name: Verify action parameters were accepted
+    ansible.builtin.assert:
+      that:
+        - deploy_res.api_response is defined
+
+  # --- Test: Verify action=Undeploy param accepted ---
+  - name: Attempt Undeploy on unassigned profile (should be no-op)
+    cisco.intersight.intersight_server_profile:
+      <<: *api_info
+      name: test_sp_deploy_basic
+      action: Undeploy
+      wait_for_action: false
+    register: undeploy_res
+    ignore_errors: true
+
+  - name: Verify Undeploy was accepted
+    ansible.builtin.assert:
+      that:
+        - undeploy_res.api_response is defined
+
+  always:
+  # --- Cleanup ---
+  - name: Clean up test profiles
+    cisco.intersight.intersight_server_profile:
+      <<: *api_info
+      name: "{{ item }}"
+      state: absent
+    loop:
+      - test_sp_deploy_basic
+      - test_sp_deploy_action
+    ignore_errors: true
