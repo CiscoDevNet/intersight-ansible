@@ -8,6 +8,11 @@ import subprocess
 from pathlib import Path
 
 
+NON_RUNNABLE_INTEGRATION_TARGETS = {
+    'prepare_test_run',
+}
+
+
 def get_changed_files():
     """Get list of changed files in the current PR/commit."""
     try:
@@ -46,7 +51,11 @@ def map_files_to_test_targets(changed_files):
     test_targets_dir = Path('tests/integration/targets')
     available_targets = {
         target.name for target in test_targets_dir.iterdir()
-        if target.is_dir() and not target.name.startswith('__')
+        if (
+            target.is_dir()
+            and not target.name.startswith('__')
+            and target.name not in NON_RUNNABLE_INTEGRATION_TARGETS
+        )
     }
 
     for file_path in changed_files:
@@ -112,7 +121,11 @@ def main():
             test_targets_dir = Path('tests/integration/targets')
             available_targets = [
                 target.name for target in test_targets_dir.iterdir()
-                if target.is_dir() and not target.name.startswith('__')
+                if (
+                    target.is_dir()
+                    and not target.name.startswith('__')
+                    and target.name not in NON_RUNNABLE_INTEGRATION_TARGETS
+                )
             ]
             targets_string = ' '.join(available_targets)
             print(f"Running all available test targets: {available_targets}")
