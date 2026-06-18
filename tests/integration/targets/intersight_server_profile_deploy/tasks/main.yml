@@ -1,0 +1,3 @@
+---
+- name: Import server profile deploy tests
+  ansible.builtin.import_tasks: tests.yml

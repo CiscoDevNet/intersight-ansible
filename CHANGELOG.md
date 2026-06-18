@@ -8,6 +8,14 @@
   - Supports static and dynamic allocation, reserve and release operations.
 
 ## Version 2.19.0
+- Added lifecycle action support to intersight_server_profile module (fixes #85).
+- New action parameter with choices: Deploy, Undeploy, Unassign, Attach, Detach.
+- New server_profile_template parameter for Attach action (uses MoMerger API).
+- New parameters: wait_for_action, action_timeout, action_poll_interval for deploy/undeploy polling.
+- Deploy waits for profile validation, submits action, polls for completion, and retrieves failure reasons on error.
+- All actions are idempotent.
+- Added 25 unit tests covering all action types.
+- Added integration test target for server profile deploy.
 - Added OAuth2 bearer token support for API authentication.
 - BIOS policy and CI fixes.
 
@@ -16,7 +24,7 @@
 - Added Organization aware lookup for IP pools.
 - Added Unified Edge Profile module.
 - Added assignment order option to all pool modules.
-- Added IPMI/Local account types to Local User Policy module. 
+- Added IPMI/Local account types to Local User Policy module.
 
 ## Version 2.17.0
 - Resource Group resources list and Domain/Server Profile updates to use serial numbers.
