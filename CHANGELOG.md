@@ -1,5 +1,10 @@
 # cisco.intersight Ansible Collection Changelog
 
+## Version 2.20.0
+- New intersight_pool_reservation module for managing pool identifier reservations (IP, UUID, MAC, WWNN, WWPN).
+- Handles Intersight reservation API one-time-use constraint with pre-flight idempotency checks.
+- Supports static and dynamic allocation, reserve and release operations.
+
 ## Version 2.19.0
 - Added OAuth2 bearer token support for API authentication.
 - BIOS policy and CI fixes.
