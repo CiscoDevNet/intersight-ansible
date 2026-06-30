@@ -134,6 +134,22 @@ class TestCreateReservation(unittest.TestCase):
         self.assertEqual(body['IdPurpose'], 'WWPN')
 
 
+    def test_iqn_reservation(self):
+        intersight = make_intersight_mock()
+        intersight.call_api.return_value = {}
+
+        create_reservation(
+            intersight, '/iqnpool/Reservations', 'pool-123',
+            'org-123', 'iqn.2010-11.com.flexpod:storage:component:server01', 'static', 'iqnpool.Reservation', 'iqn',
+        )
+
+        call_args = intersight.call_api.call_args
+        body = call_args.kwargs['body']
+        self.assertEqual(body['Identity'], 'iqn.2010-11.com.flexpod:storage:component:server01')
+        self.assertEqual(body['ObjectType'], 'iqnpool.Reservation')
+        self.assertNotIn('IdPurpose', body)
+
+
 class TestDeleteReservation(unittest.TestCase):
     def test_deletes_by_moid(self):
         intersight = make_intersight_mock()
@@ -148,7 +164,7 @@ class TestDeleteReservation(unittest.TestCase):
 
 class TestPoolTypeMap(unittest.TestCase):
     def test_all_pool_types_mapped(self):
-        for pool_type in ['ip', 'uuid', 'mac', 'wwnn', 'wwpn']:
+        for pool_type in ['ip', 'uuid', 'mac', 'iqn', 'wwnn', 'wwpn']:
             self.assertIn(pool_type, POOL_TYPE_MAP)
             self.assertIn('resource_path', POOL_TYPE_MAP[pool_type])
             self.assertIn('pool_path', POOL_TYPE_MAP[pool_type])
