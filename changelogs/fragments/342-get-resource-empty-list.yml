@@ -1,0 +1,2 @@
+bugfixes:
+  - module_utils - ``get_resource`` no longer stores an empty list-response wrapper as a found object. A filtered query with no matches now clears ``api_response`` instead of keeping the ``asset.*.List`` dict, so callers such as ``intersight_target_claim`` correctly detect an absent resource and perform the create/claim (https://github.com/CiscoDevNet/intersight-ansible/issues/342).
