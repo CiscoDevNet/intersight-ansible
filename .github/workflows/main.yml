@@ -102,7 +102,7 @@ jobs:
       - name: Perform sanity testing
         # See the documentation for the following GitHub action on
         # https://github.com/ansible-community/ansible-test-gh-action/blob/main/README.md
-        uses: ansible-community/ansible-test-gh-action@release/v1
+        uses: ansible-community/ansible-test-gh-action@6ded727edb598e670ac056a8e680ca4050bac0a3 # release/v1
         with:
           ansible-core-version: ${{ matrix.ansible }}
           testing-type: sanity
@@ -116,6 +116,37 @@ jobs:
           # https://github.com/ansible-community/ansible-test-gh-action#pull-request-change-detection
           pull-request-change-detection: false
 
+  units:
+    name: Units (Ⓐ${{ matrix.ansible }})
+    strategy:
+      fail-fast: false
+      max-parallel: 1
+      matrix:
+        ansible:
+          - stable-2.16
+          - stable-2.17
+          - stable-2.18
+          - stable-2.19
+          - stable-2.20
+          - stable-2.21
+    # Ansible-test on various stable branches does not yet work well with cgroups v2.
+    # Since ubuntu-latest now uses Ubuntu 22.04, we need to fall back to the ubuntu-20.04
+    # image for these stable branches. The list of branches where this is necessary will
+    # shrink over time, check out https://github.com/ansible-collections/news-for-maintainers/issues/28
+    # for the latest list.
+    runs-on: >-
+      ${{ contains(fromJson(
+          '["stable-2.9", "stable-2.10", "stable-2.11"]'
+      ), matrix.ansible) && 'ubuntu-20.04' || 'ubuntu-latest' }}
+    steps:
+      - name: Perform unit testing
+        # See the documentation for the following GitHub action on
+        # https://github.com/ansible-community/ansible-test-gh-action/blob/main/README.md
+        uses: ansible-community/ansible-test-gh-action@6ded727edb598e670ac056a8e680ca4050bac0a3 # release/v1
+        with:
+          ansible-core-version: ${{ matrix.ansible }}
+          testing-type: units
+
   check:  # This job does nothing and is only used for the branch protection
           # or multi-stage CI jobs, like making sure that all tests pass before
           # a publishing job is started.
@@ -123,11 +154,12 @@ jobs:
 
     needs:
       - sanity
+      - units
 
     runs-on: ubuntu-latest
 
     steps:
       - name: Decide whether the needed jobs succeeded or failed
-        uses: re-actors/alls-green@release/v1
+        uses: re-actors/alls-green@05ac9388f0aebcb5727afa17fcccfecd6f8ec5fe # release/v1
         with:
           jobs: ${{ toJSON(needs) }}
