@@ -44,11 +44,12 @@ jobs:
       targets: ${{ steps.map-tests.outputs.targets }}
       skip_tests: ${{ steps.map-tests.outputs.skip_tests }}
     steps:
-      - name: Checkout trusted workflow code
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - name: Checkout workflow code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           ref: ${{ github.event_name == 'pull_request_target' && github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 0
+          allow-unsafe-pr-checkout: ${{ github.event_name == 'pull_request_target' }}
 
       - name: Map changed files to test targets
         id: map-tests
@@ -89,6 +90,14 @@ jobs:
     outputs:
       results: ${{ steps.test-results.outputs.results }}
     steps:
+      - name: Checkout collection source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: ${{ github.event_name == 'pull_request_target' && github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+          allow-unsafe-pr-checkout: ${{ github.event_name == 'pull_request_target' }}
+
       # Run integration tests inside a Docker container.
       # The docker container has all the pinned dependencies that are
       # required and all Python versions Ansible supports.
@@ -101,12 +110,12 @@ jobs:
           ansible-core-version: ${{ matrix.ansible }}
           testing-type: integration
           target: ${{ needs.detect-changes.outputs.targets }}
+          collection-src-directory: .
           pre-test-cmd: >-
             install -d ./tests/integration/targets/prepare_test_run
             && printf '%s\n' "$API_PRIVATE_KEY" > ./tests/integration/targets/prepare_test_run/api_private_key.pem
             && chmod 600 ./tests/integration/targets/prepare_test_run/api_private_key.pem
             && printf '%s\n' '---' 'api_private_key: ./targets/prepare_test_run/api_private_key.pem' "api_key_id: ${API_KEY_ID}" > ./tests/integration/targets/prepare_test_run/integration_config.yml
-          git-checkout-ref: ${{ github.event_name == 'pull_request_target' && github.event.pull_request.head.sha || github.sha }}
         env:
           API_PRIVATE_KEY: ${{ secrets.INTERSIGHT_API_PRIVATE_KEY_CI }}
           API_KEY_ID: ${{ secrets.INTERSIGHT_API_KEY_ID_CI }}
