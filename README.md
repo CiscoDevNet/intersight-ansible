@@ -133,3 +133,5 @@ Cisco's DevNet includes a [Learning Lab on using this collection](https://develo
 ## License Information
 
 Licensed under the [MIT License](https://github.com/CiscoDevNet/intersight-ansible/blob/main/LICENSE.txt).
+
+<!-- Dummy change to verify CI skips integration tests for README-only PRs. -->
