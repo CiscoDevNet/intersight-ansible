@@ -97,6 +97,7 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
           allow-unsafe-pr-checkout: ${{ github.event_name == 'pull_request_target' }}
+          path: .tmp-ansible-collection-source
 
       # Run integration tests inside a Docker container.
       # The docker container has all the pinned dependencies that are
@@ -110,7 +111,7 @@ jobs:
           ansible-core-version: ${{ matrix.ansible }}
           testing-type: integration
           target: ${{ needs.detect-changes.outputs.targets }}
-          collection-src-directory: .
+          collection-src-directory: .tmp-ansible-collection-source
           pre-test-cmd: >-
             install -d ./tests/integration/targets/prepare_test_run
             && printf '%s\n' "$API_PRIVATE_KEY" > ./tests/integration/targets/prepare_test_run/api_private_key.pem
