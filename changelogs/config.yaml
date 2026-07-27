@@ -8,6 +8,7 @@
 changelog_filename_template: ../CHANGELOG.md
 changelog_filename_version_depth: 0
 notesdir: fragments
+changes_format: combined
 
 # Keep this aligned with Ansible's standard fragment section names.
 sections:
