@@ -1,0 +1,36 @@
+# Copyright (c) Ansible Project
+# GNU General Public License v3.0+ (see LICENSES/GPL-3.0-or-later.txt or https://www.gnu.org/licenses/gpl-3.0.txt)
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+# Changelog config for ansible-test sanity "changelog".
+# See: https://docs.ansible.com/ansible-core/devel/dev_guide/testing/sanity/changelog.html
+
+changelog_filename_template: ../CHANGELOG.md
+changelog_filename_version_depth: 0
+notesdir: fragments
+changes_format: combined
+
+# Keep this aligned with Ansible's standard fragment section names.
+sections:
+  - - major_changes
+    - Major Changes
+  - - minor_changes
+    - Minor Changes
+  - - breaking_changes
+    - Breaking Changes / Porting Guide
+  - - deprecated_features
+    - Deprecated Features
+  - - removed_features
+    - Removed Features (previously deprecated)
+  - - security_fixes
+    - Security Fixes
+  - - bugfixes
+    - Bugfixes
+  - - known_issues
+    - Known Issues
+
+# This collection uses Markdown for CHANGELOG.md.
+output_formats:
+  - md
+
+use_fqcn: true

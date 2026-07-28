@@ -407,8 +407,13 @@ class IntersightModule():
                 # return the 1st list element
                 self.result['api_response'] = response['Results'][0]
         else:
-            # Return a dict if no Results array (handles case where resource_path contains a Moid)
-            if isinstance(response, dict):
+            # A GET by Moid returns the object directly (a dict with no
+            # 'Results' key). A filtered list query with no matches returns a
+            # dict that DOES contain an (empty) 'Results' key; that is not a
+            # hit and must not be stored, otherwise callers that guard on
+            # `if not api_response` (e.g. intersight_target_claim) treat the
+            # empty result as an existing object and skip their action.
+            if isinstance(response, dict) and 'Results' not in response:
                 self.result['api_response'] = response
             else:
                 # Clear api_response when no results found to prevent returning stale data
