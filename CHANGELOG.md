@@ -1,5 +1,9 @@
 # cisco.intersight Ansible Collection Changelog
 
+## Version 2.21.0
+- Fix for empty list response in get_resource.
+- Fix telemetry taxonomy values for Ansible NRT v1.0.
+
 ## Version 2.20.0
 - New intersight_server_profile_derive module for deriving profiles from templates (MoCloner) and syncing back (MoMerger).
   - Supports derive, sync, force_sync, delete, check-mode, and idempotency.
