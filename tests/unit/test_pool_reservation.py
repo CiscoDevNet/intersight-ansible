@@ -133,7 +133,6 @@ class TestCreateReservation(unittest.TestCase):
         body = call_args.kwargs['body']
         self.assertEqual(body['IdPurpose'], 'WWPN')
 
-
     def test_iqn_reservation(self):
         intersight = make_intersight_mock()
         intersight.call_api.return_value = {}
