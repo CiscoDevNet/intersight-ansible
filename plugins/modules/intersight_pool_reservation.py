@@ -15,7 +15,7 @@ DOCUMENTATION = r'''
 module: intersight_pool_reservation
 short_description: Manage pool identifier reservations in Cisco Intersight
 description:
-  - Reserve and release identifiers (IP, UUID, MAC, WWNN, WWPN) from Intersight pools.
+  - Reserve and release identifiers (IP, UUID, MAC, IQN, WWNN, WWPN) from Intersight pools.
   - Handles the Intersight reservation API's one-time-use constraint by performing a pre-flight
     check before attempting to reserve, ensuring idempotent playbook runs.
   - Reserved identifiers are consumed when a policy using them is attached to a server profile
@@ -29,7 +29,7 @@ options:
       - The type of pool to manage reservations for.
     type: str
     required: true
-    choices: [ip, uuid, mac, wwnn, wwpn]
+    choices: [ip, uuid, mac, iqn, wwnn, wwpn]
   pool_name:
     description:
       - Name of the pool to reserve from.
@@ -42,7 +42,7 @@ options:
     default: default
   identity:
     description:
-      - The specific identifier value to reserve (e.g., an IP address, UUID, MAC address).
+      - The specific identifier value to reserve (e.g., an IP address, UUID, MAC address, IQN).
       - Required when C(state) is C(present).
     type: str
   state:
@@ -105,6 +105,14 @@ EXAMPLES = r'''
     pool_type: ip
     pool_name: IP-Pool-01
     allocation_type: dynamic
+
+- name: Reserve an IQN from a pool
+  cisco.intersight.intersight_pool_reservation:
+    api_private_key: "{{ api_private_key }}"
+    api_key_id: "{{ api_key_id }}"
+    pool_type: iqn
+    pool_name: IQN-Pool-01
+    identity: "iqn.2010-11.com.flexpod:storage:component:server01"
 '''
 
 RETURN = r'''
@@ -149,6 +157,12 @@ POOL_TYPE_MAP = {
         'pool_path': '/fcpool/Pools',
         'identity_key': 'Identity',
         'object_type': 'fcpool.Reservation',
+    },
+    'iqn': {
+        'resource_path': '/iqnpool/Reservations',
+        'pool_path': '/iqnpool/Pools',
+        'identity_key': 'Identity',
+        'object_type': 'iqnpool.Reservation',
     },
     'wwpn': {
         'resource_path': '/fcpool/Reservations',
@@ -238,7 +252,7 @@ def delete_reservation(intersight, resource_path, reservation_moid):
 def main():
     argument_spec = intersight_argument_spec.copy()
     argument_spec.update(
-        pool_type=dict(type='str', required=True, choices=['ip', 'uuid', 'mac', 'wwnn', 'wwpn']),
+        pool_type=dict(type='str', required=True, choices=['ip', 'uuid', 'mac', 'iqn', 'wwnn', 'wwpn']),
         pool_name=dict(type='str', required=True),
         organization=dict(type='str', default='default'),
         identity=dict(type='str'),
