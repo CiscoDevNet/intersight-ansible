@@ -106,7 +106,7 @@ EXAMPLES = r'''
     api_key_id: "{{ api_key_id }}"
     name: "FlowControl-PFC-On-Policy"
     description: "Flow control policy with PFC always on"
-    priority_flow_control_mode: on
+    priority_flow_control_mode: "on"
     state: present
 
 - name: Create a Flow Control Policy with link-level flow control
@@ -115,7 +115,7 @@ EXAMPLES = r'''
     api_key_id: "{{ api_key_id }}"
     name: "FlowControl-LinkLevel-Policy"
     description: "Flow control policy with link-level settings"
-    priority_flow_control_mode: off
+    priority_flow_control_mode: "off"
     receive_direction: enabled
     send_direction: enabled
     state: present
@@ -125,7 +125,7 @@ EXAMPLES = r'''
     api_private_key: "{{ api_private_key }}"
     api_key_id: "{{ api_key_id }}"
     name: "FlowControl-Disabled-Policy"
-    priority_flow_control_mode: off
+    priority_flow_control_mode: "off"
     receive_direction: disabled
     send_direction: disabled
     state: present
@@ -136,7 +136,7 @@ EXAMPLES = r'''
     api_key_id: "{{ api_key_id }}"
     name: "FlowControl-Auto-Policy"
     description: "Updated flow control policy"
-    priority_flow_control_mode: on
+    priority_flow_control_mode: "on"
     state: present
 
 - name: Delete a Flow Control Policy
