@@ -1,0 +1,5 @@
+---
+bugfixes:
+  - event_query - ``Name`` was part of ``canonical_facts``, which is the only key the Automation Platform controller deduplicates indirect nodes on. Intersight names are user-editable, so renaming a policy, pool or profile produced a second audit row for the same object. ``Name`` moved to ``facts``, which is not hashed, and is now also used as the record's display name instead of the Moid (https://github.com/CiscoDevNet/intersight-ansible/pull/354).
+minor_changes:
+  - event_query - added ``tests/unit/audit/test_event_query_contract.py``, which asserts the constraints the controller imposes on this file (https://github.com/CiscoDevNet/intersight-ansible/pull/354).
