@@ -18,6 +18,22 @@
 # accepts int/float/str/bool/dict/list/tuple and raises UnhashableFacts on
 # anything else, so a null field discards the whole record, silently, with the
 # job green. The select() below proves both Moid and ObjectType are non-null.
+#
+# `name` must also be UNIQUE WITHIN A JOB. IndirectManagedNodeAudit declares
+# unique_together = [('name', 'job')] and the controller bulk_create()s a job's
+# records in one transaction, so two objects that deduplicate apart on
+# canonical_facts but share a `name` raise IntegrityError -- which rolls back
+# the transaction and loses EVERY audit record for that job, not just the
+# colliding pair, and reverts event_queries_processed so the fallback task
+# re-picks the job and fails the same way until it ages out. `Name` is
+# user-editable and not unique across object types in Intersight, so `name` is
+# the Moid; the display name is reported in facts.name, which is unconstrained.
+#
+# ObjectType has moved out of canonical_facts for the same reason. A Moid is a
+# globally unique object id, so it already determines the ObjectType -- keeping
+# both made the key compound without making it any more discriminating, which
+# in turn left `name` (the Moid alone) less discriminating than the key it is
+# supposed to track. ObjectType is still reported, in facts.node_type.
 cisco.intersight.*:
   query: >-
     (
@@ -98,16 +114,16 @@ cisco.intersight.*:
        ) as $data |
         select($data.Moid != null and $data.ObjectType != null) |
         {
-          name: ($data.Name // $data.Moid),
+          name: $data.Moid,
           canonical_facts: {
-            id: $data.Moid,
-            node_type: $data.ObjectType
+            id: $data.Moid
           },
           facts: {
             infra_type: "private_cloud",
+            node_type: $data.ObjectType,
             infra_bucket: ($mapping[$data.ObjectType] // "unknown"),
             device_type: (($data.ObjectType | split(".")[0]) as $dt | ($device_type_mapping[$dt] // $dt)),
-            name: ($data.Name // "UNKNOWN")
+            name: ($data.Name // $data.Moid)
           }
         }
     )
