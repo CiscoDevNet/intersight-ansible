@@ -43,20 +43,20 @@ class TestDeployDomain(unittest.TestCase):
 
     @patch.object(domain, 'wait_for_switch_deployment')
     def test_check_mode_does_not_wait_for_active_deployment(self, wait):
-        intersight, _ = make_intersight(check_mode=True, state='Configuring', action='Deploy')
+        intersight, unused_profiles = make_intersight(check_mode=True, state='Configuring', action='Deploy')
         domain.deploy_domain_profile(intersight, 'cluster-1')
         self.assertTrue(intersight.result['changed'])
         self.assertEqual(intersight.call_api.call_count, 1)
         wait.assert_not_called()
 
     def test_associated_is_idempotent(self):
-        intersight, _ = make_intersight(state='Associated')
+        intersight, unused_profiles = make_intersight(state='Associated')
         domain.deploy_domain_profile(intersight, 'cluster-1')
         self.assertFalse(intersight.result['changed'])
         self.assertEqual(intersight.call_api.call_count, 1)
 
     def test_configuration_changes_require_deployment(self):
-        intersight, _ = make_intersight(check_mode=True, state='Associated')
+        intersight, unused_profiles = make_intersight(check_mode=True, state='Associated')
         domain.deploy_domain_profile(intersight, 'cluster-1', configuration_changed=True)
         self.assertTrue(intersight.result['changed'])
 
@@ -75,7 +75,7 @@ class TestDeployDomain(unittest.TestCase):
 
     @patch.object(domain, 'wait_for_switch_deployment')
     def test_no_wait(self, wait):
-        intersight, _ = make_intersight()
+        intersight, unused_profiles = make_intersight()
         intersight.module.params['wait_for_action'] = False
         domain.deploy_domain_profile(intersight, 'cluster-1')
         wait.assert_not_called()
@@ -97,7 +97,7 @@ class TestDeployDomain(unittest.TestCase):
         self.assertEqual(intersight.call_api.call_count, 1)
 
     def test_missing_switch_profile_fails(self):
-        intersight, _ = make_intersight()
+        intersight, unused_profiles = make_intersight()
         intersight.call_api.return_value = {'Results': []}
         with self.assertRaises(ModuleFailure):
             domain.deploy_domain_profile(intersight, 'cluster-1')
@@ -188,12 +188,12 @@ class TestMain(unittest.TestCase):
         deploy.assert_not_called()
 
     def test_action_rejects_absent(self):
-        module, _, deploy = self.run_main(state='absent')
+        module, unused_intersight, deploy = self.run_main(state='absent')
         module.fail_json.assert_called_once_with(msg='action requires state=present.')
         deploy.assert_not_called()
 
     def test_poll_interval_must_be_positive(self):
-        module, _, deploy = self.run_main(action_poll_interval=0)
+        module, unused_intersight, deploy = self.run_main(action_poll_interval=0)
         module.fail_json.assert_called_once_with(msg='action_timeout and action_poll_interval must be positive.')
         deploy.assert_not_called()
 
