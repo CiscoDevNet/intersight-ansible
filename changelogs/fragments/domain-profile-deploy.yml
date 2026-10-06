@@ -1,0 +1,2 @@
+minor_changes:
+  - intersight_domain - Support action=Deploy for both domain SwitchProfiles, with optional waiting, timeout controls, and read-only check-mode previews. Deployment of an existing domain can omit configuration options to preserve policies and assignments.
