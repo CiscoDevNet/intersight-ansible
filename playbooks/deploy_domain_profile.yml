@@ -1,0 +1,32 @@
+---
+# Preview deployment of the existing domain without changing policies or assignments.
+# Use the updated local collection, then run from the repository root:
+# ansible-playbook playbooks/deploy_domain_profile_check.yml --check --diff
+# Uses INTERSIGHT_API_KEY_ID / INTERSIGHT_API_PRIVATE_KEY, or explicit api_key_id / api_private_key vars.
+# The task always uses check mode, even if --check is omitted.
+- name: Preview UCS Domain Profile deployment
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  vars:
+    profile_name: SJC07-R14-R15
+    org_name: dsoper-DevNet
+  tasks:
+    - name: Check deployment of the existing UCS Domain Profile
+      cisco.intersight.intersight_domain:
+        api_private_key: "{{ api_private_key | default(omit) }}"
+        api_key_id: "{{ api_key_id | default(omit) }}"
+        api_uri: "{{ api_uri | default(omit) }}"
+        validate_certs: "{{ validate_certs | default(omit) }}"
+        organization: "{{ org_name }}"
+        name: "{{ profile_name }}"
+        action: Deploy
+      register: domain_deploy_preview
+
+    - name: Show deployment preview
+      ansible.builtin.debug:
+        msg:
+          domain_profile: "{{ domain_deploy_preview.api_response.Name }}"
+          deployment_needed: "{{ domain_deploy_preview.changed }}"
+          switch_profiles: "{{ domain_deploy_preview.switch_profiles | map(attribute='Name') | list }}"
+          switch_config_states: "{{ domain_deploy_preview.switch_profiles | map(attribute='ConfigContext.ConfigState') | list }}"

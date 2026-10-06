@@ -1,5 +1,8 @@
 # cisco.intersight Ansible Collection Changelog
 
+## Version 2.22.0
+- Add support for action Deploy in intersight_domain module.
+
 ## Version 2.21.0
 - Fix for empty list response in get_resource.
 - Fix telemetry taxonomy values for Ansible NRT v1.0.

@@ -18,7 +18,7 @@ description:
   - Create, update, and delete UCS Domain Profiles (SwitchClusterProfiles) on Cisco Intersight.
   - Manages the associated SwitchProfiles (A and B), Fabric Interconnect assignments, and policy buckets.
   - Policies are attached to SwitchProfiles via the Intersight bulk API.
-  - This module does not manage deployment of the domain profile.
+  - Supports deployment of both associated SwitchProfiles, with optional waiting for completion.
   - For more information see L(Cisco Intersight,https://intersight.com/apidocs/fabric/SwitchClusterProfiles/post/).
 extends_documentation_fragment: intersight
 options:
@@ -52,6 +52,29 @@ options:
       - List of tags in Key:<user-defined key> Value:<user-defined value> format.
     type: list
     elements: dict
+  action:
+    description:
+      - Deploy both SwitchProfiles after configuration.
+      - With no configuration options, deploy an existing domain without modifying its policies or assignments.
+      - Already associated SwitchProfiles are skipped unless configuration changed.
+      - Check mode reports whether deployment is needed without submitting or waiting for an action.
+    type: str
+    choices: [Deploy]
+  wait_for_action:
+    description:
+      - Wait for deployment of both SwitchProfiles to complete.
+    type: bool
+    default: true
+  action_timeout:
+    description:
+      - Maximum seconds to wait for each SwitchProfile deployment.
+    type: int
+    default: 1200
+  action_poll_interval:
+    description:
+      - Seconds between deployment status polls.
+    type: int
+    default: 60
   assigned_switch_a_serial:
     description:
       - The serial number of the Fabric Interconnect to assign to SwitchProfile A.
@@ -113,7 +136,7 @@ options:
   system_qos_policy:
     description:
       - Name of the System QoS Policy to associate with both Fabric Interconnects.
-      - This policy is mandatory for UCS Domain Profiles.
+      - Required when creating or configuring a domain; optional for deployment of an existing domain.
     type: str
   auditd_policy:
     description:
@@ -160,6 +183,15 @@ EXAMPLES = r'''
     switch_control_policy: "Switch-Control"
     state: present
 
+- name: Preview deployment of an existing UCS Domain Profile
+  cisco.intersight.intersight_domain:
+    api_private_key: "{{ api_private_key }}"
+    api_key_id: "{{ api_key_id }}"
+    organization: "default"
+    name: "Domain-01"
+    action: Deploy
+  check_mode: true
+
 - name: Delete a UCS Domain Profile
   cisco.intersight.intersight_domain:
     api_private_key: "{{ api_private_key }}"
@@ -169,6 +201,11 @@ EXAMPLES = r'''
 '''
 
 RETURN = r'''
+switch_profiles:
+  description: Current or final A/B SwitchProfile responses when deployment is requested.
+  returned: when action is Deploy
+  type: list
+  elements: dict
 api_response:
   description: The API response output returned by the SwitchClusterProfile resource.
   returned: always
@@ -190,6 +227,8 @@ api_response:
     }
 '''
 
+
+import time
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible_collections.cisco.intersight.plugins.module_utils.intersight import (
@@ -355,6 +394,76 @@ def unassign_switches_before_delete(intersight, cluster_moid):
             )
 
 
+def wait_for_switch_deployment(intersight, profile_moid, timeout, poll_interval):
+    """Wait for one SwitchProfile to finish deploying, preserving failure details."""
+    deadline = time.monotonic() + timeout
+    while True:
+        profile = intersight.call_api(
+            http_method='get', resource_path='/fabric/SwitchProfiles', moid=profile_moid,
+        )
+        context = profile.get('ConfigContext') or {}
+        if context.get('OperState') == 'Failed' or context.get('ConfigState') == 'Failed':
+            intersight.module.fail_json(
+                msg="SwitchProfile '%s' deployment failed." % profile.get('Name', profile_moid),
+                api_response=profile,
+            )
+        if context.get('ControlAction') in ('No-op', 'No_op', '', None) and context.get('ConfigState') == 'Associated':
+            return profile
+        remaining = deadline - time.monotonic()
+        if remaining <= 0:
+            intersight.module.fail_json(
+                msg="Timed out waiting for SwitchProfile '%s' deployment after %d seconds." % (profile_moid, timeout),
+                api_response=profile,
+            )
+        time.sleep(min(poll_interval, remaining))
+
+
+def deploy_domain_profile(intersight, cluster_moid, configuration_changed=False):
+    """Deploy the actual A/B SwitchProfiles belonging to the selected domain."""
+    response = intersight.call_api(
+        http_method='get', resource_path='/fabric/SwitchProfiles',
+        query_params={'$filter': "SwitchClusterProfile.Moid eq '%s'" % cluster_moid},
+    )
+    profiles = response.get('Results') or []
+    if len(profiles) != 2 or {p.get('SwitchId') for p in profiles} != {'A', 'B'}:
+        intersight.module.fail_json(msg='Deployment requires both A and B SwitchProfiles.', api_response=response)
+    # Validate both assignments before submitting either action.
+    for profile in profiles:
+        if not (profile.get('AssignedSwitch') or {}).get('Moid'):
+            intersight.module.fail_json(msg="SwitchProfile '%s' has no assigned Fabric Interconnect." % profile['Name'])
+
+    wait = intersight.module.params['wait_for_action']
+    timeout = intersight.module.params['action_timeout']
+    interval = intersight.module.params['action_poll_interval']
+    deployed_profiles = []
+    for profile in profiles:
+        context = profile.get('ConfigContext') or {}
+        active_action = context.get('ControlAction') not in ('No-op', 'No_op', '', None)
+        needed = configuration_changed or context.get('ConfigState') != 'Associated' or active_action
+        if needed and intersight.module.check_mode:
+            intersight.result['changed'] = True
+        elif active_action:
+            if context.get('ControlAction') != 'Deploy':
+                intersight.module.fail_json(
+                    msg="SwitchProfile '%s' already has action '%s' in progress." % (profile['Name'], context['ControlAction']),
+                    api_response=profile,
+                )
+            if wait:
+                profile = wait_for_switch_deployment(intersight, profile['Moid'], timeout, interval)
+        elif needed:
+            result = intersight.call_api(
+                http_method='patch', resource_path='/fabric/SwitchProfiles',
+                moid=profile['Moid'], body={'Action': 'Deploy'},
+            )
+            intersight.result['changed'] = True
+            if wait:
+                profile = wait_for_switch_deployment(intersight, profile['Moid'], timeout, interval)
+            elif result:
+                profile = result
+        deployed_profiles.append(profile)
+    intersight.result['switch_profiles'] = deployed_profiles
+
+
 def main():
     argument_spec = intersight_argument_spec.copy()
     argument_spec.update(
@@ -363,6 +472,10 @@ def main():
         name=dict(type='str', required=True),
         description=dict(type='str', aliases=['descr']),
         tags=dict(type='list', elements='dict'),
+        action=dict(type='str', choices=['Deploy']),
+        wait_for_action=dict(type='bool', default=True),
+        action_timeout=dict(type='int', default=1200),
+        action_poll_interval=dict(type='int', default=60),
         assigned_switch_a_serial=dict(type='str'),
         assigned_switch_b_serial=dict(type='str'),
         vlan_policy_fi_a=dict(type='str'),
@@ -385,13 +498,24 @@ def main():
     module = AnsibleModule(
         argument_spec,
         supports_check_mode=True,
-        required_if=[
-            ['state', 'present', ['system_qos_policy']],
-        ],
         required_together=[
             ['assigned_switch_a_serial', 'assigned_switch_b_serial'],
         ],
     )
+
+    configuration_options = (
+        list(PER_FI_A_POLICY_MAPPING) + list(PER_FI_B_POLICY_MAPPING) + list(SHARED_POLICY_MAPPING)
+        + ['assigned_switch_a_serial', 'assigned_switch_b_serial', 'description', 'tags']
+    )
+    deploy_only = module.params['action'] == 'Deploy' and not any(
+        module.params.get(option) is not None for option in configuration_options
+    )
+    if module.params['action'] and module.params['state'] != 'present':
+        module.fail_json(msg='action requires state=present.')
+    if module.params['state'] == 'present' and not deploy_only and not module.params['system_qos_policy']:
+        module.fail_json(msg='system_qos_policy is required when creating or configuring a domain profile.')
+    if module.params['action_timeout'] <= 0 or module.params['action_poll_interval'] <= 0:
+        module.fail_json(msg='action_timeout and action_poll_interval must be positive.')
 
     intersight = IntersightModule(module)
     intersight.result['api_response'] = {}
@@ -401,6 +525,24 @@ def main():
     name = intersight.module.params['name']
     organization = intersight.module.params['organization']
     state = intersight.module.params['state']
+
+    if deploy_only:
+        organization_moid = intersight.get_moid_by_name(
+            resource_path='/organization/Organizations', resource_name=organization,
+        )
+        if not organization_moid:
+            module.fail_json(msg="Organization '%s' not found." % organization)
+        intersight.get_resource(
+            resource_path=cluster_path,
+            query_params={'$filter': "Name eq '%s' and Organization.Moid eq '%s'" % (name.replace("'", "''"), organization_moid)},
+        )
+        cluster_response = dict(intersight.result['api_response'])
+        cluster_moid = cluster_response.get('Moid')
+        if not cluster_moid:
+            module.fail_json(msg="Domain profile '%s' not found in organization '%s'." % (name, organization))
+        deploy_domain_profile(intersight, cluster_moid)
+        intersight.result['api_response'] = cluster_response
+        module.exit_json(**intersight.result)
 
     intersight.api_body = {
         'Organization': {'Name': organization},
@@ -438,6 +580,9 @@ def main():
         for profile_moid, desired_bucket, current_bucket in profiles_to_sync:
             bucket_path = f'/fabric/SwitchProfiles/{profile_moid}/PolicyBucket'
             sync_policy_bucket(intersight, bucket_path, desired_bucket, current_bucket)
+
+    if cluster_moid and state == 'present' and module.params['action'] == 'Deploy':
+        deploy_domain_profile(intersight, cluster_moid, configuration_changed=intersight.result['changed'])
 
     if cluster_response:
         intersight.result['api_response'] = cluster_response
