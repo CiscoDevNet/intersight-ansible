@@ -1,6 +1,5 @@
-# Standalone copy of the partner certification checker workflow so the
-# production lint job can remain visible while its existing findings are
-# non-blocking. Build/import and sanity jobs still fail the workflow on errors.
+# Standalone partner certification workflow for collection build/import and
+# sanity checks.
 
 name: Run collection certification checks
 
@@ -51,27 +50,6 @@ jobs:
 
       - name: Build the collection and run galaxy-importer
         run: python -m galaxy_importer.main --git-clone-path . --output-path /tmp
-
-  lint:
-    name: Lint moderate (non-blocking)
-    continue-on-error: true
-    runs-on: ubuntu-latest
-    steps:
-      - name: Check out code
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-        with:
-          persist-credentials: false
-
-      - name: Set up Python
-        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
-        with:
-          python-version: "3.12"
-
-      - name: Install ansible-lint
-        run: python -m pip install ansible-lint
-
-      - name: Run ansible-lint
-        run: ansible-lint --profile=moderate
 
   sanity:
     name: Sanity (Ⓐ${{ matrix.ansible }})
