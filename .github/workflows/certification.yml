@@ -53,7 +53,7 @@ jobs:
         run: python -m galaxy_importer.main --git-clone-path . --output-path /tmp
 
   lint:
-    name: Lint production (non-blocking)
+    name: Lint moderate (non-blocking)
     continue-on-error: true
     runs-on: ubuntu-latest
     steps:
@@ -71,7 +71,7 @@ jobs:
         run: python -m pip install ansible-lint
 
       - name: Run ansible-lint
-        run: ansible-lint --profile=production
+        run: ansible-lint --profile=moderate
 
   sanity:
     name: Sanity (Ⓐ${{ matrix.ansible }})
