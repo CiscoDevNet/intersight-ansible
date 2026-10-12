@@ -1,0 +1,70 @@
+# Standalone partner certification workflow for collection build/import and
+# sanity checks.
+
+name: Run collection certification checks
+
+permissions:
+  contents: read
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+  schedule:
+    - cron: "0 6 * * *"
+
+concurrency:
+  group: cert-ver-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  build-import:
+    name: Build & import collection
+    env:
+      CHECK_REQUIRED_TAGS: "True"
+      RUN_ANSIBLE_LINT: "False"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+        with:
+          python-version: "3.12"
+
+      - name: Install ansible-core and galaxy-importer
+        run: python -m pip install ansible-core galaxy-importer
+
+      - name: Configure galaxy-importer
+        shell: bash
+        run: |
+          cat > /tmp/galaxy-importer.cfg << EOF
+          [galaxy-importer]
+          CHECK_REQUIRED_TAGS=${{ env.CHECK_REQUIRED_TAGS }}
+          RUN_ANSIBLE_LINT=${{ env.RUN_ANSIBLE_LINT }}
+          EOF
+          echo "GALAXY_IMPORTER_CONFIG=/tmp/galaxy-importer.cfg" >> "${GITHUB_ENV}"
+
+      - name: Build the collection and run galaxy-importer
+        run: python -m galaxy_importer.main --git-clone-path . --output-path /tmp
+
+  sanity:
+    name: Sanity (Ⓐ${{ matrix.ansible }})
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        ansible:
+          - stable-2.16
+          - stable-2.18
+          - stable-2.20
+    steps:
+      - name: Perform sanity testing
+        uses: ansible-community/ansible-test-gh-action@d3a8ec7a59694e25e210fcd44738910149537f0e # v1.17.0
+        with:
+          ansible-core-version: ${{ matrix.ansible }}
+          origin-python-version: "3.12"
+          testing-type: sanity
+          pull-request-change-detection: false

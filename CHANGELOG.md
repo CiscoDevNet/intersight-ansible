@@ -1,5 +1,8 @@
 # cisco.intersight Ansible Collection Changelog
 
+## Version 2.23.0
+- Remove .ansible from collection and add certification workflow.
+
 ## Version 2.22.0
 - Add support for action Deploy in intersight_domain module.
 
