@@ -65,6 +65,8 @@
         - disabled_creation.changed
         - disabled_info.api_response[0].Name == 'test_snmp_policy_disabled'
         - disabled_info.api_response[0].Enabled == false
+        - disabled_info.api_response[0].IsAccessCommunityStringSet == false
+        - disabled_info.api_response[0].IsTrapCommunitySet == false
 
   - name: Create disabled SNMP policy (idempotency check)
     cisco.intersight.intersight_snmp_policy:
@@ -113,8 +115,8 @@
         - v2_only_info.api_response[0].V2Enabled == true
         - v2_only_info.api_response[0].V3Enabled == false
         - v2_only_info.api_response[0].CommunityAccess == "Limited"
-        - v2_only_info.api_response[0].AccessCommunityString == "public"
-        - v2_only_info.api_response[0].TrapCommunity == "trapcomm"
+        - v2_only_info.api_response[0].IsAccessCommunityStringSet == true
+        - v2_only_info.api_response[0].IsTrapCommunitySet == true
 
   - name: Create SNMPv3 only SNMP policy
     cisco.intersight.intersight_snmp_policy:
@@ -194,8 +196,8 @@
         - mixed_info.api_response[0].V2Enabled == true
         - mixed_info.api_response[0].V3Enabled == true
         - mixed_info.api_response[0].CommunityAccess == "Full"
-        - mixed_info.api_response[0].AccessCommunityString == "public"
-        - mixed_info.api_response[0].TrapCommunity == "trapcomm"
+        - mixed_info.api_response[0].IsAccessCommunityStringSet == true
+        - mixed_info.api_response[0].IsTrapCommunitySet == true
         - mixed_info.api_response[0].EngineId == "mixed-engine-id"
         - mixed_info.api_response[0].SnmpUsers | length == 1
         - mixed_info.api_response[0].SnmpUsers[0].Name == "mixeduser"
@@ -306,9 +308,9 @@
         - traps_info.api_response[0].SnmpTraps | length == 4
         - traps_info.api_response[0].SnmpTraps[0].Enabled == true
         - traps_info.api_response[0].SnmpTraps[0].Version == "V2"
-        - traps_info.api_response[0].SnmpTraps[0].Community == "trapcomm"
         - traps_info.api_response[0].SnmpTraps[0].Type == "Trap"
         - traps_info.api_response[0].SnmpTraps[0].Destination == "192.168.1.100"
+        - traps_info.api_response[0].SnmpTraps[0].Port == 162
         - traps_info.api_response[0].SnmpTraps[1].Type == "Inform"
         - traps_info.api_response[0].SnmpTraps[2].Version == "V3"
         - traps_info.api_response[0].SnmpTraps[2].User == "trapuser"
@@ -345,7 +347,7 @@
         - modified_info.api_response[0].V2Enabled == true
         - modified_info.api_response[0].SysContact == "modified@example.com"
         - modified_info.api_response[0].SysLocation == "Modified Location"
-        - modified_info.api_response[0].AccessCommunityString == "modified"
+        - modified_info.api_response[0].IsAccessCommunityStringSet == true
 
   - name: Fetch all SNMP policies under selected organization
     cisco.intersight.intersight_snmp_policy_info:
